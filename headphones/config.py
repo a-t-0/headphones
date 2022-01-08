@@ -458,7 +458,7 @@ class Config(object):
         """
         for name, value in list(kwargs.items()):
             key, definition_type, section, ini_key, default = self._define(name)
-            self._config[section][ini_key] = definition_type(value)
+            self._config[section][ini_key] = str(value)
 
     def _upgrade(self):
         """

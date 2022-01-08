@@ -46,13 +46,13 @@ class EmbedCoverArtPlugin(BeetsPlugin):
 
         if self.config['maxwidth'].get(int) and not ArtResizer.shared.local:
             self.config['maxwidth'] = 0
-            log.warn(u"embedart: ImageMagick or PIL not found; "
-                     u"'maxwidth' option ignored")
+            log.warn("embedart: ImageMagick or PIL not found; "
+                     "'maxwidth' option ignored")
         if self.config['compare_threshold'].get(int) and not \
                 ArtResizer.shared.can_compare:
             self.config['compare_threshold'] = 0
-            log.warn(u"embedart: ImageMagick 6.8.7 or higher not installed; "
-                     u"'compare_threshold' option ignored")
+            log.warn("embedart: ImageMagick 6.8.7 or higher not installed; "
+                     "'compare_threshold' option ignored")
 
     def commands(self):
         # Embed command.
@@ -115,14 +115,14 @@ def embed_item(item, imagepath, maxwidth=None, itempath=None,
     """
     if compare_threshold:
         if not check_art_similarity(item, imagepath, compare_threshold):
-            log.warn(u'Image not similar; skipping.')
+            log.warn('Image not similar; skipping.')
             return
     if ifempty:
         art = get_art(item)
         if not art:
             pass
         else:
-            log.debug(u'embedart: media file contained art already {0}'.format(
+            log.debug('embedart: media file contained art already {0}'.format(
                 displayable_path(imagepath)
             ))
             return
@@ -130,12 +130,12 @@ def embed_item(item, imagepath, maxwidth=None, itempath=None,
         imagepath = resize_image(imagepath, maxwidth)
 
     try:
-        log.debug(u'embedart: embedding {0}'.format(
+        log.debug('embedart: embedding {0}'.format(
             displayable_path(imagepath)
         ))
         item['images'] = [_mediafile_image(imagepath, maxwidth)]
     except IOError as exc:
-        log.error(u'embedart: could not read image file: {0}'.format(exc))
+        log.error('embedart: could not read image file: {0}'.format(exc))
     else:
         # We don't want to store the image in the database.
         item.try_write(itempath)
@@ -147,11 +147,11 @@ def embed_album(album, maxwidth=None, quiet=False):
     """
     imagepath = album.artpath
     if not imagepath:
-        log.info(u'No album art present: {0} - {1}'.
+        log.info('No album art present: {0} - {1}'.
                  format(album.albumartist, album.album))
         return
     if not os.path.isfile(syspath(imagepath)):
-        log.error(u'Album art not found at {0}'
+        log.error('Album art not found at {0}'
                   .format(displayable_path(imagepath)))
         return
     if maxwidth:
@@ -159,10 +159,10 @@ def embed_album(album, maxwidth=None, quiet=False):
 
     log.log(
         logging.DEBUG if quiet else logging.INFO,
-        u'Embedding album art into {0.albumartist} - {0.album}.'.format(album),
+        'Embedding album art into {0.albumartist} - {0.album}.'.format(album),
     )
 
-    for item in album.items():
+    for item in list(album.items()):
         embed_item(item, imagepath, maxwidth, None,
                    config['embedart']['compare_threshold'].get(int),
                    config['embedart']['ifempty'].get(bool), as_album=True)
@@ -171,7 +171,7 @@ def embed_album(album, maxwidth=None, quiet=False):
 def resize_image(imagepath, maxwidth):
     """Returns path to an image resized to maxwidth.
     """
-    log.info(u'Resizing album art to {0} pixels wide'
+    log.info('Resizing album art to {0} pixels wide'
              .format(maxwidth))
     imagepath = ArtResizer.shared.resize(maxwidth, syspath(imagepath))
     return imagepath
@@ -197,7 +197,7 @@ def check_art_similarity(item, imagepath, compare_threshold):
             stdout, stderr = proc.communicate()
             if proc.returncode:
                 if proc.returncode != 1:
-                    log.warn(u'embedart: IM phashes compare failed for {0}, \
+                    log.warn('embedart: IM phashes compare failed for {0}, \
                    {1}'.format(displayable_path(imagepath),
                                displayable_path(art)))
                     return
@@ -205,7 +205,7 @@ def check_art_similarity(item, imagepath, compare_threshold):
             else:
                 phashDiff = float(stdout)
 
-            log.info(u'embedart: compare PHASH score is {0}'.format(phashDiff))
+            log.info('embedart: compare PHASH score is {0}'.format(phashDiff))
             if phashDiff > compare_threshold:
                 return False
 
@@ -226,7 +226,7 @@ def get_art(item):
     try:
         mf = mediafile.MediaFile(syspath(item.path))
     except mediafile.UnreadableFileError as exc:
-        log.error(u'Could not extract art from {0}: {1}'.format(
+        log.error('Could not extract art from {0}: {1}'.format(
             displayable_path(item.path), exc
         ))
         return
@@ -238,25 +238,25 @@ def get_art(item):
 
 def extract(outpath, item):
     if not item:
-        log.error(u'No item matches query.')
+        log.error('No item matches query.')
         return
 
     art = get_art(item)
 
     if not art:
-        log.error(u'No album art present in {0} - {1}.'
+        log.error('No album art present in {0} - {1}.'
                   .format(item.artist, item.title))
         return
 
     # Add an extension to the filename.
     ext = imghdr.what(None, h=art)
     if not ext:
-        log.error(u'Unknown image type.')
+        log.error('Unknown image type.')
         return
     outpath += '.' + ext
 
-    log.info(u'Extracting album art from: {0.artist} - {0.title} '
-             u'to: {1}'.format(item, displayable_path(outpath)))
+    log.info('Extracting album art from: {0.artist} - {0.title} '
+             'to: {1}'.format(item, displayable_path(outpath)))
     with open(syspath(outpath), 'wb') as f:
         f.write(art)
     return outpath
@@ -265,14 +265,14 @@ def extract(outpath, item):
 # 'clearart' command.
 
 def clear(lib, query):
-    log.info(u'Clearing album art from items:')
+    log.info('Clearing album art from items:')
     for item in lib.items(query):
-        log.info(u'{0} - {1}'.format(item.artist, item.title))
+        log.info('{0} - {1}'.format(item.artist, item.title))
         try:
             mf = mediafile.MediaFile(syspath(item.path),
                                      config['id3v23'].get(bool))
         except mediafile.UnreadableFileError as exc:
-            log.error(u'Could not clear art from {0}: {1}'.format(
+            log.error('Could not clear art from {0}: {1}'.format(
                 displayable_path(item.path), exc
             ))
             continue

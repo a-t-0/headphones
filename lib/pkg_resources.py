@@ -43,7 +43,7 @@ if PY3:
     from urllib.parse import urlparse, urlunparse
 
 if PY2:
-    from urlparse import urlparse, urlunparse
+    from urllib.parse import urlparse, urlunparse
 
 if PY3:
     string_types = str,
@@ -83,13 +83,13 @@ def _declare_state(vartype, **kw):
 def __getstate__():
     state = {}
     g = globals()
-    for k, v in _state_vars.items():
+    for k, v in list(_state_vars.items()):
         state[k] = g['_sget_'+v](g[k])
     return state
 
 def __setstate__(state):
     g = globals()
-    for k, v in state.items():
+    for k, v in list(state.items()):
         g['_sset_'+_state_vars[k]](k, g[k], v)
     return state
 
@@ -503,7 +503,7 @@ class WorkingSet(object):
         for dist in self:
             entries = dist.get_entry_map(group)
             if name is None:
-                for ep in entries.values():
+                for ep in list(entries.values()):
                     yield ep
             elif name in entries:
                 yield entries[name]
@@ -883,7 +883,7 @@ class Environment(object):
 
     def __iter__(self):
         """Yield the unique project names of the available distributions"""
-        for key in self._distmap.keys():
+        for key in list(self._distmap.keys()):
             if self[key]:
                 yield key
 
@@ -1312,7 +1312,7 @@ class MarkerEvaluation(object):
         # markerlib implements Metadata 1.2 (PEP 345) environment markers.
         # Translate the variables to Metadata 2.0 (PEP 426).
         env = _markerlib.default_environment()
-        for key in env.keys():
+        for key in list(env.keys()):
             new_key = key.replace('.', '_')
             env[new_key] = env.pop(key)
         try:
@@ -2244,7 +2244,7 @@ class EntryPoint(object):
     def parse_map(cls, data, dist=None):
         """Parse a map of entry point groups"""
         if isinstance(data, dict):
-            data = data.items()
+            data = list(data.items())
         else:
             data = split_sections(data)
         maps = {}

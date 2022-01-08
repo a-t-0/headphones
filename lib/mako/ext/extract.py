@@ -16,7 +16,7 @@ class MessageExtractor(object):
         translator_comments = []
         in_translator_comments = False
         comment_tags = list(
-            filter(None, re.split(r'\s+', self.config['comment-tags'])))
+            [_f for _f in re.split(r'\s+', self.config['comment-tags']) if _f])
 
         for node in nodes:
             child_nodes = None

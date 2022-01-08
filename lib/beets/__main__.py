@@ -17,7 +17,7 @@
 `python -m beets`.
 """
 
-from __future__ import division, absolute_import, print_function
+
 
 import sys
 from .ui import main

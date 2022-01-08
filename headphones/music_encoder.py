@@ -25,7 +25,7 @@ from beets.mediafile import MediaFile
 
 
 # xld
-import getXldProfile
+from . import getXldProfile
 
 
 def encode(albumPath):
@@ -185,13 +185,13 @@ def encode(albumPath):
                 # Retrieve the results
                 results = results.get()
         else:
-            results = map(command_map, jobs)
+            results = list(map(command_map, jobs))
 
         # The results are either True or False, so determine if one is False
         encoder_failed = not all(results)
 
-    musicFiles = filter(None, musicFiles)
-    musicTempFiles = filter(None, musicTempFiles)
+    musicFiles = [_f for _f in musicFiles if _f]
+    musicTempFiles = [_f for _f in musicTempFiles if _f]
 
     # check all files to be encoded now exist in temp directory
     if not encoder_failed and musicTempFiles:

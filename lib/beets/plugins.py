@@ -15,7 +15,7 @@
 
 """Support for beets plugins."""
 
-from __future__ import division, absolute_import, print_function
+
 
 import inspect
 import traceback
@@ -51,7 +51,7 @@ class PluginLogFilter(logging.Filter):
     message.
     """
     def __init__(self, plugin):
-        self.prefix = u'{0}: '.format(plugin.name)
+        self.prefix = '{0}: '.format(plugin.name)
 
     def filter(self, record):
         if hasattr(record.msg, 'msg') and isinstance(record.msg.msg,
@@ -125,7 +125,7 @@ class BeetsPlugin(object):
                 except TypeError as exc:
                     if exc.args[0].startswith(func.__name__):
                         # caused by 'func' and not stuff internal to 'func'
-                        kwargs = dict((arg, val) for arg, val in kwargs.items()
+                        kwargs = dict((arg, val) for arg, val in list(kwargs.items())
                                       if arg in argspec.args)
                         return func(*args, **kwargs)
                     else:
@@ -255,18 +255,18 @@ def load_plugins(names=()):
             except ImportError as exc:
                 # Again, this is hacky:
                 if exc.args[0].endswith(' ' + name):
-                    log.warning(u'** plugin {0} not found', name)
+                    log.warning('** plugin {0} not found', name)
                 else:
                     raise
             else:
-                for obj in getattr(namespace, name).__dict__.values():
+                for obj in list(getattr(namespace, name).__dict__.values()):
                     if isinstance(obj, type) and issubclass(obj, BeetsPlugin) \
                             and obj != BeetsPlugin and obj not in _classes:
                         _classes.add(obj)
 
         except:
             log.warning(
-                u'** error loading plugin {}:\n{}',
+                '** error loading plugin {}:\n{}',
                 name,
                 traceback.format_exc(),
             )
@@ -320,9 +320,9 @@ def types(model_cls):
         for field in plugin_types:
             if field in types and plugin_types[field] != types[field]:
                 raise PluginConflictException(
-                    u'Plugin {0} defines flexible field {1} '
-                    u'which has already been defined with '
-                    u'another type.'.format(plugin.name, field)
+                    'Plugin {0} defines flexible field {1} '
+                    'which has already been defined with '
+                    'another type.'.format(plugin.name, field)
                 )
         types.update(plugin_types)
     return types
@@ -433,7 +433,7 @@ def event_handlers():
     all_handlers = defaultdict(list)
     for plugin in find_plugins():
         if plugin.listeners:
-            for event, handlers in plugin.listeners.items():
+            for event, handlers in list(plugin.listeners.items()):
                 all_handlers[event] += handlers
     return all_handlers
 
@@ -446,7 +446,7 @@ def send(event, **arguments):
 
     Return a list of non-None values returned from the handlers.
     """
-    log.debug(u'Sending event: {0}', event)
+    log.debug('Sending event: {0}', event)
     results = []
     for handler in event_handlers()[event]:
         result = handler(**arguments)

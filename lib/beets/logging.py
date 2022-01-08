@@ -21,7 +21,7 @@ that when getLogger(name) instantiates a logger that logger uses
 {}-style formatting.
 """
 
-from __future__ import division, absolute_import, print_function
+
 
 from copy import copy
 from logging import *  # noqa
@@ -82,7 +82,7 @@ class StrFormatLogger(Logger):
 
         def __str__(self):
             args = [logsafe(a) for a in self.args]
-            kwargs = dict((k, logsafe(v)) for (k, v) in self.kwargs.items())
+            kwargs = dict((k, logsafe(v)) for (k, v) in list(self.kwargs.items()))
             return self.msg.format(*args, **kwargs)
 
     def _log(self, level, msg, args, exc_info=None, extra=None, **kwargs):

@@ -14,7 +14,7 @@
 # included in all copies or substantial portions of the Software.
 
 """Glue between metadata sources and the matching logic."""
-from __future__ import division, absolute_import, print_function
+
 
 from collections import namedtuple
 from functools import total_ordering
@@ -316,7 +316,7 @@ class Distance(object):
         """
         weights_view = config['match']['distance_weights']
         weights = {}
-        for key in weights_view.keys():
+        for key in list(weights_view.keys()):
             weights[key] = weights_view[key].as_number()
         return weights
 
@@ -337,7 +337,7 @@ class Distance(object):
         """Return the maximum distance penalty (normalization factor).
         """
         dist_max = 0.0
-        for key, penalty in self._penalties.items():
+        for key, penalty in list(self._penalties.items()):
             dist_max += len(penalty) * self._weights[key]
         return dist_max
 
@@ -346,7 +346,7 @@ class Distance(object):
         """Return the raw (denormalized) distance.
         """
         dist_raw = 0.0
-        for key, penalty in self._penalties.items():
+        for key, penalty in list(self._penalties.items()):
             dist_raw += sum(penalty) * self._weights[key]
         return dist_raw
 
@@ -403,22 +403,22 @@ class Distance(object):
         return 0.0
 
     def __iter__(self):
-        return iter(self.items())
+        return iter(list(self.items()))
 
     def __len__(self):
-        return len(self.items())
+        return len(list(self.items()))
 
     def keys(self):
-        return [key for key, _ in self.items()]
+        return [key for key, _ in list(self.items())]
 
     def update(self, dist):
         """Adds all the distance penalties from `dist`.
         """
         if not isinstance(dist, Distance):
             raise ValueError(
-                u'`dist` must be a Distance object, not {0}'.format(type(dist))
+                '`dist` must be a Distance object, not {0}'.format(type(dist))
             )
-        for key, penalties in dist._penalties.items():
+        for key, penalties in list(dist._penalties.items()):
             self._penalties.setdefault(key, []).extend(penalties)
 
     # Adding components.
@@ -440,7 +440,7 @@ class Distance(object):
         """
         if not 0.0 <= dist <= 1.0:
             raise ValueError(
-                u'`dist` must be between 0.0 and 1.0, not {0}'.format(dist)
+                '`dist` must be between 0.0 and 1.0, not {0}'.format(dist)
             )
         self._penalties.setdefault(key, []).append(dist)
 
@@ -549,7 +549,7 @@ def track_for_mbid(recording_id):
         exc.log(log)
 
 
-@plugins.notify_info_yielded(u'albuminfo_received')
+@plugins.notify_info_yielded('albuminfo_received')
 def albums_for_id(album_id):
     """Get a list of albums for an ID."""
     a = album_for_mbid(album_id)
@@ -560,7 +560,7 @@ def albums_for_id(album_id):
             yield a
 
 
-@plugins.notify_info_yielded(u'trackinfo_received')
+@plugins.notify_info_yielded('trackinfo_received')
 def tracks_for_id(track_id):
     """Get a list of tracks for an ID."""
     t = track_for_mbid(track_id)
@@ -571,7 +571,7 @@ def tracks_for_id(track_id):
             yield t
 
 
-@plugins.notify_info_yielded(u'albuminfo_received')
+@plugins.notify_info_yielded('albuminfo_received')
 def album_candidates(items, artist, album, va_likely):
     """Search for album matches. ``items`` is a list of Item objects
     that make up the album. ``artist`` and ``album`` are the respective
@@ -600,7 +600,7 @@ def album_candidates(items, artist, album, va_likely):
         yield candidate
 
 
-@plugins.notify_info_yielded(u'trackinfo_received')
+@plugins.notify_info_yielded('trackinfo_received')
 def item_candidates(item, artist, title):
     """Search for item matches. ``item`` is the Item to be matched.
     ``artist`` and ``title`` are strings and either reflect the item or

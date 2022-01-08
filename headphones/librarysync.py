@@ -329,7 +329,7 @@ def libraryScan(dir=None, append=False, ArtistID=None, ArtistName=None,
         logger.info('Updating scanned artist track counts')
 
         # Clean up the new artist list
-        unique_artists = {}.fromkeys(new_artists).keys()
+        unique_artists = list({}.fromkeys(new_artists).keys())
 
         # # Don't think we need to do this, check the db instead below
         #

@@ -17,7 +17,7 @@
 # Stolen from Sick-Beard's sab.py #
 ###################################
 
-import cookielib
+import http.cookiejar
 
 import headphones
 from headphones.common import USER_AGENT
@@ -84,19 +84,19 @@ def sendNZB(nzb):
     if nzb.resultType == "nzb":
         response = sab_api_call('send_nzb', params=params)
     elif nzb.resultType == "nzbdata":
-        cookies = cookielib.CookieJar()
+        cookies = http.cookiejar.CookieJar()
         response = sab_api_call('send_nzb', params=params, method="post", files=files,
                                 cookies=cookies, headers=headers)
 
     if not response:
-        logger.info(u"No data returned from SABnzbd, NZB not sent")
+        logger.info("No data returned from SABnzbd, NZB not sent")
         return False
 
     if response['status']:
-        logger.info(u"NZB sent to SABnzbd successfully")
+        logger.info("NZB sent to SABnzbd successfully")
         return True
     else:
-        logger.error(u"Error sending NZB to SABnzbd: %s" % response['error'])
+        logger.error("Error sending NZB to SABnzbd: %s" % response['error'])
         return False
 
 

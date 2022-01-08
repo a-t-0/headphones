@@ -15,7 +15,7 @@
 
 """Representation of type information for DBCore model fields.
 """
-from __future__ import division, absolute_import, print_function
+
 
 from . import query
 from beets.util import str2bool
@@ -33,7 +33,7 @@ class Type(object):
     field.
     """
 
-    sql = u'TEXT'
+    sql = 'TEXT'
     """The SQLite column type for the value.
     """
 
@@ -63,7 +63,7 @@ class Type(object):
             value = self.null
         # `self.null` might be `None`
         if value is None:
-            value = u''
+            value = ''
         if isinstance(value, bytes):
             value = value.decode('utf-8', 'ignore')
 
@@ -127,7 +127,7 @@ class Default(Type):
 class Integer(Type):
     """A basic integer type.
     """
-    sql = u'INTEGER'
+    sql = 'INTEGER'
     query = query.NumericQuery
     model_type = int
 
@@ -140,19 +140,19 @@ class PaddedInt(Integer):
         self.digits = digits
 
     def format(self, value):
-        return u'{0:0{1}d}'.format(value or 0, self.digits)
+        return '{0:0{1}d}'.format(value or 0, self.digits)
 
 
 class ScaledInt(Integer):
     """An integer whose formatting operation scales the number by a
     constant and adds a suffix. Good for units with large magnitudes.
     """
-    def __init__(self, unit, suffix=u''):
+    def __init__(self, unit, suffix=''):
         self.unit = unit
         self.suffix = suffix
 
     def format(self, value):
-        return u'{0}{1}'.format((value or 0) // self.unit, self.suffix)
+        return '{0}{1}'.format((value or 0) // self.unit, self.suffix)
 
 
 class Id(Integer):
@@ -163,18 +163,18 @@ class Id(Integer):
 
     def __init__(self, primary=True):
         if primary:
-            self.sql = u'INTEGER PRIMARY KEY'
+            self.sql = 'INTEGER PRIMARY KEY'
 
 
 class Float(Type):
     """A basic floating-point type.
     """
-    sql = u'REAL'
+    sql = 'REAL'
     query = query.NumericQuery
     model_type = float
 
     def format(self, value):
-        return u'{0:.1f}'.format(value or 0.0)
+        return '{0:.1f}'.format(value or 0.0)
 
 
 class NullFloat(Float):
@@ -186,14 +186,14 @@ class NullFloat(Float):
 class String(Type):
     """A Unicode string type.
     """
-    sql = u'TEXT'
+    sql = 'TEXT'
     query = query.SubstringQuery
 
 
 class Boolean(Type):
     """A boolean type.
     """
-    sql = u'INTEGER'
+    sql = 'INTEGER'
     query = query.BooleanQuery
     model_type = bool
 

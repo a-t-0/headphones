@@ -14,7 +14,7 @@ def _unicode(string, encoding=None):
     This can only be a guess, but this might be better than failing.
     It is safe to use this on numbers or strings that are already unicode.
     """
-    if isinstance(string, compat.unicode):
+    if isinstance(string, compat.str):
         unicode_string = string
     elif isinstance(string, compat.bytes):
         # use given encoding, stdin, preferred until something != None is found
@@ -24,14 +24,14 @@ def _unicode(string, encoding=None):
             encoding = locale.getpreferredencoding()
         unicode_string = string.decode(encoding, "ignore")
     else:
-        unicode_string = compat.unicode(string)
+        unicode_string = compat.str(string)
     return unicode_string.replace('\x00', '').strip()
 
 def bytes_to_elementtree(bytes_or_file):
 	"""Given a bytestring or a file-like object that will produce them,
 	parse and return an ElementTree.
 	"""
-	if isinstance(bytes_or_file, compat.basestring):
+	if isinstance(bytes_or_file, compat.str):
 		s = bytes_or_file
 	else:
 		s = bytes_or_file.read()

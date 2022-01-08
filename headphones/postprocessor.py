@@ -135,11 +135,11 @@ def verify(albumid, albumpath, Kind=None, forced=False, keep_original_folder=Fal
                     if headphones.CONFIG.RENAME_FROZEN:
                         renameUnprocessedFolder(albumpath, tag="Frozen")
                     else:
-                        logger.warn(u"Won't rename %s to mark as 'Frozen', because it is disabled.",
+                        logger.warn("Won't rename %s to mark as 'Frozen', because it is disabled.",
                                     albumpath.decode(headphones.SYS_ENCODING, 'replace'))
                 return
 
-        logger.info(u"Now adding/updating artist: " + release_dict['artist_name'])
+        logger.info("Now adding/updating artist: " + release_dict['artist_name'])
 
         if release_dict['artist_name'].startswith('The '):
             sortname = release_dict['artist_name'][4:]
@@ -161,7 +161,7 @@ def verify(albumid, albumpath, Kind=None, forced=False, keep_original_folder=Fal
 
         myDB.upsert("artists", newValueDict, controlValueDict)
 
-        logger.info(u"Now adding album: " + release_dict['title'])
+        logger.info("Now adding album: " + release_dict['title'])
         controlValueDict = {"AlbumID": albumid}
 
         newValueDict = {"ArtistID": release_dict['artist_id'],
@@ -202,7 +202,7 @@ def verify(albumid, albumpath, Kind=None, forced=False, keep_original_folder=Fal
         newValueDict = {"Status": "Paused"}
 
         myDB.upsert("artists", newValueDict, controlValueDict)
-        logger.info(u"Addition complete for: " + release_dict['title'] + " - " + release_dict[
+        logger.info("Addition complete for: " + release_dict['title'] + " - " + release_dict[
             'artist_name'])
 
         release = myDB.action('SELECT * from albums WHERE AlbumID=?', [albumid]).fetchone()
@@ -265,8 +265,8 @@ def verify(albumid, albumpath, Kind=None, forced=False, keep_original_folder=Fal
             f = MediaFile(downloaded_track)
         except Exception as e:
             logger.info(
-                u"Exception from MediaFile for: " + downloaded_track.decode(headphones.SYS_ENCODING,
-                                                                            'replace') + u" : " + unicode(
+                "Exception from MediaFile for: " + downloaded_track.decode(headphones.SYS_ENCODING,
+                                                                            'replace') + " : " + str(
                     e))
             continue
 
@@ -340,7 +340,7 @@ def verify(albumid, albumpath, Kind=None, forced=False, keep_original_folder=Fal
                                  keep_original_folder, forced, single)
                 return
 
-    logger.warn(u'Could not identify album: %s. It may not be the intended album.',
+    logger.warn('Could not identify album: %s. It may not be the intended album.',
                 albumpath.decode(headphones.SYS_ENCODING, 'replace'))
     markAsUnprocessed(albumid, albumpath, keep_original_folder)
 
@@ -354,7 +354,7 @@ def markAsUnprocessed(albumid, albumpath, keep_original_folder=False):
         if headphones.CONFIG.RENAME_UNPROCESSED and not keep_original_folder:
             renameUnprocessedFolder(albumpath, tag="Unprocessed")
         else:
-            logger.warn(u"Won't rename %s to mark as 'Unprocessed', because it is disabled or folder is being kept.",
+            logger.warn("Won't rename %s to mark as 'Unprocessed', because it is disabled or folder is being kept.",
                         albumpath.decode(headphones.SYS_ENCODING, 'replace'))
 
 
@@ -491,7 +491,7 @@ def doPostProcessing(albumid, albumpath, release, tracks, downloaded_track_list,
         if seed_snatched:
             hash = seed_snatched['TorrentHash']
             torrent_removed = False
-            logger.info(u'%s - %s. Checking if torrent has finished seeding and can be removed' % (
+            logger.info('%s - %s. Checking if torrent has finished seeding and can be removed' % (
                 release['ArtistName'], release['AlbumTitle']))
             if headphones.CONFIG.TORRENT_DOWNLOADER == 1:
                 torrent_removed = transmission.removeTorrent(hash, True)
@@ -517,18 +517,18 @@ def doPostProcessing(albumid, albumpath, release, tracks, downloaded_track_list,
                                 ArtistName=release['ArtistName'])
 
     logger.info(
-        u'Post-processing for %s - %s complete' % (release['ArtistName'], release['AlbumTitle']))
+        'Post-processing for %s - %s complete' % (release['ArtistName'], release['AlbumTitle']))
 
     pushmessage = release['ArtistName'] + ' - ' + release['AlbumTitle']
     statusmessage = "Download and Postprocessing completed"
 
     if headphones.CONFIG.GROWL_ENABLED:
-        logger.info(u"Growl request")
+        logger.info("Growl request")
         growl = notifiers.GROWL()
         growl.notify(pushmessage, statusmessage)
 
     if headphones.CONFIG.PROWL_ENABLED:
-        logger.info(u"Prowl request")
+        logger.info("Prowl request")
         prowl = notifiers.PROWL()
         prowl.notify(pushmessage, statusmessage)
 
@@ -559,7 +559,7 @@ def doPostProcessing(albumid, albumpath, release, tracks, downloaded_track_list,
         nma.notify(release['ArtistName'], release['AlbumTitle'])
 
     if headphones.CONFIG.PUSHALOT_ENABLED:
-        logger.info(u"Pushalot request")
+        logger.info("Pushalot request")
         pushalot = notifiers.PUSHALOT()
         pushalot.notify(pushmessage, statusmessage)
 
@@ -569,27 +569,27 @@ def doPostProcessing(albumid, albumpath, release, tracks, downloaded_track_list,
             syno.notify(albumpath)
 
     if headphones.CONFIG.PUSHOVER_ENABLED:
-        logger.info(u"Pushover request")
+        logger.info("Pushover request")
         pushover = notifiers.PUSHOVER()
         pushover.notify(pushmessage, "Headphones")
 
     if headphones.CONFIG.PUSHBULLET_ENABLED:
-        logger.info(u"PushBullet request")
+        logger.info("PushBullet request")
         pushbullet = notifiers.PUSHBULLET()
         pushbullet.notify(pushmessage, statusmessage)
 
     if headphones.CONFIG.JOIN_ENABLED:
-        logger.info(u"Join request")
+        logger.info("Join request")
         join = notifiers.JOIN()
         join.notify(pushmessage, statusmessage)
 
     if headphones.CONFIG.TELEGRAM_ENABLED:
-        logger.info(u"Telegram request")
+        logger.info("Telegram request")
         telegram = notifiers.TELEGRAM()
         telegram.notify(statusmessage, pushmessage)
 
     if headphones.CONFIG.TWITTER_ENABLED:
-        logger.info(u"Sending Twitter notification")
+        logger.info("Sending Twitter notification")
         twitter = notifiers.TwitterNotifier()
         twitter.notify_download(pushmessage)
 
@@ -597,7 +597,7 @@ def doPostProcessing(albumid, albumpath, release, tracks, downloaded_track_list,
         from headphones import cache
         c = cache.Cache()
         album_art = c.get_artwork_from_cache(None, release['AlbumID'])
-        logger.info(u"Sending OS X notification")
+        logger.info("Sending OS X notification")
         osx_notify = notifiers.OSX_NOTIFY()
         osx_notify.notify(release['ArtistName'],
                           release['AlbumTitle'],
@@ -605,13 +605,13 @@ def doPostProcessing(albumid, albumpath, release, tracks, downloaded_track_list,
                           image=album_art)
 
     if headphones.CONFIG.BOXCAR_ENABLED:
-        logger.info(u"Sending Boxcar2 notification")
+        logger.info("Sending Boxcar2 notification")
         boxcar = notifiers.BOXCAR()
         boxcar.notify('Headphones processed: ' + pushmessage,
                       statusmessage, release['AlbumID'])
 
     if headphones.CONFIG.SUBSONIC_ENABLED:
-        logger.info(u"Sending Subsonic update")
+        logger.info("Sending Subsonic update")
         subsonic = notifiers.SubSonicNotifier()
         subsonic.notify(albumpaths)
 
@@ -620,7 +620,7 @@ def doPostProcessing(albumid, albumpath, release, tracks, downloaded_track_list,
         mpc.notify()
 
     if headphones.CONFIG.EMAIL_ENABLED:
-        logger.info(u"Sending Email notification")
+        logger.info("Sending Email notification")
         email = notifiers.Email()
         subject = release['ArtistName'] + ' - ' + release['AlbumTitle']
         email.notify(subject, "Download and Postprocessing completed")
@@ -636,7 +636,7 @@ def embedAlbumArt(artwork, downloaded_track_list):
         try:
             f = MediaFile(downloaded_track)
         except:
-            logger.error(u'Could not read %s. Not adding album art' % downloaded_track.decode(
+            logger.error('Could not read %s. Not adding album art' % downloaded_track.decode(
                 headphones.SYS_ENCODING, 'replace'))
             continue
 
@@ -646,7 +646,7 @@ def embedAlbumArt(artwork, downloaded_track_list):
             f.art = artwork
             f.save()
         except Exception as e:
-            logger.error(u'Error embedding album art to: %s. Error: %s' % (
+            logger.error('Error embedding album art to: %s. Error: %s' % (
                 downloaded_track.decode(headphones.SYS_ENCODING, 'replace'), str(e)))
             continue
 
@@ -690,7 +690,7 @@ def cleanupFiles(albumpath):
                 try:
                     os.remove(os.path.join(r, files))
                 except Exception as e:
-                    logger.error(u'Could not remove file: %s. Error: %s' % (
+                    logger.error('Could not remove file: %s. Error: %s' % (
                         files.decode(headphones.SYS_ENCODING, 'replace'), e))
 
 
@@ -708,7 +708,7 @@ def renameNFO(albumpath):
                         new_file_name = os.path.join(r, file)[:-3] + 'orig.nfo'
                         os.rename(os.path.join(r, file), new_file_name)
                     except Exception as e:
-                        logger.error(u'Could not rename file: %s. Error: %s' % (
+                        logger.error('Could not rename file: %s. Error: %s' % (
                             os.path.join(r, file).decode(headphones.SYS_ENCODING, 'replace'), e))
 
 
@@ -1067,7 +1067,7 @@ def embedLyrics(downloaded_track_list):
                 if any(lyrics):
                     break
 
-            lyrics = u"\n\n---\n\n".join([l for l in lyrics if l])
+            lyrics = "\n\n---\n\n".join([l for l in lyrics if l])
 
             if lyrics:
                 logger.debug('Adding lyrics to: %s', item.title)

@@ -15,7 +15,7 @@
 
 """The central Model and Database constructs for DBCore.
 """
-from __future__ import division, absolute_import, print_function
+
 
 import time
 import os
@@ -178,16 +178,16 @@ class Model(object):
         ordinary construction are bypassed.
         """
         obj = cls(db)
-        for key, value in fixed_values.items():
+        for key, value in list(fixed_values.items()):
             obj._values_fixed[key] = cls._type(key).from_sql(value)
-        for key, value in flex_values.items():
+        for key, value in list(flex_values.items()):
             obj._values_flex[key] = cls._type(key).from_sql(value)
         return obj
 
     def __repr__(self):
         return '{0}({1})'.format(
             type(self).__name__,
-            ', '.join('{0}={1!r}'.format(k, v) for k, v in dict(self).items()),
+            ', '.join('{0}={1!r}'.format(k, v) for k, v in list(dict(self).items())),
         )
 
     def clear_dirty(self):
@@ -203,10 +203,10 @@ class Model(object):
         """
         if not self._db:
             raise ValueError(
-                u'{0} has no database'.format(type(self).__name__)
+                '{0} has no database'.format(type(self).__name__)
             )
         if need_id and not self.id:
-            raise ValueError(u'{0} has no id'.format(type(self).__name__))
+            raise ValueError('{0} has no id'.format(type(self).__name__))
 
     # Essential field accessors.
 
@@ -258,11 +258,11 @@ class Model(object):
             del self._values_flex[key]
             self._dirty.add(key)  # Mark for dropping on store.
         elif key in self._getters():  # Computed.
-            raise KeyError(u'computed field {0} cannot be deleted'.format(key))
+            raise KeyError('computed field {0} cannot be deleted'.format(key))
         elif key in self._fields:  # Fixed.
-            raise KeyError(u'fixed field {0} cannot be deleted'.format(key))
+            raise KeyError('fixed field {0} cannot be deleted'.format(key))
         else:
-            raise KeyError(u'no such field {0}'.format(key))
+            raise KeyError('no such field {0}'.format(key))
 
     def keys(self, computed=False):
         """Get a list of available field names for this object. The
@@ -287,7 +287,7 @@ class Model(object):
     def update(self, values):
         """Assign all values in the given dict.
         """
-        for key, value in values.items():
+        for key, value in list(values.items()):
             self[key] = value
 
     def items(self):
@@ -315,18 +315,18 @@ class Model(object):
         """Iterate over the available field names (excluding computed
         fields).
         """
-        return iter(self.keys())
+        return iter(list(self.keys()))
 
     # Convenient attribute access.
 
     def __getattr__(self, key):
         if key.startswith('_'):
-            raise AttributeError(u'model has no attribute {0!r}'.format(key))
+            raise AttributeError('model has no attribute {0!r}'.format(key))
         else:
             try:
                 return self[key]
             except KeyError:
-                raise AttributeError(u'no such field {0!r}'.format(key))
+                raise AttributeError('no such field {0!r}'.format(key))
 
     def __setattr__(self, key, value):
         if key.startswith('_'):
@@ -372,7 +372,7 @@ class Model(object):
                 tx.mutate(query, subvars)
 
             # Modified/added flexible attributes.
-            for key, value in self._values_flex.items():
+            for key, value in list(self._values_flex.items()):
                 if key in self._dirty:
                     self._dirty.remove(key)
                     tx.mutate(
@@ -397,7 +397,7 @@ class Model(object):
         """
         self._check_db()
         stored_obj = self._db._get(type(self), self.id)
-        assert stored_obj is not None, u"object {0} not in DB".format(self.id)
+        assert stored_obj is not None, "object {0} not in DB".format(self.id)
         self._values_fixed = {}
         self._values_flex = {}
         self.update(dict(stored_obj))
@@ -470,7 +470,7 @@ class Model(object):
         """Parse a string as a value for the given key.
         """
         if not isinstance(string, six.string_types):
-            raise TypeError(u"_parse() argument must be a string")
+            raise TypeError("_parse() argument must be a string")
 
         return cls._type(key).parse(string)
 
@@ -572,7 +572,7 @@ class Results(object):
             )
 
         cols = dict(row)
-        values = dict((k, v) for (k, v) in cols.items()
+        values = dict((k, v) for (k, v) in list(cols.items())
                       if not k[:4] == 'flex')
         flex_values = dict((row['key'], row['value']) for row in flex_rows)
 
@@ -598,7 +598,7 @@ class Results(object):
             # A fast query. Just count the rows.
             return self._row_count
 
-    def __nonzero__(self):
+    def __bool__(self):
         """Does this result contain any objects?
         """
         return self.__bool__()
@@ -623,7 +623,7 @@ class Results(object):
                 next(it)
             return next(it)
         except StopIteration:
-            raise IndexError(u'result index {0} out of range'.format(n))
+            raise IndexError('result index {0} out of range'.format(n))
 
     def get(self):
         """Return the first matching object, or None if no objects
@@ -798,7 +798,7 @@ class Database(object):
         if not current_fields:
             # No table exists.
             columns = []
-            for name, typ in fields.items():
+            for name, typ in list(fields.items()):
                 columns.append('{0} {1}'.format(name, typ.sql))
             setup_sql = 'CREATE TABLE {0} ({1});\n'.format(table,
                                                            ', '.join(columns))
@@ -806,7 +806,7 @@ class Database(object):
         else:
             # Table exists does not match the field set.
             setup_sql = ''
-            for name, typ in fields.items():
+            for name, typ in list(fields.items()):
                 if name in current_fields:
                     continue
                 setup_sql += 'ALTER TABLE {0} ADD COLUMN {1} {2};\n'.format(

@@ -14,7 +14,7 @@
 # included in all copies or substantial portions of the Software.
 
 """Simple library to work out if a file is hidden on different platforms."""
-from __future__ import division, absolute_import, print_function
+
 
 import os
 import stat

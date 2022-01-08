@@ -16,7 +16,7 @@
 """Abstraction layer to resize images using PIL, ImageMagick, or a
 public resizing proxy if neither is available.
 """
-from __future__ import division, absolute_import, print_function
+
 
 import subprocess
 import os
@@ -65,7 +65,7 @@ def pil_resize(maxwidth, path_in, path_out=None):
     """
     path_out = path_out or temp_file_for(path_in)
     from PIL import Image
-    log.debug(u'artresizer: PIL resizing {0} to {1}',
+    log.debug('artresizer: PIL resizing {0} to {1}',
               util.displayable_path(path_in), util.displayable_path(path_out))
 
     try:
@@ -75,7 +75,7 @@ def pil_resize(maxwidth, path_in, path_out=None):
         im.save(path_out)
         return path_out
     except IOError:
-        log.error(u"PIL cannot create thumbnail for '{0}'",
+        log.error("PIL cannot create thumbnail for '{0}'",
                   util.displayable_path(path_in))
         return path_in
 
@@ -85,7 +85,7 @@ def im_resize(maxwidth, path_in, path_out=None):
     Return the output path of resized image.
     """
     path_out = path_out or temp_file_for(path_in)
-    log.debug(u'artresizer: ImageMagick resizing {0} to {1}',
+    log.debug('artresizer: ImageMagick resizing {0} to {1}',
               util.displayable_path(path_in), util.displayable_path(path_out))
 
     # "-resize widthxheight>" shrinks images with dimension(s) larger
@@ -99,7 +99,7 @@ def im_resize(maxwidth, path_in, path_out=None):
             util.syspath(path_out, prefix=False),
         ])
     except subprocess.CalledProcessError:
-        log.warning(u'artresizer: IM convert failed for {0}',
+        log.warning('artresizer: IM convert failed for {0}',
                     util.displayable_path(path_in))
         return path_in
     return path_out
@@ -117,7 +117,7 @@ def pil_getsize(path_in):
         im = Image.open(util.syspath(path_in))
         return im.size
     except IOError as exc:
-        log.error(u"PIL could not read file {}: {}",
+        log.error("PIL could not read file {}: {}",
                   util.displayable_path(path_in), exc)
 
 
@@ -127,17 +127,17 @@ def im_getsize(path_in):
     try:
         out = util.command_output(cmd)
     except subprocess.CalledProcessError as exc:
-        log.warning(u'ImageMagick size query failed')
+        log.warning('ImageMagick size query failed')
         log.debug(
-            u'`convert` exited with (status {}) when '
-            u'getting size with command {}:\n{}',
+            '`convert` exited with (status {}) when '
+            'getting size with command {}:\n{}',
             exc.returncode, cmd, exc.output.strip()
         )
         return
     try:
         return tuple(map(int, out.split(b' ')))
     except IndexError:
-        log.warning(u'Could not understand IM output: {0!r}', out)
+        log.warning('Could not understand IM output: {0!r}', out)
 
 
 BACKEND_GET_SIZE = {
@@ -171,7 +171,7 @@ class ArtResizer(six.with_metaclass(Shareable, object)):
         """Create a resizer object with an inferred method.
         """
         self.method = self._check_method()
-        log.debug(u"artresizer: method is {0}", self.method)
+        log.debug("artresizer: method is {0}", self.method)
         self.can_compare = self._can_compare()
 
     def resize(self, maxwidth, path_in, path_out=None):
@@ -248,7 +248,7 @@ def get_im_version():
             return (0,)
 
     except (subprocess.CalledProcessError, OSError) as exc:
-        log.debug(u'ImageMagick check `convert --version` failed: {}', exc)
+        log.debug('ImageMagick check `convert --version` failed: {}', exc)
         return None
 
 

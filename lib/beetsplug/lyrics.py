@@ -14,17 +14,17 @@
 
 """Fetches, embeds, and displays lyrics.
 """
-from __future__ import print_function
+
 
 import re
 import logging
 import requests
 import json
 import unicodedata
-import urllib
+import urllib.request, urllib.parse, urllib.error
 import difflib
 import itertools
-from HTMLParser import HTMLParseError
+from html.parser import HTMLParseError
 
 from beets import plugins
 from beets import config, ui
@@ -39,18 +39,18 @@ COMMENT_RE = re.compile(r'<!--.*-->', re.S)
 TAG_RE = re.compile(r'<[^>]*>')
 BREAK_RE = re.compile(r'\n?\s*<br([\s|/][^>]*)*>\s*\n?', re.I)
 URL_CHARACTERS = {
-    u'\u2018': u"'",
-    u'\u2019': u"'",
-    u'\u201c': u'"',
-    u'\u201d': u'"',
-    u'\u2010': u'-',
-    u'\u2011': u'-',
-    u'\u2012': u'-',
-    u'\u2013': u'-',
-    u'\u2014': u'-',
-    u'\u2015': u'-',
-    u'\u2016': u'-',
-    u'\u2026': u'...',
+    '\u2018': "'",
+    '\u2019': "'",
+    '\u201c': '"',
+    '\u201d': '"',
+    '\u2010': '-',
+    '\u2011': '-',
+    '\u2012': '-',
+    '\u2013': '-',
+    '\u2014': '-',
+    '\u2015': '-',
+    '\u2016': '-',
+    '\u2026': '...',
 }
 
 
@@ -63,24 +63,24 @@ def fetch_url(url):
     try:
         r = requests.get(url, verify=False)
     except requests.RequestException as exc:
-        log.debug(u'lyrics request failed: {0}'.format(exc))
+        log.debug('lyrics request failed: {0}'.format(exc))
         return
     if r.status_code == requests.codes.ok:
         return r.text
     else:
-        log.debug(u'failed to fetch: {0} ({1})'.format(url, r.status_code))
+        log.debug('failed to fetch: {0} ({1})'.format(url, r.status_code))
 
 
 def unescape(text):
     """Resolves &#xxx; HTML entities (and some others)."""
     if isinstance(text, str):
         text = text.decode('utf8', 'ignore')
-    out = text.replace(u'&nbsp;', u' ')
+    out = text.replace('&nbsp;', ' ')
 
     def replchar(m):
         num = m.group(1)
-        return unichr(int(num))
-    out = re.sub(u"&#(\d+);", replchar, out)
+        return chr(int(num))
+    out = re.sub("&#(\d+);", replchar, out)
     return out
 
 
@@ -89,7 +89,7 @@ def extract_text_between(html, start_marker, end_marker):
         _, html = html.split(start_marker, 1)
         html, _ = html.split(end_marker, 1)
     except ValueError:
-        return u''
+        return ''
     return html
 
 
@@ -124,7 +124,7 @@ def extract_text_in(html, starttag):
     else:
         print('no closing tag found!')
         return
-    return u''.join(parts)
+    return ''.join(parts)
 
 
 def search_pairs(item):
@@ -178,11 +178,11 @@ def _encode(s):
     """Encode the string for inclusion in a URL (common to both
     LyricsWiki and Lyrics.com).
     """
-    if isinstance(s, unicode):
-        for char, repl in URL_CHARACTERS.items():
+    if isinstance(s, str):
+        for char, repl in list(URL_CHARACTERS.items()):
             s = s.replace(char, repl)
         s = s.encode('utf8', 'ignore')
-    return urllib.quote(s)
+    return urllib.parse.quote(s)
 
 # Musixmatch
 
@@ -220,7 +220,7 @@ def fetch_lyricswiki(artist, title):
     if not html:
         return
 
-    lyrics = extract_text_in(html, u"<div class='lyricbox'>")
+    lyrics = extract_text_in(html, "<div class='lyricbox'>")
     if lyrics and 'Unfortunately, we are not licensed' not in lyrics:
         return lyrics
 
@@ -270,9 +270,9 @@ def slugify(text):
     text = re.sub(pat, '\g<1>', text).strip()
     try:
         text = unicodedata.normalize('NFKD', text).encode('ascii', 'ignore')
-        text = unicode(re.sub('[-\s]+', ' ', text))
+        text = str(re.sub('[-\s]+', ' ', text))
     except UnicodeDecodeError:
-        log.exception(u"Failing to normalize '{0}'".format(text))
+        log.exception("Failing to normalize '{0}'".format(text))
     return text
 
 
@@ -286,7 +286,7 @@ def is_page_candidate(urlLink, urlTitle, title, artist):
     """
     title = slugify(title.lower())
     artist = slugify(artist.lower())
-    sitename = re.search(u"//([^/]+)/.*", slugify(urlLink.lower())).group(1)
+    sitename = re.search("//([^/]+)/.*", slugify(urlLink.lower())).group(1)
     urlTitle = slugify(urlTitle.lower())
     # Check if URL title contains song title (exact match)
     if urlTitle.find(title) != -1:
@@ -295,7 +295,7 @@ def is_page_candidate(urlLink, urlTitle, title, artist):
     # they are close enough
     tokens = [by + '_' + artist for by in BY_TRANS] + \
              [artist, sitename, sitename.replace('www.', '')] + LYRICS_TRANS
-    songTitle = re.sub(u'(%s)' % u'|'.join(tokens), u'', urlTitle)
+    songTitle = re.sub('(%s)' % '|'.join(tokens), '', urlTitle)
     songTitle = songTitle.strip('_|')
     typoRatio = .9
     return difflib.SequenceMatcher(None, songTitle, title).ratio() >= typoRatio
@@ -323,7 +323,7 @@ def is_lyrics(text, artist=None):
     badTriggersOcc = []
     nbLines = text.count('\n')
     if nbLines <= 1:
-        log.debug(u"Ignoring too short lyrics '{0}'".format(text))
+        log.debug("Ignoring too short lyrics '{0}'".format(text))
         return False
     elif nbLines < 5:
         badTriggersOcc.append('too_short')
@@ -341,7 +341,7 @@ def is_lyrics(text, artist=None):
                                                   text, re.I))
 
     if badTriggersOcc:
-        log.debug(u'Bad triggers detected: {0}'.format(badTriggersOcc))
+        log.debug('Bad triggers detected: {0}'.format(badTriggersOcc))
     return len(badTriggersOcc) < 2
 
 
@@ -399,23 +399,23 @@ def scrape_lyrics_from_html(html):
 def fetch_google(artist, title):
     """Fetch lyrics from Google search results.
     """
-    query = u"%s %s" % (artist, title)
-    api_key = config['lyrics']['google_API_key'].get(unicode)
-    engine_id = config['lyrics']['google_engine_ID'].get(unicode)
-    url = u'https://www.googleapis.com/customsearch/v1?key=%s&cx=%s&q=%s' % \
-          (api_key, engine_id, urllib.quote(query.encode('utf8')))
+    query = "%s %s" % (artist, title)
+    api_key = config['lyrics']['google_API_key'].get(str)
+    engine_id = config['lyrics']['google_engine_ID'].get(str)
+    url = 'https://www.googleapis.com/customsearch/v1?key=%s&cx=%s&q=%s' % \
+          (api_key, engine_id, urllib.parse.quote(query.encode('utf8')))
 
-    data = urllib.urlopen(url)
+    data = urllib.request.urlopen(url)
     data = json.load(data)
     if 'error' in data:
         reason = data['error']['errors'][0]['reason']
-        log.debug(u'google lyrics backend error: {0}'.format(reason))
+        log.debug('google lyrics backend error: {0}'.format(reason))
         return
 
-    if 'items' in data.keys():
+    if 'items' in list(data.keys()):
         for item in data['items']:
             urlLink = item['link']
-            urlTitle = item.get('title', u'')
+            urlTitle = item.get('title', '')
             if not is_page_candidate(urlLink, urlTitle, title, artist):
                 continue
             html = fetch_url(urlLink)
@@ -424,7 +424,7 @@ def fetch_google(artist, title):
                 continue
 
             if is_lyrics(lyrics, artist):
-                log.debug(u'got lyrics from {0}'.format(item['displayLink']))
+                log.debug('got lyrics from {0}'.format(item['displayLink']))
                 return lyrics
 
 
@@ -446,7 +446,7 @@ class LyricsPlugin(plugins.BeetsPlugin):
         self.config.add({
             'auto': True,
             'google_API_key': None,
-            'google_engine_ID': u'009217259823014548361:lndtuqkycfu',
+            'google_engine_ID': '009217259823014548361:lndtuqkycfu',
             'fallback': None,
             'force': False,
             'sources': SOURCES,
@@ -502,7 +502,7 @@ class LyricsPlugin(plugins.BeetsPlugin):
         """
         # Skip if the item already has lyrics.
         if not force and item.lyrics:
-            log.log(loglevel, u'lyrics already present: {0} - {1}'
+            log.log(loglevel, 'lyrics already present: {0} - {1}'
                     .format(item.artist, item.title))
             return
 
@@ -512,13 +512,13 @@ class LyricsPlugin(plugins.BeetsPlugin):
             if any(lyrics):
                 break
 
-        lyrics = u"\n\n---\n\n".join([l for l in lyrics if l])
+        lyrics = "\n\n---\n\n".join([l for l in lyrics if l])
 
         if lyrics:
-            log.log(loglevel, u'fetched lyrics: {0} - {1}'
+            log.log(loglevel, 'fetched lyrics: {0} - {1}'
                               .format(item.artist, item.title))
         else:
-            log.log(loglevel, u'lyrics not found: {0} - {1}'
+            log.log(loglevel, 'lyrics not found: {0} - {1}'
                               .format(item.artist, item.title))
             fallback = self.config['fallback'].get()
             if fallback:
@@ -539,6 +539,6 @@ class LyricsPlugin(plugins.BeetsPlugin):
         for backend in self.backends:
             lyrics = backend(artist, title)
             if lyrics:
-                log.debug(u'got lyrics from backend: {0}'
+                log.debug('got lyrics from backend: {0}'
                           .format(backend.__name__))
                 return _scrape_strip_cruft(lyrics, True)

@@ -244,9 +244,9 @@ def _check_filter_and_make_params(entity, includes, release_status=[], release_t
     the filters can be used with the given includes. Return a params
     dict that can be passed to _do_mb_query.
     """
-    if isinstance(release_status, compat.basestring):
+    if isinstance(release_status, compat.str):
         release_status = [release_status]
-    if isinstance(release_type, compat.basestring):
+    if isinstance(release_type, compat.str):
         release_type = [release_type]
     _check_filter(release_status, VALID_RELEASE_STATUSES)
     _check_filter(release_type, VALID_RELEASE_TYPES)
@@ -640,7 +640,7 @@ def _mb_request(path, method='GET', auth_required=AUTH_NO,
     # Encode Unicode arguments using UTF-8.
     newargs = []
     for key, value in sorted(args.items()):
-        if isinstance(value, compat.unicode):
+        if isinstance(value, compat.str):
             value = value.encode('utf8')
         newargs.append((key, value))
 
@@ -758,7 +758,7 @@ def _do_mb_search(entity, query='', fields={},
 				query_parts.append(clean_query.lower())
 		else:
 			query_parts.append(clean_query)
-	for key, value in fields.items():
+	for key, value in list(fields.items()):
 		# Ensure this is a valid search field.
 		if key not in VALID_SEARCH_FIELDS[entity]:
 			raise InvalidSearchFieldError(
@@ -1099,11 +1099,11 @@ def _browse_impl(entity, includes, limit, offset, params, release_status=[], rel
     valid_includes = VALID_BROWSE_INCLUDES[entity]
     _check_includes_impl(includes, valid_includes)
     p = {}
-    for k,v in params.items():
+    for k,v in list(params.items()):
         if v:
             p[k] = v
     if len(p) > 1:
-        raise Exception("Can't have more than one of " + ", ".join(params.keys()))
+        raise Exception("Can't have more than one of " + ", ".join(list(params.keys())))
     if limit: p["limit"] = limit
     if offset: p["offset"] = offset
     filterp = _check_filter_and_make_params(entity, includes, release_status, release_type)
@@ -1312,7 +1312,7 @@ def submit_isrcs(recording_isrcs):
     or {recording_id1: isrc, ...}.
     """
     rec2isrcs = dict()
-    for (rec, isrcs) in recording_isrcs.items():
+    for (rec, isrcs) in list(recording_isrcs.items()):
         rec2isrcs[rec] = isrcs if isinstance(isrcs, list) else [isrcs]
     query = mbxml.make_isrc_request(rec2isrcs)
     return _do_mb_post("recording", query)
@@ -1329,8 +1329,8 @@ def submit_tags(**kwargs):
     removing tags as necessary. Submitting an empty list for an entity
     will remove all tags for that entity by the user.
     """
-    for k, v in kwargs.items():
-        for id, tags in v.items():
+    for k, v in list(kwargs.items()):
+        for id, tags in list(v.items()):
             kwargs[k][id] = tags if isinstance(tags, list) else [tags]
 
     query = mbxml.make_tag_request(**kwargs)

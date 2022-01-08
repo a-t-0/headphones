@@ -15,7 +15,7 @@
 
 """The core data store and collection logic for beets.
 """
-from __future__ import division, absolute_import, print_function
+
 
 import os
 import sys
@@ -144,7 +144,7 @@ class DateType(types.Float):
 
 
 class PathType(types.Type):
-    sql = u'BLOB'
+    sql = 'BLOB'
     query = PathQuery
     model_type = bytes
 
@@ -190,7 +190,7 @@ class MusicalKey(types.String):
 
     def parse(self, key):
         key = key.lower()
-        for flat, sharp in self.ENHARMONIC.items():
+        for flat, sharp in list(self.ENHARMONIC.items()):
             key = re.sub(flat, sharp, key)
         key = re.sub(r'[\W\s]+minor', 'm', key)
         key = re.sub(r'[\W\s]+major', '', key)
@@ -280,7 +280,7 @@ class FileOperationError(Exception):
         """Get a string representing the error. Describes both the
         underlying reason and the file path in question.
         """
-        return u'{0}: {1}'.format(
+        return '{0}: {1}'.format(
             util.displayable_path(self.path),
             six.text_type(self.reason)
         )
@@ -295,7 +295,7 @@ class ReadError(FileOperationError):
     """An error while reading a file (i.e. in `Item.read`).
     """
     def __str__(self):
-        return u'error reading ' + super(ReadError, self).text()
+        return 'error reading ' + super(ReadError, self).text()
 
 
 @six.python_2_unicode_compatible
@@ -303,7 +303,7 @@ class WriteError(FileOperationError):
     """An error while writing a file (i.e. in `Item.write`).
     """
     def __str__(self):
-        return u'error writing ' + super(WriteError, self).text()
+        return 'error writing ' + super(WriteError, self).text()
 
 
 # Item and Album model classes.
@@ -359,7 +359,7 @@ class FormattedItemMapping(dbcore.db.FormattedMapping):
         self.album_keys = []
         if self.album:
             for key in self.album.keys(True):
-                if key in Album.item_keys or key not in item._fields.keys():
+                if key in Album.item_keys or key not in list(item._fields.keys()):
                     self.album_keys.append(key)
         self.all_keys = set(self.model_keys).union(self.album_keys)
 
@@ -459,9 +459,9 @@ class Item(LibModel):
         'initial_key':          MusicalKey(),
 
         'length':      DurationType(),
-        'bitrate':     types.ScaledInt(1000, u'kbps'),
+        'bitrate':     types.ScaledInt(1000, 'kbps'),
         'format':      types.STRING,
-        'samplerate':  types.ScaledInt(1000, u'kHz'),
+        'samplerate':  types.ScaledInt(1000, 'kHz'),
         'bitdepth':    types.INTEGER,
         'channels':    types.INTEGER,
         'mtime':       DateType(),
@@ -476,7 +476,7 @@ class Item(LibModel):
     }
 
     _media_fields = set(MediaFile.readable_fields()) \
-        .intersection(_fields.keys())
+        .intersection(list(_fields.keys()))
     """Set of item fields that are backed by `MediaFile` fields.
 
     Any kind of field (fixed, flexible, and computed) may be a media
@@ -484,7 +484,7 @@ class Item(LibModel):
     `write`.
     """
 
-    _media_tag_fields = set(MediaFile.fields()).intersection(_fields.keys())
+    _media_tag_fields = set(MediaFile.fields()).intersection(list(_fields.keys()))
     """Set of item fields that are backed by *writable* `MediaFile` tag
     fields.
 
@@ -601,7 +601,7 @@ class Item(LibModel):
 
         # Get the data to write to the file.
         item_tags = dict(self)
-        item_tags = {k: v for k, v in item_tags.items()
+        item_tags = {k: v for k, v in list(item_tags.items())
                      if k in self._media_fields}  # Only write media fields.
         if tags is not None:
             item_tags.update(tags)
@@ -636,7 +636,7 @@ class Item(LibModel):
             self.write(path, tags)
             return True
         except FileOperationError as exc:
-            log.error(u"{0}", exc)
+            log.error("{0}", exc)
             return False
 
     def try_sync(self, write, move, with_album=True):
@@ -656,7 +656,7 @@ class Item(LibModel):
         if move:
             # Check whether this file is inside the library directory.
             if self._db and self._db.directory in util.ancestry(self.path):
-                log.debug(u'moving {0} to synchronize path',
+                log.debug('moving {0} to synchronize path',
                           util.displayable_path(self.path))
                 self.move(with_album=with_album)
         self.store()
@@ -706,7 +706,7 @@ class Item(LibModel):
         try:
             return os.path.getsize(syspath(self.path))
         except (OSError, Exception) as exc:
-            log.warning(u'could not get filesize: {0}', exc)
+            log.warning('could not get filesize: {0}', exc)
             return 0
 
     # Model methods.
@@ -721,7 +721,7 @@ class Item(LibModel):
         # Remove the album if it is empty.
         if with_album:
             album = self.get_album()
-            if album and not album.items():
+            if album and not list(album.items()):
                 album.remove(delete, False)
 
         # Send a 'item_removed' signal to plugins
@@ -814,7 +814,7 @@ class Item(LibModel):
                 if query == PF_KEY_DEFAULT:
                     break
             else:
-                assert False, u"no default path format"
+                assert False, "no default path format"
         if isinstance(path_format, Template):
             subpath_tmpl = path_format
         else:
@@ -848,9 +848,9 @@ class Item(LibModel):
             # Print an error message if legalization fell back to
             # default replacements because of the maximum length.
             log.warning(
-                u'Fell back to default replacements when naming '
-                u'file {}. Configure replacements to avoid lengthening '
-                u'the filename.',
+                'Fell back to default replacements when naming '
+                'file {}. Configure replacements to avoid lengthening '
+                'the filename.',
                 subpath
             )
 
@@ -981,7 +981,7 @@ class Album(LibModel):
 
         # Remove (and possibly delete) the constituent items.
         if with_items:
-            for item in self.items():
+            for item in list(self.items()):
                 item.remove(delete, False)
 
     def move_art(self, copy=False, link=False, hardlink=False):
@@ -997,7 +997,7 @@ class Album(LibModel):
             return
 
         new_art = util.unique_path(new_art)
-        log.debug(u'moving album art {0} to {1}',
+        log.debug('moving album art {0} to {1}',
                   util.displayable_path(old_art),
                   util.displayable_path(new_art))
         if copy:
@@ -1046,21 +1046,21 @@ class Album(LibModel):
         """Returns the directory containing the album's first item,
         provided that such an item exists.
         """
-        item = self.items().get()
+        item = list(self.items()).get()
         if not item:
-            raise ValueError(u'empty album')
+            raise ValueError('empty album')
         return os.path.dirname(item.path)
 
     def _albumtotal(self):
         """Return the total number of tracks on all discs on the album
         """
         if self.disctotal == 1 or not beets.config['per_disc_numbering']:
-            return self.items()[0].tracktotal
+            return list(self.items())[0].tracktotal
 
         counted = []
         total = 0
 
-        for item in self.items():
+        for item in list(self.items()):
             if item.disc in counted:
                 continue
 
@@ -1147,8 +1147,8 @@ class Album(LibModel):
         with self._db.transaction():
             super(Album, self).store(fields)
             if track_updates:
-                for item in self.items():
-                    for key, value in track_updates.items():
+                for item in list(self.items()):
+                    for key, value in list(track_updates.items()):
                         item[key] = value
                     item.store()
 
@@ -1162,7 +1162,7 @@ class Album(LibModel):
         moved.
         """
         self.store()
-        for item in self.items():
+        for item in list(self.items()):
             item.try_sync(write, move)
 
 
@@ -1208,7 +1208,7 @@ def parse_query_string(s, model_cls):
 
     The string is split into components using shell-like syntax.
     """
-    message = u"Query is not unicode: {0!r}".format(s)
+    message = "Query is not unicode: {0!r}".format(s)
     assert isinstance(s, six.text_type), message
     try:
         parts = util.shlex_split(s)
@@ -1274,7 +1274,7 @@ class Library(dbcore.Database):
         be empty.
         """
         if not items:
-            raise ValueError(u'need at least one item')
+            raise ValueError('need at least one item')
 
         # Create the album structure using metadata from the first item.
         values = dict((key, items[0][key]) for key in Album.item_keys)
@@ -1425,7 +1425,7 @@ class DefaultTemplateFunctions(object):
         return s[-_int_arg(chars):]
 
     @staticmethod
-    def tmpl_if(condition, trueval, falseval=u''):
+    def tmpl_if(condition, trueval, falseval=''):
         """If ``condition`` is nonempty and nonzero, emit ``trueval``;
         otherwise, emit ``falseval`` (if provided).
         """
@@ -1467,9 +1467,9 @@ class DefaultTemplateFunctions(object):
         """
         # Fast paths: no album, no item or library, or memoized value.
         if not self.item or not self.lib:
-            return u''
+            return ''
         if self.item.album_id is None:
-            return u''
+            return ''
         memokey = ('aunique', keys, disam, self.item.album_id)
         memoval = self.lib._memotable.get(memokey)
         if memoval is not None:
@@ -1487,14 +1487,14 @@ class DefaultTemplateFunctions(object):
             bracket_l = bracket[0]
             bracket_r = bracket[1]
         else:
-            bracket_l = u''
-            bracket_r = u''
+            bracket_l = ''
+            bracket_r = ''
 
         album = self.lib.get_album(self.item)
         if not album:
             # Do nothing for singletons.
-            self.lib._memotable[memokey] = u''
-            return u''
+            self.lib._memotable[memokey] = ''
+            return ''
 
         # Find matching albums to disambiguate with.
         subqueries = []
@@ -1506,8 +1506,8 @@ class DefaultTemplateFunctions(object):
         # If there's only one album to matching these details, then do
         # nothing.
         if len(albums) == 1:
-            self.lib._memotable[memokey] = u''
-            return u''
+            self.lib._memotable[memokey] = ''
+            return ''
 
         # Find the first disambiguator that distinguishes the albums.
         for disambiguator in disam:
@@ -1522,7 +1522,7 @@ class DefaultTemplateFunctions(object):
 
         else:
             # No disambiguator distinguished all fields.
-            res = u' {1}{0}{2}'.format(album.id, bracket_l, bracket_r)
+            res = ' {1}{0}{2}'.format(album.id, bracket_l, bracket_r)
             self.lib._memotable[memokey] = res
             return res
 
@@ -1531,15 +1531,15 @@ class DefaultTemplateFunctions(object):
 
         # Return empty string if disambiguator is empty.
         if disam_value:
-            res = u' {1}{0}{2}'.format(disam_value, bracket_l, bracket_r)
+            res = ' {1}{0}{2}'.format(disam_value, bracket_l, bracket_r)
         else:
-            res = u''
+            res = ''
 
         self.lib._memotable[memokey] = res
         return res
 
     @staticmethod
-    def tmpl_first(s, count=1, skip=0, sep=u'; ', join_str=u'; '):
+    def tmpl_first(s, count=1, skip=0, sep='; ', join_str='; '):
         """ Gets the item(s) from x to y in a string separated by something
         and join then with something
 
@@ -1553,7 +1553,7 @@ class DefaultTemplateFunctions(object):
         count = skip + int(count)
         return join_str.join(s.split(sep)[skip:count])
 
-    def tmpl_ifdef(self, field, trueval=u'', falseval=u''):
+    def tmpl_ifdef(self, field, trueval='', falseval=''):
         """ If field exists return trueval or the field (default)
         otherwise, emit return falseval (if provided).
 

@@ -210,7 +210,7 @@ def pattern_substitute(pattern, dic, normalize=False):
 
     if normalize:
         new_dic = {}
-        for i, j in dic.iteritems():
+        for i, j in dic.items():
             if j is not None:
                 try:
                     if sys.platform == 'darwin':
@@ -229,7 +229,7 @@ def replace_all(text, dic):
     if not text:
         return ''
 
-    for i, j in dic.iteritems():
+    for i, j in dic.items():
         text = text.replace(i, j)
     return text
 
@@ -242,8 +242,8 @@ def replace_illegal_chars(string, type="file"):
     return string
 
 
-_CN_RE1 = re.compile(ur'[^\w]+', re.UNICODE)
-_CN_RE2 = re.compile(ur'[\s_]+', re.UNICODE)
+_CN_RE1 = re.compile(r'[^\w]+', re.UNICODE)
+_CN_RE2 = re.compile(r'[\s_]+', re.UNICODE)
 
 
 _XLATE_GRAPHICAL_AND_DIACRITICAL = {
@@ -253,33 +253,33 @@ _XLATE_GRAPHICAL_AND_DIACRITICAL = {
     # ©ª«®²³¹»¼½¾ÆÐØÞßæðøþĐđĦħıĲĳĸĿŀŁłŒœŦŧǄǅǆǇǈǉǊǋǌǤǥǱǲǳȤȥ. This
     # includes also some graphical symbols which can be easily replaced and
     # usually are written by people who don't have appropriate keyboard layout.
-    u'©': '(C)', u'ª': 'a.', u'«': '<<', u'®': '(R)', u'²': '2', u'³': '3',
-    u'¹': '1', u'»': '>>', u'¼': ' 1/4 ', u'½': ' 1/2 ', u'¾': ' 3/4 ',
-    u'Æ': 'AE', u'Ð': 'D', u'Ø': 'O', u'Þ': 'Th', u'ß': 'ss', u'æ': 'ae',
-    u'ð': 'd', u'ø': 'o', u'þ': 'th', u'Đ': 'D', u'đ': 'd', u'Ħ': 'H',
-    u'ħ': 'h', u'ı': 'i', u'Ĳ': 'IJ', u'ĳ': 'ij', u'ĸ': 'q', u'Ŀ': 'L',
-    u'ŀ': 'l', u'Ł': 'L', u'ł': 'l', u'Œ': 'OE', u'œ': 'oe', u'Ŧ': 'T',
-    u'ŧ': 't', u'Ǆ': 'DZ', u'ǅ': 'Dz', u'Ǉ': 'LJ', u'ǈ': 'Lj',
-    u'ǉ': 'lj', u'Ǌ': 'NJ', u'ǋ': 'Nj', u'ǌ': 'nj',
-    u'Ǥ': 'G', u'ǥ': 'g', u'Ǳ': 'DZ', u'ǲ': 'Dz', u'ǳ': 'dz',
-    u'Ȥ': 'Z', u'ȥ': 'z', u'№': 'No.',
-    u'º': 'o.',        # normalize Nº abbrev (popular w/ classical music),
+    '©': '(C)', 'ª': 'a.', '«': '<<', '®': '(R)', '²': '2', '³': '3',
+    '¹': '1', '»': '>>', '¼': ' 1/4 ', '½': ' 1/2 ', '¾': ' 3/4 ',
+    'Æ': 'AE', 'Ð': 'D', 'Ø': 'O', 'Þ': 'Th', 'ß': 'ss', 'æ': 'ae',
+    'ð': 'd', 'ø': 'o', 'þ': 'th', 'Đ': 'D', 'đ': 'd', 'Ħ': 'H',
+    'ħ': 'h', 'ı': 'i', 'Ĳ': 'IJ', 'ĳ': 'ij', 'ĸ': 'q', 'Ŀ': 'L',
+    'ŀ': 'l', 'Ł': 'L', 'ł': 'l', 'Œ': 'OE', 'œ': 'oe', 'Ŧ': 'T',
+    'ŧ': 't', 'Ǆ': 'DZ', 'ǅ': 'Dz', 'Ǉ': 'LJ', 'ǈ': 'Lj',
+    'ǉ': 'lj', 'Ǌ': 'NJ', 'ǋ': 'Nj', 'ǌ': 'nj',
+    'Ǥ': 'G', 'ǥ': 'g', 'Ǳ': 'DZ', 'ǲ': 'Dz', 'ǳ': 'dz',
+    'Ȥ': 'Z', 'ȥ': 'z', '№': 'No.',
+    'º': 'o.',        # normalize Nº abbrev (popular w/ classical music),
                        # this is 'masculine ordering indicator', not degree
 }
 
 _XLATE_SPECIAL = {
     # Translation table.
     # Cover additional special characters processing normalization.
-    u"'": '',         # replace apostrophe with nothing
-    u"’": '',         # replace musicbrainz style apostrophe with nothing
-    u'&': ' and ',     # expand & to ' and '
+    "'": '',         # replace apostrophe with nothing
+    "’": '',         # replace musicbrainz style apostrophe with nothing
+    '&': ' and ',     # expand & to ' and '
 }
 
 _XLATE_MUSICBRAINZ = {
     # Translation table for Musicbrainz.
-    u"…": '...',     # HORIZONTAL ELLIPSIS (U+2026)
-    u"’": "'",       # APOSTROPHE (U+0027)
-    u"‐": "-",       # EN DASH (U+2013)
+    "…": '...',     # HORIZONTAL ELLIPSIS (U+2026)
+    "’": "'",       # APOSTROPHE (U+0027)
+    "‐": "-",       # EN DASH (U+2013)
 }
 
 
@@ -314,10 +314,10 @@ def _transliterate(u, xlate):
     Perform transliteration using the specified dictionary
     """
     u = unicodedata.normalize('NFD', u)
-    u = u''.join([u'' if _is_unicode_combining(x) else x for x in u])
+    u = ''.join(['' if _is_unicode_combining(x) else x for x in u])
     u = _translate(u, xlate)
     # at this point output is either unicode, or plain ascii
-    return unicode(u)
+    return str(u)
 
 
 def clean_name(s):
@@ -327,10 +327,10 @@ def clean_name(s):
     :param s: string to clean up, possibly unicode one.
     :return: cleaned-up version of input string.
     """
-    if not isinstance(s, unicode):
+    if not isinstance(s, str):
         # ignore extended chars if someone was dumb enough to pass non-ascii
         # narrow string here, use only unicode for meaningful texts
-        u = unicode(s, 'ascii', 'replace')
+        u = str(s, 'ascii', 'replace')
     else:
         u = s
     # 1. don't bother doing normalization NFKC, rather transliterate
@@ -341,9 +341,9 @@ def clean_name(s):
     # 3. translate spacials
     u = _translate(u, _XLATE_SPECIAL)
     # 4. replace any non-alphanumeric character sequences by spaces
-    u = _CN_RE1.sub(u' ', u)
+    u = _CN_RE1.sub(' ', u)
     # 5. coalesce interleaved space/underscore sequences
-    u = _CN_RE2.sub(u' ', u)
+    u = _CN_RE2.sub(' ', u)
     # 6. trim
     u = u.strip()
     # 7. lowercase
@@ -357,8 +357,8 @@ def clean_musicbrainz_name(s, return_as_string=True):
     :param s: string to clean up, probably unicode.
     :return: cleaned-up version of input string.
     """
-    if not isinstance(s, unicode):
-        u = unicode(s, 'ascii', 'replace')
+    if not isinstance(s, str):
+        u = str(s, 'ascii', 'replace')
     else:
         u = s
     u = _translate(u, _XLATE_MUSICBRAINZ)
@@ -878,7 +878,7 @@ def walk_directory(basedir, followlinks=True):
     with care. In case a folder is already processed, don't traverse it again.
     """
 
-    import logger
+    from . import logger
 
     # Add the base path, because symlinks poiting to the basedir should not be
     # traversed again.
@@ -940,7 +940,7 @@ def sab_sanitize_foldername(name):
 
     if not name:
         return name
-    if isinstance(name, unicode):
+    if isinstance(name, str):
         illegal = uFL_ILLEGAL
         legal = uFL_LEGAL
     else:

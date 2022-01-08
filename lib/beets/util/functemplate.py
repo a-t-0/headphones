@@ -27,7 +27,7 @@ This is sort of like a tiny, horrible degeneration of a real templating
 engine like Jinja2 or Mustache.
 """
 
-from __future__ import division, absolute_import, print_function
+
 
 import re
 import ast
@@ -36,12 +36,12 @@ import types
 import sys
 import six
 
-SYMBOL_DELIM = u'$'
-FUNC_DELIM = u'%'
-GROUP_OPEN = u'{'
-GROUP_CLOSE = u'}'
-ARG_SEP = u','
-ESCAPE_CHAR = u'$'
+SYMBOL_DELIM = '$'
+FUNC_DELIM = '%'
+GROUP_OPEN = '{'
+GROUP_CLOSE = '}'
+ARG_SEP = ','
+ESCAPE_CHAR = '$'
 
 VARIABLE_PREFIX = '__var_'
 FUNCTION_PREFIX = '__func_'
@@ -80,7 +80,7 @@ def ex_literal(val):
         return ast.Name(bytes(val), ast.Load())
     elif isinstance(val, six.string_types):
         return ast.Str(val)
-    raise TypeError(u'no literal for {0}'.format(type(val)))
+    raise TypeError('no literal for {0}'.format(type(val)))
 
 
 def ex_varassign(name, expr):
@@ -167,7 +167,7 @@ class Symbol(object):
         self.original = original
 
     def __repr__(self):
-        return u'Symbol(%s)' % repr(self.ident)
+        return 'Symbol(%s)' % repr(self.ident)
 
     def evaluate(self, env):
         """Evaluate the symbol in the environment, returning a Unicode
@@ -198,7 +198,7 @@ class Call(object):
         self.original = original
 
     def __repr__(self):
-        return u'Call(%s, %s, %s)' % (repr(self.ident), repr(self.args),
+        return 'Call(%s, %s, %s)' % (repr(self.ident), repr(self.args),
                                       repr(self.original))
 
     def evaluate(self, env):
@@ -212,7 +212,7 @@ class Call(object):
             except Exception as exc:
                 # Function raised exception! Maybe inlining the name of
                 # the exception will help debug.
-                return u'<%s>' % six.text_type(exc)
+                return '<%s>' % six.text_type(exc)
             return six.text_type(out)
         else:
             return self.original
@@ -235,7 +235,7 @@ class Call(object):
             # Create a subexpression that joins the result components of
             # the arguments.
             arg_exprs.append(ex_call(
-                ast.Attribute(ex_literal(u''), 'join', ast.Load()),
+                ast.Attribute(ex_literal(''), 'join', ast.Load()),
                 [ex_call(
                     'map',
                     [
@@ -260,7 +260,7 @@ class Expression(object):
         self.parts = parts
 
     def __repr__(self):
-        return u'Expression(%s)' % (repr(self.parts))
+        return 'Expression(%s)' % (repr(self.parts))
 
     def evaluate(self, env):
         """Evaluate the entire expression in the environment, returning
@@ -272,7 +272,7 @@ class Expression(object):
                 out.append(part)
             else:
                 out.append(part.evaluate(env))
-        return u''.join(map(six.text_type, out))
+        return ''.join(map(six.text_type, out))
 
     def translate(self):
         """Compile the expression to a list of Python AST expressions, a
@@ -326,7 +326,7 @@ class Parser(object):
     special_chars = (SYMBOL_DELIM, FUNC_DELIM, GROUP_OPEN, GROUP_CLOSE,
                      ESCAPE_CHAR)
     special_char_re = re.compile(r'[%s]|$' %
-                                 u''.join(re.escape(c) for c in special_chars))
+                                 ''.join(re.escape(c) for c in special_chars))
     escapable_chars = (SYMBOL_DELIM, FUNC_DELIM, GROUP_CLOSE, ARG_SEP)
     terminator_chars = (GROUP_CLOSE,)
 
@@ -343,7 +343,7 @@ class Parser(object):
         if self.in_argument:
             extra_special_chars = (ARG_SEP,)
             special_char_re = re.compile(
-                r'[%s]|$' % u''.join(re.escape(c) for c in
+                r'[%s]|$' % ''.join(re.escape(c) for c in
                                      self.special_chars + extra_special_chars))
 
         text_parts = []
@@ -384,7 +384,7 @@ class Parser(object):
 
             # Shift all characters collected so far into a single string.
             if text_parts:
-                self.parts.append(u''.join(text_parts))
+                self.parts.append(''.join(text_parts))
                 text_parts = []
 
             if char == SYMBOL_DELIM:
@@ -406,7 +406,7 @@ class Parser(object):
 
         # If any parsed characters remain, shift them into a string.
         if text_parts:
-            self.parts.append(u''.join(text_parts))
+            self.parts.append(''.join(text_parts))
 
     def parse_symbol(self):
         """Parse a variable reference (like ``$foo`` or ``${foo}``)
@@ -597,7 +597,7 @@ class Template(object):
             for funcname in funcnames:
                 args[FUNCTION_PREFIX + funcname] = functions[funcname]
             parts = func(**args)
-            return u''.join(parts)
+            return ''.join(parts)
 
         return wrapper_func
 
@@ -606,7 +606,7 @@ class Template(object):
 
 if __name__ == '__main__':
     import timeit
-    _tmpl = Template(u'foo $bar %baz{foozle $bar barzle} $bar')
+    _tmpl = Template('foo $bar %baz{foozle $bar barzle} $bar')
     _vars = {'bar': 'qux'}
     _funcs = {'baz': six.text_type.upper}
     interp_time = timeit.timeit('_tmpl.interpret(_vars, _funcs)',
@@ -617,4 +617,4 @@ if __name__ == '__main__':
                               'from __main__ import _tmpl, _vars, _funcs',
                               number=10000)
     print(comp_time)
-    print(u'Speedup:', interp_time / comp_time)
+    print('Speedup:', interp_time / comp_time)

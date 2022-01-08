@@ -20,7 +20,7 @@ class TGPlugin(object):
 
         # Pull the options out and initialize the lookup
         lookup_options = {}
-        for k, v in options.items():
+        for k, v in list(options.items()):
             if k.startswith('mako.'):
                 lookup_options[k[5:]] = v
             elif k in ['directories', 'filesystem_checks', 'module_directory']:

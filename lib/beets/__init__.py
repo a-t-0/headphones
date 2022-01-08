@@ -13,7 +13,7 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-from __future__ import division, absolute_import, print_function
+
 
 import os
 
@@ -21,8 +21,8 @@ from beets.util import confit
 
 # This particular version has been slightly modified to work with Headphones
 # https://github.com/rembo10/headphones
-__version__ = u'1.4.4-headphones'
-__author__ = u'Adrian Sampson <adrian@radbox.org>'
+__version__ = '1.4.4-headphones'
+__author__ = 'Adrian Sampson <adrian@radbox.org>'
 
 
 class IncludeLazyConfig(confit.LazyConfig):

@@ -15,7 +15,7 @@
 
 """Parsing of strings into DBCore queries.
 """
-from __future__ import division, absolute_import, print_function
+
 
 import re
 import itertools
@@ -93,7 +93,7 @@ def parse_query_part(part, query_classes={}, prefixes={},
 
     # Check whether there's a prefix in the query and use the
     # corresponding query type.
-    for pre, query_class in prefixes.items():
+    for pre, query_class in list(prefixes.items()):
         if term.startswith(pre):
             return key, term[len(pre):], query_class, negate
 
@@ -122,8 +122,8 @@ def construct_query_part(model_cls, prefixes, query_part):
     # Use `model_cls` to build up a map from field names to `Query`
     # classes.
     query_classes = {}
-    for k, t in itertools.chain(model_cls._fields.items(),
-                                model_cls._types.items()):
+    for k, t in itertools.chain(list(model_cls._fields.items()),
+                                list(model_cls._types.items())):
         query_classes[k] = t.query
 
     # Parse the string.
@@ -222,8 +222,8 @@ def parse_sorted_query(model_cls, parts, prefixes={}):
     # Split up query in to comma-separated subqueries, each representing
     # an AndQuery, which need to be joined together in one OrQuery
     subquery_parts = []
-    for part in parts + [u',']:
-        if part.endswith(u','):
+    for part in parts + [',']:
+        if part.endswith(','):
             # Ensure we can catch "foo, bar" as well as "foo , bar"
             last_subquery_part = part[:-1]
             if last_subquery_part:
@@ -237,8 +237,8 @@ def parse_sorted_query(model_cls, parts, prefixes={}):
         else:
             # Sort parts (1) end in + or -, (2) don't have a field, and
             # (3) consist of more than just the + or -.
-            if part.endswith((u'+', u'-')) \
-                    and u':' not in part \
+            if part.endswith(('+', '-')) \
+                    and ':' not in part \
                     and len(part) > 1:
                 sort_parts.append(part)
             else:

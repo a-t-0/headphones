@@ -15,7 +15,7 @@
 
 """The Query type hierarchy for DBCore.
 """
-from __future__ import division, absolute_import, print_function
+
 
 import re
 from operator import mul
@@ -43,7 +43,7 @@ class InvalidQueryError(ParsingError):
     def __init__(self, query, explanation):
         if isinstance(query, list):
             query = " ".join(query)
-        message = u"'{0}': {1}".format(query, explanation)
+        message = "'{0}': {1}".format(query, explanation)
         super(InvalidQueryError, self).__init__(message)
 
 
@@ -54,9 +54,9 @@ class InvalidQueryArgumentTypeError(ParsingError):
     query) InvalidQueryError can be raised.
     """
     def __init__(self, what, expected, detail=None):
-        message = u"'{0}' is not {1}".format(what, expected)
+        message = "'{0}' is not {1}".format(what, expected)
         if detail:
-            message = u"{0}: {1}".format(message, detail)
+            message = "{0}: {1}".format(message, detail)
         super(InvalidQueryArgumentTypeError, self).__init__(message)
 
 
@@ -212,7 +212,7 @@ class RegexpQuery(StringFieldQuery):
         except re.error as exc:
             # Invalid regular expression.
             raise InvalidQueryArgumentTypeError(pattern,
-                                                u"a regular expression",
+                                                "a regular expression",
                                                 format(exc))
 
     @staticmethod
@@ -285,7 +285,7 @@ class NumericQuery(FieldQuery):
             try:
                 return float(s)
             except ValueError:
-                raise InvalidQueryArgumentTypeError(s, u"an int or a float")
+                raise InvalidQueryArgumentTypeError(s, "an int or a float")
 
     def __init__(self, field, pattern, fast=True):
         super(NumericQuery, self).__init__(field, pattern, fast)
@@ -323,14 +323,14 @@ class NumericQuery(FieldQuery):
             return self.field + '=?', (self.point,)
         else:
             if self.rangemin is not None and self.rangemax is not None:
-                return (u'{0} >= ? AND {0} <= ?'.format(self.field),
+                return ('{0} >= ? AND {0} <= ?'.format(self.field),
                         (self.rangemin, self.rangemax))
             elif self.rangemin is not None:
-                return u'{0} >= ?'.format(self.field), (self.rangemin,)
+                return '{0} >= ?'.format(self.field), (self.rangemin,)
             elif self.rangemax is not None:
-                return u'{0} <= ?'.format(self.field), (self.rangemax,)
+                return '{0} <= ?'.format(self.field), (self.rangemax,)
             else:
-                return u'1', ()
+                return '1', ()
 
 
 class CollectionQuery(Query):
@@ -381,7 +381,7 @@ class CollectionQuery(Query):
         """Since subqueries are mutable, this object should not be hashable.
         However and for conveniences purposes, it can be hashed.
         """
-        return reduce(mul, map(hash, self.subqueries), 1)
+        return reduce(mul, list(map(hash, self.subqueries)), 1)
 
 
 class AnyFieldQuery(CollectionQuery):
@@ -541,7 +541,7 @@ class Period(object):
         precision (a string, one of "year", "month", or "day").
         """
         if precision not in Period.precisions:
-            raise ValueError(u'Invalid precision {0}'.format(precision))
+            raise ValueError('Invalid precision {0}'.format(precision))
         self.date = date
         self.precision = precision
 
@@ -581,7 +581,7 @@ class Period(object):
         elif 'day' == precision:
             return date + timedelta(days=1)
         else:
-            raise ValueError(u'unhandled precision {0}'.format(precision))
+            raise ValueError('unhandled precision {0}'.format(precision))
 
 
 class DateInterval(object):
@@ -593,7 +593,7 @@ class DateInterval(object):
 
     def __init__(self, start, end):
         if start is not None and end is not None and not start < end:
-            raise ValueError(u"start date {0} is not before end date {1}"
+            raise ValueError("start date {0} is not before end date {1}"
                              .format(start, end))
         self.start = start
         self.end = end
@@ -685,7 +685,7 @@ class DurationQuery(NumericQuery):
             except ValueError:
                 raise InvalidQueryArgumentTypeError(
                     s,
-                    u"a M:SS string or a float")
+                    "a M:SS string or a float")
 
 
 # Sorting.
@@ -853,7 +853,7 @@ class NullSort(Sort):
     def sort(self, items):
         return items
 
-    def __nonzero__(self):
+    def __bool__(self):
         return self.__bool__()
 
     def __bool__(self):

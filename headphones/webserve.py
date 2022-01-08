@@ -19,12 +19,12 @@ from operator import itemgetter
 import threading
 import hashlib
 import random
-import urllib
+import urllib.request, urllib.parse, urllib.error
 import json
 import time
 import cgi
 import sys
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 
 import os
 import re
@@ -97,7 +97,7 @@ class WebInterface(object):
         # Serve the extras up as a dict to make things easier for new templates (append new extras to the end)
         extras_list = headphones.POSSIBLE_EXTRAS
         if artist['Extras']:
-            artist_extras = map(int, artist['Extras'].split(','))
+            artist_extras = list(map(int, artist['Extras'].split(',')))
         else:
             artist_extras = []
 
@@ -230,7 +230,7 @@ class WebInterface(object):
 
     @cherrypy.expose
     def pauseArtist(self, ArtistID):
-        logger.info(u"Pausing artist: " + ArtistID)
+        logger.info("Pausing artist: " + ArtistID)
         myDB = db.DBConnection()
         controlValueDict = {'ArtistID': ArtistID}
         newValueDict = {'Status': 'Paused'}
@@ -239,7 +239,7 @@ class WebInterface(object):
 
     @cherrypy.expose
     def resumeArtist(self, ArtistID):
-        logger.info(u"Resuming artist: " + ArtistID)
+        logger.info("Resuming artist: " + ArtistID)
         myDB = db.DBConnection()
         controlValueDict = {'ArtistID': ArtistID}
         newValueDict = {'Status': 'Active'}
@@ -252,9 +252,9 @@ class WebInterface(object):
         for name in namecheck:
             artistname = name['ArtistName']
         try:
-            logger.info(u"Deleting all traces of artist: " + artistname)
+            logger.info("Deleting all traces of artist: " + artistname)
         except TypeError:
-            logger.info(u"Deleting all traces of artist: null")
+            logger.info("Deleting all traces of artist: null")
         myDB.action('DELETE from artists WHERE ArtistID=?', [ArtistID])
 
         from headphones import cache
@@ -291,7 +291,7 @@ class WebInterface(object):
         myDB = db.DBConnection()
         artist_name = myDB.select('SELECT DISTINCT ArtistName FROM artists WHERE ArtistID=?', [ArtistID])[0][0]
 
-        logger.info(u"Scanning artist: %s", artist_name)
+        logger.info("Scanning artist: %s", artist_name)
 
         full_folder_format = headphones.CONFIG.FOLDER_FORMAT
         folder_format = re.findall(r'(.*?[Aa]rtist?)\.*', full_folder_format)[0]
@@ -314,7 +314,7 @@ class WebInterface(object):
             sortname = artist
 
         if sortname[0].isdigit():
-            firstchar = u'0-9'
+            firstchar = '0-9'
         else:
             firstchar = sortname[0]
 
@@ -363,7 +363,7 @@ class WebInterface(object):
 
     @cherrypy.expose
     def deleteEmptyArtists(self):
-        logger.info(u"Deleting all empty artists")
+        logger.info("Deleting all empty artists")
         myDB = db.DBConnection()
         emptyArtistIDs = [row['ArtistID'] for row in
                           myDB.select("SELECT ArtistID FROM artists WHERE LatestAlbum IS NULL")]
@@ -423,7 +423,7 @@ class WebInterface(object):
 
     @cherrypy.expose
     def queueAlbum(self, AlbumID, ArtistID=None, new=False, redirect=None, lossless=False):
-        logger.info(u"Marking album: " + AlbumID + " as wanted...")
+        logger.info("Marking album: " + AlbumID + " as wanted...")
         myDB = db.DBConnection()
         controlValueDict = {'AlbumID': AlbumID}
         if lossless:
@@ -461,13 +461,13 @@ class WebInterface(object):
     def download_specific_release(self, AlbumID, title, size, url, provider, kind, **kwargs):
         # Handle situations where the torrent url contains arguments that are parsed
         if kwargs:
-            url = urllib2.quote(url, safe=":?/=&") + '&' + urllib.urlencode(kwargs)
+            url = urllib.parse.quote(url, safe=":?/=&") + '&' + urllib.parse.urlencode(kwargs)
         try:
             result = [(title, int(size), url, provider, kind)]
         except ValueError:
             result = [(title, float(size), url, provider, kind)]
 
-        logger.info(u"Making sure we can download the chosen result")
+        logger.info("Making sure we can download the chosen result")
         (data, bestqual) = searcher.preprocess(result)
 
         if data and bestqual:
@@ -480,7 +480,7 @@ class WebInterface(object):
 
     @cherrypy.expose
     def unqueueAlbum(self, AlbumID, ArtistID):
-        logger.info(u"Marking album: " + AlbumID + "as skipped...")
+        logger.info("Marking album: " + AlbumID + "as skipped...")
         myDB = db.DBConnection()
         controlValueDict = {'AlbumID': AlbumID}
         newValueDict = {'Status': 'Skipped'}
@@ -489,7 +489,7 @@ class WebInterface(object):
 
     @cherrypy.expose
     def deleteAlbum(self, AlbumID, ArtistID=None):
-        logger.info(u"Deleting all traces of album: " + AlbumID)
+        logger.info("Deleting all traces of album: " + AlbumID)
         myDB = db.DBConnection()
 
         myDB.action('DELETE from have WHERE Matched=?', [AlbumID])
@@ -528,7 +528,7 @@ class WebInterface(object):
 
     @cherrypy.expose
     def editSearchTerm(self, AlbumID, SearchTerm):
-        logger.info(u"Updating search term for albumid: " + AlbumID)
+        logger.info("Updating search term for albumid: " + AlbumID)
         myDB = db.DBConnection()
         controlValueDict = {'AlbumID': AlbumID}
         newValueDict = {'SearchTerm': SearchTerm}
@@ -1103,13 +1103,13 @@ class WebInterface(object):
         myDB = db.DBConnection()
         if type:
             if type == 'all':
-                logger.info(u"Clearing all history")
+                logger.info("Clearing all history")
                 myDB.action('DELETE from snatched WHERE Status NOT LIKE "Seed%"')
             else:
-                logger.info(u"Clearing history where status is %s" % type)
+                logger.info("Clearing history where status is %s" % type)
                 myDB.action('DELETE from snatched WHERE Status=?', [type])
         else:
-            logger.info(u"Deleting '%s' from history" % title)
+            logger.info("Deleting '%s' from history" % title)
             myDB.action(
                 'DELETE from snatched WHERE Status NOT LIKE "Seed%" AND Title=? AND DateAdded=?',
                 [title, date_added])
@@ -1418,7 +1418,7 @@ class WebInterface(object):
             "join_deviceid": headphones.CONFIG.JOIN_DEVICEID
         }
 
-        for k, v in config.iteritems():
+        for k, v in config.items():
             if isinstance(v, headphones.config.path):
                 # need to apply SoftChroot to paths:
                 nv = headphones.SOFT_CHROOT.apply(v)
@@ -1435,7 +1435,7 @@ class WebInterface(object):
 
         extras_list = [extra_munges.get(x, x) for x in headphones.POSSIBLE_EXTRAS]
         if headphones.CONFIG.EXTRAS:
-            extras = map(int, headphones.CONFIG.EXTRAS.split(','))
+            extras = list(map(int, headphones.CONFIG.EXTRAS.split(',')))
         else:
             extras = []
 
@@ -1496,7 +1496,7 @@ class WebInterface(object):
             kwargs[plain_config] = kwargs[use_config]
             del kwargs[use_config]
 
-        for k, v in kwargs.iteritems():
+        for k, v in kwargs.items():
             # TODO : HUGE crutch. It is all because there is no way to deal with options...
             try:
                 _conf = headphones.CONFIG._define(k)
@@ -1700,7 +1700,7 @@ class WebInterface(object):
         cherrypy.response.headers['Cache-Control'] = "max-age=0,no-cache,no-store"
         tweet = notifiers.TwitterNotifier()
         result = tweet._get_credentials(key)
-        logger.info(u"result: " + str(result))
+        logger.info("result: " + str(result))
         if result:
             return "Key verification successful"
         else:
@@ -1732,14 +1732,14 @@ class WebInterface(object):
 
     @cherrypy.expose
     def testPushover(self):
-        logger.info(u"Sending Pushover notification")
+        logger.info("Sending Pushover notification")
         pushover = notifiers.PUSHOVER()
         result = pushover.notify("hooray!", "This is a test")
         return str(result)
 
     @cherrypy.expose
     def testPlex(self):
-        logger.info(u"Testing plex update")
+        logger.info("Testing plex update")
         plex = notifiers.Plex()
         plex.update()
 

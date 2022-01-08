@@ -50,12 +50,12 @@ def _fetch_image(url):
     actually be an image. If so, returns a path to the downloaded image.
     Otherwise, returns None.
     """
-    log.debug(u'fetchart: downloading art: {0}'.format(url))
+    log.debug('fetchart: downloading art: {0}'.format(url))
     try:
         with closing(requests_session.get(url, stream=True)) as resp:
             if 'Content-Type' not in resp.headers \
                     or resp.headers['Content-Type'] not in CONTENT_TYPES:
-                log.debug(u'fetchart: not an image')
+                log.debug('fetchart: not an image')
                 return
 
             # Generate a temporary file with the correct extension.
@@ -63,12 +63,12 @@ def _fetch_image(url):
                     as fh:
                 for chunk in resp.iter_content():
                     fh.write(chunk)
-            log.debug(u'fetchart: downloaded art to: {0}'.format(
+            log.debug('fetchart: downloaded art to: {0}'.format(
                 util.displayable_path(fh.name)
             ))
             return fh.name
     except (IOError, requests.RequestException):
-        log.debug(u'fetchart: error fetching art')
+        log.debug('fetchart: error fetching art')
 
 
 # ART SOURCES ################################################################
@@ -117,9 +117,9 @@ def aao_art(album):
     # Get the page from albumart.org.
     try:
         resp = requests_session.get(AAO_URL, params={'asin': album.asin})
-        log.debug(u'fetchart: scraped art URL: {0}'.format(resp.url))
+        log.debug('fetchart: scraped art URL: {0}'.format(resp.url))
     except requests.RequestException:
-        log.debug(u'fetchart: error scraping art page')
+        log.debug('fetchart: error scraping art page')
         return
 
     # Search the page for the image URL.
@@ -128,7 +128,7 @@ def aao_art(album):
         image_url = m.group(1)
         yield image_url
     else:
-        log.debug(u'fetchart: no image found on page')
+        log.debug('fetchart: no image found on page')
 
 
 # Google Images scraper.
@@ -157,7 +157,7 @@ def google_art(album):
         for myUrl in dataInfo:
             yield myUrl['unescapedUrl']
     except:
-        log.debug(u'fetchart: error scraping art page')
+        log.debug('fetchart: error scraping art page')
         return
 
 
@@ -180,9 +180,9 @@ def itunes_art(album):
             big_url = small_url.replace('100x100', '1200x1200')
             yield big_url
         else:
-            log.debug(u'fetchart: album has no artwork in iTunes Store')
+            log.debug('fetchart: album has no artwork in iTunes Store')
     except IndexError:
-        log.debug(u'fetchart: album not found in iTunes Store')
+        log.debug('fetchart: album not found in iTunes Store')
 
 
 # Art from the filesystem.
@@ -216,14 +216,14 @@ def art_in_path(path, cover_names, cautious):
     cover_pat = r"(\b|_)({0})(\b|_)".format('|'.join(cover_names))
     for fn in images:
         if re.search(cover_pat, os.path.splitext(fn)[0], re.I):
-            log.debug(u'fetchart: using well-named art file {0}'.format(
+            log.debug('fetchart: using well-named art file {0}'.format(
                 util.displayable_path(fn)
             ))
             return os.path.join(path, fn)
 
     # Fall back to any image in the folder.
     if images and not cautious:
-        log.debug(u'fetchart: using fallback art file {0}'.format(
+        log.debug('fetchart: using fallback art file {0}'.format(
             util.displayable_path(images[0])
         ))
         return os.path.join(path, images[0])
@@ -231,14 +231,14 @@ def art_in_path(path, cover_names, cautious):
 
 # Try each source in turn.
 
-SOURCES_ALL = [u'coverart', u'itunes', u'amazon', u'albumart', u'google']
+SOURCES_ALL = ['coverart', 'itunes', 'amazon', 'albumart', 'google']
 
 ART_FUNCS = {
-    u'coverart': caa_art,
-    u'itunes': itunes_art,
-    u'albumart': aao_art,
-    u'amazon': art_for_asin,
-    u'google': google_art,
+    'coverart': caa_art,
+    'itunes': itunes_art,
+    'albumart': aao_art,
+    'amazon': art_for_asin,
+    'google': google_art,
 }
 
 
@@ -266,7 +266,7 @@ def art_for_album(album, paths, maxwidth=None, local_only=False):
 
     # Local art.
     cover_names = config['fetchart']['cover_names'].as_str_seq()
-    cover_names = map(util.bytestring_path, cover_names)
+    cover_names = list(map(util.bytestring_path, cover_names))
     cautious = config['fetchart']['cautious'].get(bool)
     if paths:
         for path in paths:
@@ -315,7 +315,7 @@ def batch_fetch_art(lib, albums, force, maxwidth=None):
             else:
                 message = ui.colorize('red', 'no art found')
 
-        log.info(u'{0} - {1}: {2}'.format(album.albumartist, album.album,
+        log.info('{0} - {1}: {2}'.format(album.albumartist, album.album,
                                           message))
 
 
@@ -344,8 +344,8 @@ class FetchArtPlugin(plugins.BeetsPlugin):
             self.register_listener('import_task_files', self.assign_art)
 
         available_sources = list(SOURCES_ALL)
-        if not HAVE_ITUNES and u'itunes' in available_sources:
-            available_sources.remove(u'itunes')
+        if not HAVE_ITUNES and 'itunes' in available_sources:
+            available_sources.remove('itunes')
         self.config['sources'] = plugins.sanitize_choices(
             self.config['sources'].as_str_seq(), available_sources)
 

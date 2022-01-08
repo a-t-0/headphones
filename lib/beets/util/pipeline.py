@@ -32,7 +32,7 @@ To do so, pass an iterable of coroutines to the Pipeline constructor
 in place of any single coroutine.
 """
 
-from __future__ import division, absolute_import, print_function
+
 
 from six.moves import queue
 from threading import Thread, Lock
@@ -372,7 +372,7 @@ class Pipeline(object):
         be at least two stages.
         """
         if len(stages) < 2:
-            raise ValueError(u'pipeline must have at least two stages')
+            raise ValueError('pipeline must have at least two stages')
         self.stages = []
         for stage in stages:
             if isinstance(stage, (list, tuple)):
@@ -477,14 +477,14 @@ if __name__ == '__main__':
     # in parallel.
     def produce():
         for i in range(5):
-            print(u'generating %i' % i)
+            print('generating %i' % i)
             time.sleep(1)
             yield i
 
     def work():
         num = yield
         while True:
-            print(u'processing %i' % num)
+            print('processing %i' % num)
             time.sleep(2)
             num = yield num * 2
 
@@ -492,7 +492,7 @@ if __name__ == '__main__':
         while True:
             num = yield
             time.sleep(1)
-            print(u'received %i' % num)
+            print('received %i' % num)
 
     ts_start = time.time()
     Pipeline([produce(), work(), consume()]).run_sequential()
@@ -501,22 +501,22 @@ if __name__ == '__main__':
     ts_par = time.time()
     Pipeline([produce(), (work(), work()), consume()]).run_parallel()
     ts_end = time.time()
-    print(u'Sequential time:', ts_seq - ts_start)
-    print(u'Parallel time:', ts_par - ts_seq)
-    print(u'Multiply-parallel time:', ts_end - ts_par)
+    print('Sequential time:', ts_seq - ts_start)
+    print('Parallel time:', ts_par - ts_seq)
+    print('Multiply-parallel time:', ts_end - ts_par)
     print()
 
     # Test a pipeline that raises an exception.
     def exc_produce():
         for i in range(10):
-            print(u'generating %i' % i)
+            print('generating %i' % i)
             time.sleep(1)
             yield i
 
     def exc_work():
         num = yield
         while True:
-            print(u'processing %i' % num)
+            print('processing %i' % num)
             time.sleep(3)
             if num == 3:
                 raise Exception()
@@ -525,6 +525,6 @@ if __name__ == '__main__':
     def exc_consume():
         while True:
             num = yield
-            print(u'received %i' % num)
+            print('received %i' % num)
 
     Pipeline([exc_produce(), exc_work(), exc_consume()]).run_parallel(1)

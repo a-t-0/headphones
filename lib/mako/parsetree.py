@@ -394,7 +394,7 @@ class TextTag(Tag):
     def undeclared_identifiers(self):
         return self.filter_args.\
                             undeclared_identifiers.\
-                            difference(filters.DEFAULT_ESCAPES.keys()).union(
+                            difference(list(filters.DEFAULT_ESCAPES.keys())).union(
                         self.expression_undeclared_identifiers
                     )
 
@@ -447,7 +447,7 @@ class DefTag(Tag):
         return set(res).union(
             self.filter_args.\
                             undeclared_identifiers.\
-                            difference(filters.DEFAULT_ESCAPES.keys())
+                            difference(list(filters.DEFAULT_ESCAPES.keys()))
         ).union(
             self.expression_undeclared_identifiers
         ).difference(
@@ -507,7 +507,7 @@ class BlockTag(Tag):
     def undeclared_identifiers(self):
         return (self.filter_args.\
                             undeclared_identifiers.\
-                            difference(filters.DEFAULT_ESCAPES.keys())
+                            difference(list(filters.DEFAULT_ESCAPES.keys()))
                 ).union(self.expression_undeclared_identifiers)
 
 
@@ -545,7 +545,7 @@ class CallNamespaceTag(Tag):
                                 namespace,
                                 defname,
                                 ",".join(["%s=%s" % (k, v) for k, v in
-                                            self.parsed_attributes.items()
+                                            list(self.parsed_attributes.items())
                                             if k != 'args'])
                             )
         self.code = ast.PythonCode(self.expression, **self.exception_kwargs)

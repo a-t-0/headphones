@@ -10,7 +10,7 @@ def bool_int(value):
     """
     Casts a config value into a 0 or 1
     """
-    if isinstance(value, basestring):
+    if isinstance(value, str):
         if value.lower() in ('', '0', 'false', 'f', 'no', 'n', 'off'):
             value = 0
     return int(bool(value))
@@ -327,7 +327,7 @@ class Config(object):
         """ Initialize the config with values from a file """
         self._config_file = config_file
         self._config = ConfigObj(self._config_file, encoding='utf-8')
-        for key in _CONFIG_DEFINITIONS.keys():
+        for key in list(_CONFIG_DEFINITIONS.keys()):
             self.check_setting(key)
         self.ENCODER_MULTICORE_COUNT = max(0, self.ENCODER_MULTICORE_COUNT)
         self._upgrade()
@@ -368,14 +368,14 @@ class Config(object):
 
         # first copy over everything from the old config, even if it is not
         # correctly defined to keep from losing data
-        for key, subkeys in self._config.items():
+        for key, subkeys in list(self._config.items()):
             if key not in new_config:
                 new_config[key] = {}
-            for subkey, value in subkeys.items():
+            for subkey, value in list(subkeys.items()):
                 new_config[key][subkey] = value
 
         # next make sure that everything we expect to have defined is so
-        for key in _CONFIG_DEFINITIONS.keys():
+        for key in list(_CONFIG_DEFINITIONS.keys()):
             key, definition_type, section, ini_key, default = self._define(key)
             self.check_setting(key)
             if section not in new_config:
@@ -393,7 +393,7 @@ class Config(object):
     def get_extra_newznabs(self):
         """ Return the extra newznab tuples """
         extra_newznabs = list(
-            itertools.izip(*[itertools.islice(self.EXTRA_NEWZNABS, i, None, 3)
+            zip(*[itertools.islice(self.EXTRA_NEWZNABS, i, None, 3)
                              for i in range(3)])
         )
         return extra_newznabs
@@ -412,7 +412,7 @@ class Config(object):
     def get_extra_torznabs(self):
         """ Return the extra torznab tuples """
         extra_torznabs = list(
-            itertools.izip(*[itertools.islice(self.EXTRA_TORZNABS, i, None, 4)
+            zip(*[itertools.islice(self.EXTRA_TORZNABS, i, None, 4)
                              for i in range(4)])
         )
         return extra_torznabs
@@ -455,7 +455,7 @@ class Config(object):
         """
         Given a big bunch of key value pairs, apply them to the ini.
         """
-        for name, value in kwargs.items():
+        for name, value in list(kwargs.items()):
             key, definition_type, section, ini_key, default = self._define(name)
             self._config[section][ini_key] = definition_type(value)
 
@@ -488,12 +488,12 @@ class Config(object):
             # Add Seed Ratio to Torznabs
             if self.EXTRA_TORZNABS:
                 extra_torznabs = list(
-                    itertools.izip(*[itertools.islice(self.EXTRA_TORZNABS, i, None, 3)
+                    zip(*[itertools.islice(self.EXTRA_TORZNABS, i, None, 3)
                                      for i in range(3)])
                 )
                 new_torznabs = []
                 for torznab in extra_torznabs:
-                    new_torznabs.extend([torznab[0], torznab[1], u'', torznab[2]])
+                    new_torznabs.extend([torznab[0], torznab[1], '', torznab[2]])
                 if new_torznabs:
                     self.EXTRA_TORZNABS = new_torznabs
 

@@ -1,7 +1,7 @@
-import enum
+from . import enum
 import sys
 import unittest
-from enum import Enum, IntEnum, unique, EnumMeta
+from .enum import Enum, IntEnum, unique, EnumMeta
 from pickle import dumps, loads, PicklingError, HIGHEST_PROTOCOL
 
 pyver = float('%s.%s' % sys.version_info[:2])
@@ -16,9 +16,9 @@ except NameError:
         return False
 
 try:
-    unicode
+    str
 except NameError:
-    unicode = str
+    str = str
 
 try:
     from collections import OrderedDict
@@ -434,7 +434,7 @@ class TestEnum(unittest.TestCase):
         self.assertTrue(Season(1) is Season.SPRING)
         self.assertEqual(Season.FALL.name, 'AUTUMN')
         self.assertEqual(
-                set([k for k,v in Season.__members__.items() if v.name != k]),
+                set([k for k,v in list(Season.__members__.items()) if v.name != k]),
                 set(['FALL', 'ANOTHER_SPRING']),
                 )
 
@@ -566,7 +566,7 @@ class TestEnum(unittest.TestCase):
             SATURDAY = 7
         self.assertTrue(WeekDay.TEUSDAY is WeekDay.TUESDAY)
         self.assertEqual(WeekDay(3).name, 'TUESDAY')
-        self.assertEqual([k for k,v in WeekDay.__members__.items()
+        self.assertEqual([k for k,v in list(WeekDay.__members__.items())
                 if v.name != k], ['TEUSDAY', ])
 
     def test_pickle_enum(self):
@@ -779,7 +779,7 @@ class TestEnum(unittest.TestCase):
             self.assertTrue(type(e) is SummerMonth)
 
     def test_programatic_function_unicode(self):
-        SummerMonth = Enum('SummerMonth', unicode('june july august'))
+        SummerMonth = Enum('SummerMonth', str('june july august'))
         lst = list(SummerMonth)
         self.assertEqual(len(lst), len(SummerMonth))
         self.assertEqual(len(SummerMonth), 3, SummerMonth)
@@ -787,7 +787,7 @@ class TestEnum(unittest.TestCase):
                 [SummerMonth.june, SummerMonth.july, SummerMonth.august],
                 lst,
                 )
-        for i, month in enumerate(unicode('june july august').split()):
+        for i, month in enumerate(str('june july august').split()):
             i += 1
             e = SummerMonth(i)
             self.assertEqual(int(e.value), i)
@@ -797,7 +797,7 @@ class TestEnum(unittest.TestCase):
             self.assertTrue(type(e) is SummerMonth)
 
     def test_programatic_function_unicode_list(self):
-        SummerMonth = Enum('SummerMonth', [unicode('june'), unicode('july'), unicode('august')])
+        SummerMonth = Enum('SummerMonth', [str('june'), str('july'), str('august')])
         lst = list(SummerMonth)
         self.assertEqual(len(lst), len(SummerMonth))
         self.assertEqual(len(SummerMonth), 3, SummerMonth)
@@ -805,7 +805,7 @@ class TestEnum(unittest.TestCase):
                 [SummerMonth.june, SummerMonth.july, SummerMonth.august],
                 lst,
                 )
-        for i, month in enumerate(unicode('june july august').split()):
+        for i, month in enumerate(str('june july august').split()):
             i += 1
             e = SummerMonth(i)
             self.assertEqual(int(e.value), i)
@@ -817,7 +817,7 @@ class TestEnum(unittest.TestCase):
     def test_programatic_function_unicode_iterable(self):
         SummerMonth = Enum(
                 'SummerMonth',
-                ((unicode('june'), 1), (unicode('july'), 2), (unicode('august'), 3))
+                ((str('june'), 1), (str('july'), 2), (str('august'), 3))
                 )
         lst = list(SummerMonth)
         self.assertEqual(len(lst), len(SummerMonth))
@@ -826,7 +826,7 @@ class TestEnum(unittest.TestCase):
                 [SummerMonth.june, SummerMonth.july, SummerMonth.august],
                 lst,
                 )
-        for i, month in enumerate(unicode('june july august').split()):
+        for i, month in enumerate(str('june july august').split()):
             i += 1
             e = SummerMonth(i)
             self.assertEqual(int(e.value), i)
@@ -838,7 +838,7 @@ class TestEnum(unittest.TestCase):
     def test_programatic_function_from_unicode_dict(self):
         SummerMonth = Enum(
                 'SummerMonth',
-                dict(((unicode('june'), 1), (unicode('july'), 2), (unicode('august'), 3)))
+                dict(((str('june'), 1), (str('july'), 2), (str('august'), 3)))
                 )
         lst = list(SummerMonth)
         self.assertEqual(len(lst), len(SummerMonth))
@@ -848,7 +848,7 @@ class TestEnum(unittest.TestCase):
                     [SummerMonth.june, SummerMonth.july, SummerMonth.august],
                     lst,
                     )
-        for i, month in enumerate(unicode('june july august').split()):
+        for i, month in enumerate(str('june july august').split()):
             i += 1
             e = SummerMonth(i)
             self.assertEqual(int(e.value), i)
@@ -858,7 +858,7 @@ class TestEnum(unittest.TestCase):
             self.assertTrue(type(e) is SummerMonth)
 
     def test_programatic_function_unicode_type(self):
-        SummerMonth = Enum('SummerMonth', unicode('june july august'), type=int)
+        SummerMonth = Enum('SummerMonth', str('june july august'), type=int)
         lst = list(SummerMonth)
         self.assertEqual(len(lst), len(SummerMonth))
         self.assertEqual(len(SummerMonth), 3, SummerMonth)
@@ -866,7 +866,7 @@ class TestEnum(unittest.TestCase):
                 [SummerMonth.june, SummerMonth.july, SummerMonth.august],
                 lst,
                 )
-        for i, month in enumerate(unicode('june july august').split()):
+        for i, month in enumerate(str('june july august').split()):
             i += 1
             e = SummerMonth(i)
             self.assertEqual(e, i)
@@ -875,7 +875,7 @@ class TestEnum(unittest.TestCase):
             self.assertTrue(type(e) is SummerMonth)
 
     def test_programatic_function_unicode_type_from_subclass(self):
-        SummerMonth = IntEnum('SummerMonth', unicode('june july august'))
+        SummerMonth = IntEnum('SummerMonth', str('june july august'))
         lst = list(SummerMonth)
         self.assertEqual(len(lst), len(SummerMonth))
         self.assertEqual(len(SummerMonth), 3, SummerMonth)
@@ -883,7 +883,7 @@ class TestEnum(unittest.TestCase):
                 [SummerMonth.june, SummerMonth.july, SummerMonth.august],
                 lst,
                 )
-        for i, month in enumerate(unicode('june july august').split()):
+        for i, month in enumerate(str('june july august').split()):
             i += 1
             e = SummerMonth(i)
             self.assertEqual(e, i)
@@ -893,14 +893,14 @@ class TestEnum(unittest.TestCase):
 
     def test_programmatic_function_unicode_class(self):
         if pyver < 3.0:
-            class_names = unicode('SummerMonth'), 'S\xfcmm\xe9rM\xf6nth'.decode('latin1')
+            class_names = str('SummerMonth'), 'S\xfcmm\xe9rM\xf6nth'.decode('latin1')
         else:
             class_names = 'SummerMonth', 'S\xfcmm\xe9rM\xf6nth'
         for i, class_name in enumerate(class_names):
             if pyver < 3.0 and i == 1:
-                self.assertRaises(TypeError, Enum, class_name, unicode('june july august'))
+                self.assertRaises(TypeError, Enum, class_name, str('june july august'))
             else:
-                SummerMonth = Enum(class_name, unicode('june july august'))
+                SummerMonth = Enum(class_name, str('june july august'))
                 lst = list(SummerMonth)
                 self.assertEqual(len(lst), len(SummerMonth))
                 self.assertEqual(len(SummerMonth), 3, SummerMonth)
@@ -908,7 +908,7 @@ class TestEnum(unittest.TestCase):
                         [SummerMonth.june, SummerMonth.july, SummerMonth.august],
                         lst,
                         )
-                for i, month in enumerate(unicode('june july august').split()):
+                for i, month in enumerate(str('june july august').split()):
                     i += 1
                     e = SummerMonth(i)
                     self.assertEqual(e.value, i)
@@ -1063,7 +1063,7 @@ class TestEnum(unittest.TestCase):
             def __new__(metacls, cls, bases, classdict):
                 original_dict = classdict
                 classdict = enum._EnumDict()
-                for k, v in original_dict.items():
+                for k, v in list(original_dict.items()):
                     classdict[k] = v
                 temp = type(classdict)()
                 names = set(classdict._member_names)
@@ -1076,7 +1076,7 @@ class TestEnum(unittest.TestCase):
                         i = v
                     i += 1
                     temp[k] = v
-                for k, v in classdict.items():
+                for k, v in list(classdict.items()):
                     if k not in names:
                         temp[k] = v
                 return super(auto_enum, metacls).__new__(
@@ -1531,7 +1531,7 @@ class TestEnum(unittest.TestCase):
         def bad_extension():
             class Shade(Enum):
                 def shade(self):
-                    print(self.name)
+                    print((self.name))
             class Color(Shade):
                 red = 1
                 green = 2

@@ -85,7 +85,7 @@ def is_ascii_str(text):
 class XMLEntityEscaper(object):
     def __init__(self, codepoint2name, name2codepoint):
         self.codepoint2entity = dict([(c, compat.text_type('&%s;' % n))
-                                      for c, n in codepoint2name.items()])
+                                      for c, n in list(codepoint2name.items())])
         self.name2codepoint = name2codepoint
 
     def escape_entities(self, text):
@@ -163,7 +163,7 @@ def htmlentityreplace_errors(ex):
     characters with HTML entities, or, if no HTML entity exists for
     the character, XML character references.
 
-    >>> u'The cost was \u20ac12.'.encode('latin1', 'htmlentityreplace')
+    >>> u'The cost was \\u20ac12.'.encode('latin1', 'htmlentityreplace')
     'The cost was &euro;12.'
     """
     if isinstance(ex, UnicodeEncodeError):

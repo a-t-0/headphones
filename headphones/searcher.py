@@ -35,7 +35,8 @@ import headphones
 from headphones.common import USER_AGENT
 from headphones import logger, db, helpers, classes, sab, nzbget, request
 from headphones import utorrent, transmission, notifiers, rutracker, deluge, qbittorrent
-from bencode import bencode, bdecode
+from bencode import encode as bencode
+from bencode import decode as bdecode
 
 # Magnet to torrent services, for Black hole. Stolen from CouchPotato.
 TORRENT_TO_MAGNET_SERVICES = [

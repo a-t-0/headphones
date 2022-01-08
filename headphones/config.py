@@ -2,8 +2,8 @@ import itertools
 
 import os
 import re
+from configparser import ConfigParser
 import headphones.logger
-from configobj import ConfigObj
 
 
 def bool_int(value):
@@ -326,7 +326,10 @@ class Config(object):
     def __init__(self, config_file):
         """ Initialize the config with values from a file """
         self._config_file = config_file
-        self._config = ConfigObj(self._config_file, encoding='utf-8')
+        try:
+            self._config = ConfigParser().read_file(open(self._config_file, 'r'))
+        except FileNotFoundError:
+            self._config = ConfigParser()
         for key in list(_CONFIG_DEFINITIONS.keys()):
             self.check_setting(key)
         self.ENCODER_MULTICORE_COUNT = max(0, self.ENCODER_MULTICORE_COUNT)
@@ -344,7 +347,7 @@ class Config(object):
 
     def check_section(self, section):
         """ Check if INI section exists, if not create it """
-        if section not in self._config:
+        if not self._config.has_section(section):
             self._config[section] = {}
             return True
         else:
@@ -357,14 +360,13 @@ class Config(object):
         try:
             my_val = definition_type(self._config[section][ini_key])
         except Exception:
-            my_val = definition_type(default)
-            self._config[section][ini_key] = my_val
+            my_val = default
+            self._config[section][ini_key] = str(my_val)
         return my_val
 
     def write(self):
         """ Make a copy of the stored config and write it to the configured file """
-        new_config = ConfigObj(encoding="UTF-8")
-        new_config.filename = self._config_file
+        new_config = ConfigParser()
 
         # first copy over everything from the old config, even if it is not
         # correctly defined to keep from losing data
@@ -386,7 +388,8 @@ class Config(object):
         headphones.logger.info("Writing configuration to file")
 
         try:
-            new_config.write()
+            with open(self._config_file, 'w') as configfile:
+                new_config.write(configfile)
         except IOError as e:
             headphones.logger.error("Error writing configuration file: %s", e)
 
@@ -448,7 +451,7 @@ class Config(object):
             return value
         else:
             key, definition_type, section, ini_key, default = self._define(name)
-            self._config[section][ini_key] = definition_type(value)
+            self._config[section][ini_key] = str(value)
             return self._config[section][ini_key]
 
     def process_kwargs(self, kwargs):

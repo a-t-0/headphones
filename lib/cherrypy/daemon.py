@@ -1,4 +1,3 @@
-#! /usr/bin/env python
 """The CherryPy daemon."""
 
 import sys
@@ -14,7 +13,7 @@ def start(configfiles=None, daemonize=False, environment=None,
     """Subscribe all engine plugins and start the engine."""
     sys.path = [''] + sys.path
     for i in imports or []:
-        exec("import %s" % i)
+        exec('import %s' % i)
 
     for c in configfiles or []:
         cherrypy.config.update(c)
@@ -38,67 +37,65 @@ def start(configfiles=None, daemonize=False, environment=None,
     if pidfile:
         plugins.PIDFile(engine, pidfile).subscribe()
 
-    if hasattr(engine, "signal_handler"):
+    if hasattr(engine, 'signal_handler'):
         engine.signal_handler.subscribe()
-    if hasattr(engine, "console_control_handler"):
+    if hasattr(engine, 'console_control_handler'):
         engine.console_control_handler.subscribe()
 
     if (fastcgi and (scgi or cgi)) or (scgi and cgi):
-        cherrypy.log.error("You may only specify one of the cgi, fastcgi, and "
-                           "scgi options.", 'ENGINE')
+        cherrypy.log.error('You may only specify one of the cgi, fastcgi, and '
+                           'scgi options.', 'ENGINE')
         sys.exit(1)
     elif fastcgi or scgi or cgi:
         # Turn off autoreload when using *cgi.
-        cherrypy.config.update({'engine.autoreload_on': False})
+        cherrypy.config.update({'engine.autoreload.on': False})
         # Turn off the default HTTP server (which is subscribed by default).
         cherrypy.server.unsubscribe()
 
         addr = cherrypy.server.bind_addr
-        if fastcgi:
-            f = servers.FlupFCGIServer(application=cherrypy.tree,
-                                       bindAddress=addr)
-        elif scgi:
-            f = servers.FlupSCGIServer(application=cherrypy.tree,
-                                       bindAddress=addr)
-        else:
-            f = servers.FlupCGIServer(application=cherrypy.tree,
-                                      bindAddress=addr)
+        cls = (
+            servers.FlupFCGIServer if fastcgi else
+            servers.FlupSCGIServer if scgi else
+            servers.FlupCGIServer
+        )
+        f = cls(application=cherrypy.tree, bindAddress=addr)
         s = servers.ServerAdapter(engine, httpserver=f, bind_addr=addr)
         s.subscribe()
 
     # Always start the engine; this will start all other services
     try:
         engine.start()
-    except:
+    except Exception:
         # Assume the error has been logged already via bus.log.
         sys.exit(1)
     else:
         engine.block()
 
 
-if __name__ == '__main__':
+def run():
+    """Run cherryd CLI."""
     from optparse import OptionParser
 
     p = OptionParser()
-    p.add_option('-c', '--config', action="append", dest='config',
-                 help="specify config file(s)")
-    p.add_option('-d', action="store_true", dest='daemonize',
-                 help="run the server as a daemon")
+    p.add_option('-c', '--config', action='append', dest='config',
+                 help='specify config file(s)')
+    p.add_option('-d', action='store_true', dest='daemonize',
+                 help='run the server as a daemon')
     p.add_option('-e', '--environment', dest='environment', default=None,
-                 help="apply the given config environment")
-    p.add_option('-f', action="store_true", dest='fastcgi',
-                 help="start a fastcgi server instead of the default HTTP "
-                      "server")
-    p.add_option('-s', action="store_true", dest='scgi',
-                 help="start a scgi server instead of the default HTTP server")
-    p.add_option('-x', action="store_true", dest='cgi',
-                 help="start a cgi server instead of the default HTTP server")
-    p.add_option('-i', '--import', action="append", dest='imports',
-                 help="specify modules to import")
+                 help='apply the given config environment')
+    p.add_option('-f', action='store_true', dest='fastcgi',
+                 help='start a fastcgi server instead of the default HTTP '
+                      'server')
+    p.add_option('-s', action='store_true', dest='scgi',
+                 help='start a scgi server instead of the default HTTP server')
+    p.add_option('-x', action='store_true', dest='cgi',
+                 help='start a cgi server instead of the default HTTP server')
+    p.add_option('-i', '--import', action='append', dest='imports',
+                 help='specify modules to import')
     p.add_option('-p', '--pidfile', dest='pidfile', default=None,
-                 help="store the process id in the given file")
-    p.add_option('-P', '--Path', action="append", dest='Path',
-                 help="add the given paths to sys.path")
+                 help='store the process id in the given file')
+    p.add_option('-P', '--Path', action='append', dest='Path',
+                 help='add the given paths to sys.path')
     options, args = p.parse_args()
 
     if options.Path:

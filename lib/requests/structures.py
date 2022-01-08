@@ -5,18 +5,18 @@ requests.structures
 ~~~~~~~~~~~~~~~~~~~
 
 Data structures that power Requests.
-
 """
 
-import collections
+from collections import OrderedDict
+
+from .compat import Mapping, MutableMapping
 
 
-class CaseInsensitiveDict(collections.MutableMapping):
-    """
-    A case-insensitive ``dict``-like object.
+class CaseInsensitiveDict(MutableMapping):
+    """A case-insensitive ``dict``-like object.
 
     Implements all methods and operations of
-    ``collections.MutableMapping`` as well as dict's ``copy``. Also
+    ``MutableMapping`` as well as dict's ``copy``. Also
     provides ``lower_items``.
 
     All keys are expected to be strings. The structure remembers the
@@ -37,10 +37,10 @@ class CaseInsensitiveDict(collections.MutableMapping):
     If the constructor, ``.update``, or equality comparison
     operations are given keys that have equal ``.lower()``s, the
     behavior is undefined.
-
     """
+
     def __init__(self, data=None, **kwargs):
-        self._store = dict()
+        self._store = OrderedDict()
         if data is None:
             data = {}
         self.update(data, **kwargs)
@@ -57,7 +57,7 @@ class CaseInsensitiveDict(collections.MutableMapping):
         del self._store[key.lower()]
 
     def __iter__(self):
-        return (casedkey for casedkey, mappedvalue in list(self._store.values()))
+        return (casedkey for casedkey, mappedvalue in self._store.values())
 
     def __len__(self):
         return len(self._store)
@@ -67,11 +67,11 @@ class CaseInsensitiveDict(collections.MutableMapping):
         return (
             (lowerkey, keyval[1])
             for (lowerkey, keyval)
-            in list(self._store.items())
+            in self._store.items()
         )
 
     def __eq__(self, other):
-        if isinstance(other, collections.Mapping):
+        if isinstance(other, Mapping):
             other = CaseInsensitiveDict(other)
         else:
             return NotImplemented
@@ -80,10 +80,11 @@ class CaseInsensitiveDict(collections.MutableMapping):
 
     # Copy is required
     def copy(self):
-        return CaseInsensitiveDict(list(self._store.values()))
+        return CaseInsensitiveDict(self._store.values())
 
     def __repr__(self):
-        return str(dict(list(self.items())))
+        return str(dict(self.items()))
+
 
 class LookupDict(dict):
     """Dictionary lookup object."""

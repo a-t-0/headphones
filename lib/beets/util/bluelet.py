@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """Extremely simple pure-Python implementation of coroutine-style
 asynchronous socket I/O. Inspired by, but inferior to, Eventlet.
 Bluelet can also be thought of as a less-terrible replacement for
@@ -8,8 +6,6 @@ asyncore.
 Bluelet: easy concurrency without all the messy parallelism.
 """
 
-
-import six
 import socket
 import select
 import sys
@@ -22,7 +18,7 @@ import collections
 
 # Basic events used for thread scheduling.
 
-class Event(object):
+class Event:
     """Just a base class identifying Bluelet events. An event is an
     object yielded from a Bluelet thread coroutine to suspend operation
     and communicate with the scheduler.
@@ -201,7 +197,7 @@ class ThreadException(Exception):
         self.exc_info = exc_info
 
     def reraise(self):
-        six.reraise(self.exc_info[0], self.exc_info[1], self.exc_info[2])
+        raise self.exc_info[1].with_traceback(self.exc_info[2])
 
 
 SUSPENDED = Event()  # Special sentinel placeholder for suspended threads.
@@ -269,7 +265,7 @@ def run(root_coro):
         except StopIteration:
             # Thread is done.
             complete_thread(coro, None)
-        except:
+        except BaseException:
             # Thread raised some other exception.
             del threads[coro]
             raise ThreadException(coro, sys.exc_info())
@@ -336,15 +332,19 @@ def run(root_coro):
                     break
 
             # Wait and fire.
-            event2coro = dict((v, k) for k, v in list(threads.items()))
-            for event in _event_select(list(threads.values())):
+            event2coro = {v: k for k, v in threads.items()}
+            for event in _event_select(threads.values()):
                 # Run the IO operation, but catch socket errors.
                 try:
                     value = event.fire()
-                except socket.error as exc:
+                except OSError as exc:
                     if isinstance(exc.args, tuple) and \
                             exc.args[0] == errno.EPIPE:
                         # Broken pipe. Remote host disconnected.
+                        pass
+                    elif isinstance(exc.args, tuple) and \
+                            exc.args[0] == errno.ECONNRESET:
+                        # Connection was reset by peer.
                         pass
                     else:
                         traceback.print_exc()
@@ -366,7 +366,7 @@ def run(root_coro):
                 exit_te = te
                 break
 
-        except:
+        except BaseException:
             # For instance, KeyboardInterrupt during select(). Raise
             # into root thread and terminate others.
             threads = {root_coro: ExceptionEvent(sys.exc_info())}
@@ -386,7 +386,7 @@ class SocketClosedError(Exception):
     pass
 
 
-class Listener(object):
+class Listener:
     """A socket wrapper object for listening sockets.
     """
     def __init__(self, host, port):
@@ -416,7 +416,7 @@ class Listener(object):
         self.sock.close()
 
 
-class Connection(object):
+class Connection:
     """A socket wrapper object for connected sockets.
     """
     def __init__(self, sock, addr):

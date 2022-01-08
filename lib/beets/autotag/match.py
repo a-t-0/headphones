@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # This file is part of beets.
 # Copyright 2016, Adrian Sampson.
 #
@@ -16,7 +15,6 @@
 """Matches existing metadata with canonical information to identify
 releases and tracks.
 """
-
 
 
 import datetime
@@ -108,7 +106,7 @@ def assign_items(items, tracks):
     log.debug('...done.')
 
     # Produce the output matching.
-    mapping = dict((items[i], tracks[j]) for (i, j) in matching)
+    mapping = {items[i]: tracks[j] for (i, j) in matching}
     extra_items = list(set(items) - set(mapping.keys()))
     extra_items.sort(key=lambda i: (i.disc, i.track, i.title))
     extra_tracks = list(set(tracks) - set(mapping.values()))
@@ -247,7 +245,7 @@ def distance(items, album_info, mapping):
 
     # Tracks.
     dist.tracks = {}
-    for item, track in list(mapping.items()):
+    for item, track in mapping.items():
         dist.tracks[track] = track_distance(item, track, album_info.va)
         dist.add('tracks', dist.tracks[track].distance)
 
@@ -324,7 +322,7 @@ def _recommendation(results):
     # applied penalty.
     keys = set(min_dist.keys())
     if isinstance(results[0], hooks.AlbumMatch):
-        for track_dist in list(min_dist.tracks.values()):
+        for track_dist in min_dist.tracks.values():
             keys.update(list(track_dist.keys()))
     max_rec_view = config['match']['max_rec']
     for key in keys:
@@ -447,6 +445,12 @@ def tag_album(items, search_artist=None, search_album=None,
             search_artist, search_album = cur_artist, cur_album
         log.debug('Search terms: {0} - {1}', search_artist, search_album)
 
+        extra_tags = None
+        if config['musicbrainz']['extra_tags']:
+            tag_list = config['musicbrainz']['extra_tags'].get()
+            extra_tags = {k: v for (k, v) in likelies.items() if k in tag_list}
+            log.debug('Additional search terms: {0}', extra_tags)
+
         # Is this album likely to be a "various artist" release?
         va_likely = ((not consensus['artist']) or
                      (search_artist.lower() in VA_ARTISTS) or
@@ -457,12 +461,13 @@ def tag_album(items, search_artist=None, search_album=None,
         for matched_candidate in hooks.album_candidates(items,
                                                         search_artist,
                                                         search_album,
-                                                        va_likely):
+                                                        va_likely,
+                                                        extra_tags):
             _add_candidate(items, candidates, matched_candidate)
 
     log.debug('Evaluating {0} candidates.', len(candidates))
     # Sort and get the recommendation.
-    candidates = _sort_candidates(list(candidates.values()))
+    candidates = _sort_candidates(candidates.values())
     rec = _recommendation(candidates)
     return cur_artist, cur_album, Proposal(candidates, rec)
 
@@ -491,16 +496,16 @@ def tag_item(item, search_artist=None, search_title=None,
                 candidates[track_info.track_id] = \
                     hooks.TrackMatch(dist, track_info)
                 # If this is a good match, then don't keep searching.
-                rec = _recommendation(_sort_candidates(list(candidates.values())))
+                rec = _recommendation(_sort_candidates(candidates.values()))
                 if rec == Recommendation.strong and \
                         not config['import']['timid']:
                     log.debug('Track ID match.')
-                    return Proposal(_sort_candidates(list(candidates.values())), rec)
+                    return Proposal(_sort_candidates(candidates.values()), rec)
 
     # If we're searching by ID, don't proceed.
     if search_ids:
         if candidates:
-            return Proposal(_sort_candidates(list(candidates.values())), rec)
+            return Proposal(_sort_candidates(candidates.values()), rec)
         else:
             return Proposal([], Recommendation.none)
 
@@ -516,6 +521,6 @@ def tag_item(item, search_artist=None, search_title=None,
 
     # Sort by distance and return with recommendation.
     log.debug('Found {0} candidates.', len(candidates))
-    candidates = _sort_candidates(list(candidates.values()))
+    candidates = _sort_candidates(candidates.values())
     rec = _recommendation(candidates)
     return Proposal(candidates, rec)

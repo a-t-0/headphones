@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # This file is part of beets.
 # Copyright 2016, Adrian Sampson.
 #
@@ -33,11 +32,9 @@ in place of any single coroutine.
 """
 
 
-
-from six.moves import queue
+import queue
 from threading import Thread, Lock
 import sys
-import six
 
 BUBBLE = '__PIPELINE_BUBBLE__'
 POISON = '__PIPELINE_POISON__'
@@ -91,6 +88,7 @@ class CountedQueue(queue.Queue):
     still feeding into it. The queue is poisoned when all threads are
     finished with the queue.
     """
+
     def __init__(self, maxsize=0):
         queue.Queue.__init__(self, maxsize)
         self.nthreads = 0
@@ -135,10 +133,11 @@ class CountedQueue(queue.Queue):
                     _invalidate_queue(self, POISON, False)
 
 
-class MultiMessage(object):
+class MultiMessage:
     """A message yielded by a pipeline stage encapsulating multiple
     values to be sent to the next stage.
     """
+
     def __init__(self, messages):
         self.messages = messages
 
@@ -210,8 +209,9 @@ def _allmsgs(obj):
 
 class PipelineThread(Thread):
     """Abstract base class for pipeline-stage threads."""
+
     def __init__(self, all_threads):
-        super(PipelineThread, self).__init__()
+        super().__init__()
         self.abort_lock = Lock()
         self.abort_flag = False
         self.all_threads = all_threads
@@ -241,14 +241,12 @@ class FirstPipelineThread(PipelineThread):
     """The thread running the first stage in a parallel pipeline setup.
     The coroutine should just be a generator.
     """
+
     def __init__(self, coro, out_queue, all_threads):
-        super(FirstPipelineThread, self).__init__(all_threads)
+        super().__init__(all_threads)
         self.coro = coro
         self.out_queue = out_queue
         self.out_queue.acquire()
-
-        self.abort_lock = Lock()
-        self.abort_flag = False
 
     def run(self):
         try:
@@ -270,7 +268,7 @@ class FirstPipelineThread(PipelineThread):
                             return
                     self.out_queue.put(msg)
 
-        except:
+        except BaseException:
             self.abort_all(sys.exc_info())
             return
 
@@ -282,8 +280,9 @@ class MiddlePipelineThread(PipelineThread):
     """A thread running any stage in the pipeline except the first or
     last.
     """
+
     def __init__(self, coro, in_queue, out_queue, all_threads):
-        super(MiddlePipelineThread, self).__init__(all_threads)
+        super().__init__(all_threads)
         self.coro = coro
         self.in_queue = in_queue
         self.out_queue = out_queue
@@ -318,7 +317,7 @@ class MiddlePipelineThread(PipelineThread):
                             return
                     self.out_queue.put(msg)
 
-        except:
+        except BaseException:
             self.abort_all(sys.exc_info())
             return
 
@@ -330,8 +329,9 @@ class LastPipelineThread(PipelineThread):
     """A thread running the last stage in a pipeline. The coroutine
     should yield nothing.
     """
+
     def __init__(self, coro, in_queue, all_threads):
-        super(LastPipelineThread, self).__init__(all_threads)
+        super().__init__(all_threads)
         self.coro = coro
         self.in_queue = in_queue
 
@@ -357,16 +357,17 @@ class LastPipelineThread(PipelineThread):
                 # Send to consumer.
                 self.coro.send(msg)
 
-        except:
+        except BaseException:
             self.abort_all(sys.exc_info())
             return
 
 
-class Pipeline(object):
+class Pipeline:
     """Represents a staged pattern of work. Each stage in the pipeline
     is a coroutine that receives messages from the previous stage and
     yields messages to be sent to the next stage.
     """
+
     def __init__(self, stages):
         """Makes a new pipeline from a list of coroutines. There must
         be at least two stages.
@@ -425,7 +426,7 @@ class Pipeline(object):
             while threads[-1].is_alive():
                 threads[-1].join(1)
 
-        except:
+        except BaseException:
             # Stop all the threads immediately.
             for thread in threads:
                 thread.abort()
@@ -442,7 +443,7 @@ class Pipeline(object):
             exc_info = thread.exc_info
             if exc_info:
                 # Make the exception appear as it was raised originally.
-                six.reraise(exc_info[0], exc_info[1], exc_info[2])
+                raise exc_info[1].with_traceback(exc_info[2])
 
     def pull(self):
         """Yield elements from the end of the pipeline. Runs the stages
@@ -468,6 +469,7 @@ class Pipeline(object):
                 msgs = next_msgs
             for msg in msgs:
                 yield msg
+
 
 # Smoke test.
 if __name__ == '__main__':

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # This file is part of beets.
 # Copyright 2017, Adrian Sampson.
 #
@@ -16,7 +15,6 @@
 """The __main__ module lets you run the beets CLI interface by typing
 `python -m beets`.
 """
-
 
 
 import sys

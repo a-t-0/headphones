@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # This file is part of beets.
 # Copyright 2016, Adrian Sampson.
 #
@@ -16,18 +15,13 @@
 """Representation of type information for DBCore model fields.
 """
 
-
 from . import query
 from beets.util import str2bool
-import six
-
-if not six.PY2:
-    buffer = memoryview  # sqlite won't accept memoryview in python 2
 
 
 # Abstract base.
 
-class Type(object):
+class Type:
     """An object encapsulating the type of a model field. Includes
     information about how to store, query, format, and parse a given
     field.
@@ -41,7 +35,7 @@ class Type(object):
     """The `Query` subclass to be used when querying the field.
     """
 
-    model_type = six.text_type
+    model_type = str
     """The Python type that is used to represent the value in the model.
 
     The model is guaranteed to return a value of this type if the field
@@ -67,7 +61,7 @@ class Type(object):
         if isinstance(value, bytes):
             value = value.decode('utf-8', 'ignore')
 
-        return six.text_type(value)
+        return str(value)
 
     def parse(self, string):
         """Parse a (possibly human-written) string and return the
@@ -97,16 +91,16 @@ class Type(object):
         For fixed fields the type of `value` is determined by the column
         type affinity given in the `sql` property and the SQL to Python
         mapping of the database adapter. For more information see:
-        http://www.sqlite.org/datatype3.html
+        https://www.sqlite.org/datatype3.html
         https://docs.python.org/2/library/sqlite3.html#sqlite-and-python-types
 
         Flexible fields have the type affinity `TEXT`. This means the
-        `sql_value` is either a `buffer`/`memoryview` or a `unicode` object`
+        `sql_value` is either a `memoryview` or a `unicode` object`
         and the method must handle these in addition.
         """
-        if isinstance(sql_value, buffer):
+        if isinstance(sql_value, memoryview):
             sql_value = bytes(sql_value).decode('utf-8', 'ignore')
-        if isinstance(sql_value, six.text_type):
+        if isinstance(sql_value, str):
             return self.parse(sql_value)
         else:
             return self.normalize(sql_value)
@@ -131,6 +125,14 @@ class Integer(Type):
     query = query.NumericQuery
     model_type = int
 
+    def normalize(self, value):
+        try:
+            return self.model_type(round(float(value)))
+        except ValueError:
+            return self.null
+        except TypeError:
+            return self.null
+
 
 class PaddedInt(Integer):
     """An integer field that is formatted with a given number of digits,
@@ -143,6 +145,12 @@ class PaddedInt(Integer):
         return '{0:0{1}d}'.format(value or 0, self.digits)
 
 
+class NullPaddedInt(PaddedInt):
+    """Same as `PaddedInt`, but does not normalize `None` to `0.0`.
+    """
+    null = None
+
+
 class ScaledInt(Integer):
     """An integer whose formatting operation scales the number by a
     constant and adds a suffix. Good for units with large magnitudes.
@@ -152,7 +160,7 @@ class ScaledInt(Integer):
         self.suffix = suffix
 
     def format(self, value):
-        return '{0}{1}'.format((value or 0) // self.unit, self.suffix)
+        return '{}{}'.format((value or 0) // self.unit, self.suffix)
 
 
 class Id(Integer):
@@ -167,14 +175,18 @@ class Id(Integer):
 
 
 class Float(Type):
-    """A basic floating-point type.
+    """A basic floating-point type. The `digits` parameter specifies how
+    many decimal places to use in the human-readable representation.
     """
     sql = 'REAL'
     query = query.NumericQuery
     model_type = float
 
+    def __init__(self, digits=1):
+        self.digits = digits
+
     def format(self, value):
-        return '{0:.1f}'.format(value or 0.0)
+        return '{0:.{1}f}'.format(value or 0, self.digits)
 
 
 class NullFloat(Float):
@@ -189,6 +201,12 @@ class String(Type):
     sql = 'TEXT'
     query = query.SubstringQuery
 
+    def normalize(self, value):
+        if value is None:
+            return self.null
+        else:
+            return self.model_type(value)
+
 
 class Boolean(Type):
     """A boolean type.
@@ -198,7 +216,7 @@ class Boolean(Type):
     model_type = bool
 
     def format(self, value):
-        return six.text_type(bool(value))
+        return str(bool(value))
 
     def parse(self, string):
         return str2bool(string)

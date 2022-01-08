@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # This file is part of beets.
 # Copyright 2016, Adrian Sampson.
 #
@@ -16,7 +15,6 @@
 """A simple utility for constructing filesystem-like trees from beets
 libraries.
 """
-
 
 from collections import namedtuple
 from beets import util
@@ -46,7 +44,7 @@ def libtree(lib):
     child node tuples.
     """
     root = Node({}, {})
-    for item in list(lib.items()):
+    for item in lib.items():
         dest = item.destination(fragment=True)
         parts = util.components(dest)
         _insert(root, parts, item.id)

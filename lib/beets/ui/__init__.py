@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # This file is part of beets.
 # Copyright 2016, Adrian Sampson.
 #
@@ -19,7 +18,6 @@ CLI commands are implemented in the ui.commands module.
 """
 
 
-
 import optparse
 import textwrap
 import sys
@@ -30,18 +28,18 @@ import re
 import struct
 import traceback
 import os.path
-from six.moves import input
 
 from beets import logging
 from beets import library
 from beets import plugins
 from beets import util
-from beets.util.functemplate import Template
+from beets.util.functemplate import template
 from beets import config
-from beets.util import confit, as_string
+from beets.util import as_string
 from beets.autotag import mb
 from beets.dbcore import query as db_query
-import six
+from beets.dbcore import db
+import confuse
 
 # On Windows platforms, use colorama to support "ANSI" terminal colors.
 if sys.platform == 'win32':
@@ -111,10 +109,7 @@ def decargs(arglist):
     """Given a list of command-line argument bytestrings, attempts to
     decode them to Unicode strings when running under Python 2.
     """
-    if six.PY2:
-        return [s.decode(util.arg_encoding()) for s in arglist]
-    else:
-        return arglist
+    return arglist
 
 
 def print_(*strings, **kwargs):
@@ -130,28 +125,24 @@ def print_(*strings, **kwargs):
     """
     if not strings:
         strings = ['']
-    assert isinstance(strings[0], six.text_type)
+    assert isinstance(strings[0], str)
 
     txt = ' '.join(strings)
     txt += kwargs.get('end', '\n')
 
     # Encode the string and write it to stdout.
-    if six.PY2:
-        # On Python 2, sys.stdout expects bytes.
+    # On Python 3, sys.stdout expects text strings and uses the
+    # exception-throwing encoding error policy. To avoid throwing
+    # errors and use our configurable encoding override, we use the
+    # underlying bytes buffer instead.
+    if hasattr(sys.stdout, 'buffer'):
         out = txt.encode(_out_encoding(), 'replace')
-        sys.stdout.write(out)
+        sys.stdout.buffer.write(out)
+        sys.stdout.buffer.flush()
     else:
-        # On Python 3, sys.stdout expects text strings and uses the
-        # exception-throwing encoding error policy. To avoid throwing
-        # errors and use our configurable encoding override, we use the
-        # underlying bytes buffer instead.
-        if hasattr(sys.stdout, 'buffer'):
-            out = txt.encode(_out_encoding(), 'replace')
-            sys.stdout.buffer.write(out)
-        else:
-            # In our test harnesses (e.g., DummyOut), sys.stdout.buffer
-            # does not exist. We instead just record the text string.
-            sys.stdout.write(txt)
+        # In our test harnesses (e.g., DummyOut), sys.stdout.buffer
+        # does not exist. We instead just record the text string.
+        sys.stdout.write(txt)
 
 
 # Configuration wrappers.
@@ -201,19 +192,16 @@ def input_(prompt=None):
     """
     # raw_input incorrectly sends prompts to stderr, not stdout, so we
     # use print_() explicitly to display prompts.
-    # http://bugs.python.org/issue1927
+    # https://bugs.python.org/issue1927
     if prompt:
         print_(prompt, end=' ')
 
     try:
-        resp = eval(input())
+        resp = input()
     except EOFError:
         raise UserError('stdin stream ended while input required')
 
-    if six.PY2:
-        return resp.decode(_in_encoding(), 'ignore')
-    else:
-        return resp
+    return resp
 
 
 def input_options(options, require=False, prompt=None, fallback_prompt=None,
@@ -265,7 +253,7 @@ def input_options(options, require=False, prompt=None, fallback_prompt=None,
         # Mark the option's shortcut letter for display.
         if not require and (
             (default is None and not numrange and first) or
-            (isinstance(default, six.string_types) and
+            (isinstance(default, str) and
              found_letter.lower() == default.lower())):
             # The first option is the default; mark it.
             show_letter = '[%s]' % found_letter.upper()
@@ -301,11 +289,11 @@ def input_options(options, require=False, prompt=None, fallback_prompt=None,
         prompt_part_lengths = []
         if numrange:
             if isinstance(default, int):
-                default_name = six.text_type(default)
+                default_name = str(default)
                 default_name = colorize('action_default', default_name)
                 tmpl = '# selection (default %s)'
                 prompt_parts.append(tmpl % default_name)
-                prompt_part_lengths.append(len(tmpl % six.text_type(default)))
+                prompt_part_lengths.append(len(tmpl % str(default)))
             else:
                 prompt_parts.append('# selection')
                 prompt_part_lengths.append(len(prompt_parts[-1]))
@@ -386,17 +374,19 @@ def input_yn(prompt, require=False):
     return sel == 'y'
 
 
-def input_select_objects(prompt, objs, rep):
+def input_select_objects(prompt, objs, rep, prompt_all=None):
     """Prompt to user to choose all, none, or some of the given objects.
     Return the list of selected objects.
 
     `prompt` is the prompt string to use for each question (it should be
-    phrased as an imperative verb). `rep` is a function to call on each
-    object to print it out when confirming objects individually.
+    phrased as an imperative verb). If `prompt_all` is given, it is used
+    instead of `prompt` for the first (yes(/no/select) question.
+    `rep` is a function to call on each object to print it out when confirming
+    objects individually.
     """
     choice = input_options(
         ('y', 'n', 's'), False,
-        '%s? (Yes/no/select)' % prompt)
+        '%s? (Yes/no/select)' % (prompt_all or prompt))
     print()  # Blank line.
 
     if choice == 'y':  # Yes.
@@ -406,9 +396,14 @@ def input_select_objects(prompt, objs, rep):
         out = []
         for obj in objs:
             rep(obj)
-            if input_yn('%s? (yes/no)' % prompt, True):
+            answer = input_options(
+                ('y', 'n', 'q'), True, '%s? (yes/no/quit)' % prompt,
+                'Enter Y or N:'
+            )
+            if answer == 'y':
                 out.append(obj)
-            print()  # go to a new line
+            elif answer == 'q':
+                return out
         return out
 
     else:  # No.
@@ -423,7 +418,7 @@ def human_bytes(size):
     unit = 'B'
     for power in powers:
         if size < 1024:
-            return "%3.1f %s%s" % (size, power, unit)
+            return f"{size:3.1f} {power}{unit}"
         size /= 1024.0
         unit = 'iB'
     return "big"
@@ -453,7 +448,7 @@ def human_seconds(interval):
         increment, suffix = units[-1]
         interval /= float(increment)
 
-    return "%3.1f %ss" % (interval, suffix)
+    return f"{interval:3.1f} {suffix}s"
 
 
 def human_seconds_short(interval):
@@ -467,7 +462,7 @@ def human_seconds_short(interval):
 # Colorization.
 
 # ANSI terminal colorization code heavily inspired by pygments:
-# http://dev.pocoo.org/hg/pygments-main/file/b2deea5b5030/pygments/console.py
+# https://bitbucket.org/birkenfeld/pygments-main/src/default/pygments/console.py
 # (pygments is by Tim Hatch, Armin Ronacher, et al.)
 COLOR_ESCAPE = "\x1b["
 DARK_COLORS = {
@@ -522,21 +517,21 @@ def colorize(color_name, text):
     """Colorize text if colored output is enabled. (Like _colorize but
     conditional.)
     """
-    if config['ui']['color']:
-        global COLORS
-        if not COLORS:
-            COLORS = dict((name,
-                           config['ui']['colors'][name].as_str())
-                          for name in COLOR_NAMES)
-        # In case a 3rd party plugin is still passing the actual color ('red')
-        # instead of the abstract color name ('text_error')
-        color = COLORS.get(color_name)
-        if not color:
-            log.debug('Invalid color_name: {0}', color_name)
-            color = color_name
-        return _colorize(color, text)
-    else:
+    if not config['ui']['color'] or 'NO_COLOR' in os.environ.keys():
         return text
+
+    global COLORS
+    if not COLORS:
+        COLORS = {name:
+                  config['ui']['colors'][name].as_str()
+                  for name in COLOR_NAMES}
+    # In case a 3rd party plugin is still passing the actual color ('red')
+    # instead of the abstract color name ('text_error')
+    color = COLORS.get(color_name)
+    if not color:
+        log.debug('Invalid color_name: {0}', color_name)
+        color = color_name
+    return _colorize(color, text)
 
 
 def _colordiff(a, b, highlight='text_highlight',
@@ -546,11 +541,11 @@ def _colordiff(a, b, highlight='text_highlight',
     highlighted intelligently to show differences; other values are
     stringified and highlighted in their entirety.
     """
-    if not isinstance(a, six.string_types) \
-       or not isinstance(b, six.string_types):
+    if not isinstance(a, str) \
+       or not isinstance(b, str):
         # Non-strings: use ordinary equality.
-        a = six.text_type(a)
-        b = six.text_type(b)
+        a = str(a)
+        b = str(b)
         if a == b:
             return a, b
         else:
@@ -598,7 +593,7 @@ def colordiff(a, b, highlight='text_highlight'):
     if config['ui']['color']:
         return _colordiff(a, b, highlight)
     else:
-        return six.text_type(a), six.text_type(b)
+        return str(a), str(b)
 
 
 def get_path_formats(subview=None):
@@ -607,23 +602,23 @@ def get_path_formats(subview=None):
     """
     path_formats = []
     subview = subview or config['paths']
-    for query, view in list(subview.items()):
+    for query, view in subview.items():
         query = PF_KEY_QUERIES.get(query, query)  # Expand common queries.
-        path_formats.append((query, Template(view.as_str())))
+        path_formats.append((query, template(view.as_str())))
     return path_formats
 
 
 def get_replacements():
-    """Confit validation function that reads regex/string pairs.
+    """Confuse validation function that reads regex/string pairs.
     """
     replacements = []
-    for pattern, repl in list(config['replace'].get(dict).items()):
+    for pattern, repl in config['replace'].get(dict).items():
         repl = repl or ''
         try:
             replacements.append((re.compile(pattern), repl))
         except re.error:
             raise UserError(
-                'malformed regular expression in replace: {0}'.format(
+                'malformed regular expression in replace: {}'.format(
                     pattern
                 )
             )
@@ -644,7 +639,7 @@ def term_width():
 
     try:
         buf = fcntl.ioctl(0, termios.TIOCGWINSZ, ' ' * 4)
-    except IOError:
+    except OSError:
         return fallback
     try:
         height, width = struct.unpack('hh', buf)
@@ -656,10 +651,10 @@ def term_width():
 FLOAT_EPSILON = 0.01
 
 
-def _field_diff(field, old, new):
-    """Given two Model objects, format their values for `field` and
-    highlight changes among them. Return a human-readable string. If the
-    value has not changed, return None instead.
+def _field_diff(field, old, old_fmt, new, new_fmt):
+    """Given two Model objects and their formatted views, format their values
+    for `field` and highlight changes among them. Return a human-readable
+    string. If the value has not changed, return None instead.
     """
     oldval = old.get(field)
     newval = new.get(field)
@@ -672,18 +667,18 @@ def _field_diff(field, old, new):
         return None
 
     # Get formatted values for output.
-    oldstr = old.formatted().get(field, '')
-    newstr = new.formatted().get(field, '')
+    oldstr = old_fmt.get(field, '')
+    newstr = new_fmt.get(field, '')
 
     # For strings, highlight changes. For others, colorize the whole
     # thing.
-    if isinstance(oldval, six.string_types):
+    if isinstance(oldval, str):
         oldstr, newstr = colordiff(oldval, newstr)
     else:
         oldstr = colorize('text_error', oldstr)
         newstr = colorize('text_error', newstr)
 
-    return '{0} -> {1}'.format(oldstr, newstr)
+    return f'{oldstr} -> {newstr}'
 
 
 def show_model_changes(new, old=None, fields=None, always=False):
@@ -698,6 +693,11 @@ def show_model_changes(new, old=None, fields=None, always=False):
     """
     old = old or new._db._get(type(new), new.id)
 
+    # Keep the formatted views around instead of re-creating them in each
+    # iteration step
+    old_fmt = old.formatted()
+    new_fmt = new.formatted()
+
     # Build up lines showing changed fields.
     changes = []
     for field in old:
@@ -706,18 +706,18 @@ def show_model_changes(new, old=None, fields=None, always=False):
             continue
 
         # Detect and show difference for this field.
-        line = _field_diff(field, old, new)
+        line = _field_diff(field, old, old_fmt, new, new_fmt)
         if line:
-            changes.append('  {0}: {1}'.format(field, line))
+            changes.append(f'  {field}: {line}')
 
     # New fields.
     for field in set(new) - set(old):
         if fields and field not in fields:
             continue
 
-        changes.append('  {0}: {1}'.format(
+        changes.append('  {}: {}'.format(
             field,
-            colorize('text_highlight', new.formatted()[field])
+            colorize('text_highlight', new_fmt[field])
         ))
 
     # Print changes.
@@ -744,7 +744,7 @@ def show_path_changes(path_changes):
     Source
       -> Destination
     """
-    sources, destinations = list(zip(*path_changes))
+    sources, destinations = zip(*path_changes)
 
     # Ensure unicode output
     sources = list(map(util.displayable_path, sources))
@@ -757,18 +757,55 @@ def show_path_changes(path_changes):
     if max_width > col_width:
         # Print every change over two lines
         for source, dest in zip(sources, destinations):
-            log.info('{0} \n  -> {1}', source, dest)
+            color_source, color_dest = colordiff(source, dest)
+            print_('{0} \n  -> {1}'.format(color_source, color_dest))
     else:
         # Print every change on a single line, and add a header
         title_pad = max_width - len('Source ') + len(' -> ')
 
-        log.info('Source {0} Destination', ' ' * title_pad)
+        print_('Source {0} Destination'.format(' ' * title_pad))
         for source, dest in zip(sources, destinations):
             pad = max_width - len(source)
-            log.info('{0} {1} -> {2}', source, ' ' * pad, dest)
+            color_source, color_dest = colordiff(source, dest)
+            print_('{0} {1} -> {2}'.format(
+                color_source,
+                ' ' * pad,
+                color_dest,
+            ))
 
 
-class CommonOptionsParser(optparse.OptionParser, object):
+# Helper functions for option parsing.
+
+def _store_dict(option, opt_str, value, parser):
+    """Custom action callback to parse options which have ``key=value``
+    pairs as values. All such pairs passed for this option are
+    aggregated into a dictionary.
+    """
+    dest = option.dest
+    option_values = getattr(parser.values, dest, None)
+
+    if option_values is None:
+        # This is the first supplied ``key=value`` pair of option.
+        # Initialize empty dictionary and get a reference to it.
+        setattr(parser.values, dest, {})
+        option_values = getattr(parser.values, dest)
+
+    # Decode the argument using the platform's argument encoding.
+    value = util.text_string(value, util.arg_encoding())
+
+    try:
+        key, value = value.split('=', 1)
+        if not (key and value):
+            raise ValueError
+    except ValueError:
+        raise UserError(
+            "supplied argument `{}' is not of the form `key=value'"
+            .format(value))
+
+    option_values[key] = value
+
+
+class CommonOptionsParser(optparse.OptionParser):
     """Offers a simple way to add common formatting options.
 
     Options available include:
@@ -783,8 +820,9 @@ class CommonOptionsParser(optparse.OptionParser, object):
 
     Each method is fully documented in the related method.
     """
+
     def __init__(self, *args, **kwargs):
-        super(CommonOptionsParser, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self._album_flags = False
         # this serves both as an indicator that we offer the feature AND allows
         # us to check whether it has been specified on the CLI - bypassing the
@@ -843,7 +881,7 @@ class CommonOptionsParser(optparse.OptionParser, object):
         By default this affects both items and albums. If add_album_option()
         is used then the target will be autodetected.
 
-        Sets the format property to u'$path' on the options extracted from the
+        Sets the format property to '$path' on the options extracted from the
         CLI.
         """
         path = optparse.Option(*flags, nargs=0, action='callback',
@@ -870,7 +908,7 @@ class CommonOptionsParser(optparse.OptionParser, object):
         """
         kwargs = {}
         if target:
-            if isinstance(target, six.string_types):
+            if isinstance(target, str):
                 target = {'item': library.Item,
                           'album': library.Album}[target]
             kwargs['target'] = target
@@ -893,14 +931,15 @@ class CommonOptionsParser(optparse.OptionParser, object):
 #
 # This is a fairly generic subcommand parser for optparse. It is
 # maintained externally here:
-# http://gist.github.com/462717
+# https://gist.github.com/462717
 # There you will also find a better description of the code and a more
 # succinct example program.
 
-class Subcommand(object):
+class Subcommand:
     """A subcommand of a root command-line application that may be
     invoked by a SubcommandOptionParser.
     """
+
     def __init__(self, name, parser=None, help='', aliases=(), hide=False):
         """Creates a new subcommand. name is the primary way to invoke
         the subcommand; aliases are alternate names. parser is an
@@ -928,7 +967,7 @@ class Subcommand(object):
     @root_parser.setter
     def root_parser(self, root_parser):
         self._root_parser = root_parser
-        self.parser.prog = '{0} {1}'.format(
+        self.parser.prog = '{} {}'.format(
             as_string(root_parser.get_prog_name()), self.name)
 
 
@@ -950,7 +989,7 @@ class SubcommandsOptionParser(CommonOptionsParser):
         kwargs['add_help_option'] = False
 
         # Super constructor.
-        super(SubcommandsOptionParser, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
         # Our root parser needs to stop on the first unrecognized argument.
         self.disable_interspersed_args()
@@ -967,7 +1006,7 @@ class SubcommandsOptionParser(CommonOptionsParser):
     # Add the list of subcommands to the help message.
     def format_help(self, formatter=None):
         # Get the original help message, to which we will append.
-        out = super(SubcommandsOptionParser, self).format_help(formatter)
+        out = super().format_help(formatter)
         if formatter is None:
             formatter = self.formatter
 
@@ -1053,7 +1092,7 @@ class SubcommandsOptionParser(CommonOptionsParser):
         cmdname = args.pop(0)
         subcommand = self._subcommand_for_name(cmdname)
         if not subcommand:
-            raise UserError("unknown command '{0}'".format(cmdname))
+            raise UserError(f"unknown command '{cmdname}'")
 
         suboptions, subargs = subcommand.parse_args(args)
         return subcommand, suboptions, subargs
@@ -1064,8 +1103,8 @@ optparse.Option.ALWAYS_TYPED_ACTIONS += ('callback',)
 
 # The main entry point and bootstrapping.
 
-def _load_plugins(config):
-    """Load the plugins specified in the configuration.
+def _load_plugins(options, config):
+    """Load the plugins specified on the command line or in the configuration.
     """
     paths = config['pluginpath'].as_str_seq(split=False)
     paths = [util.normpath(p) for p in paths]
@@ -1076,14 +1115,20 @@ def _load_plugins(config):
 
     # Extend the `beetsplug` package to include the plugin paths.
     import beetsplug
-    beetsplug.__path__ = paths + beetsplug.__path__
+    beetsplug.__path__ = paths + list(beetsplug.__path__)
 
     # For backwards compatibility, also support plugin paths that
     # *contain* a `beetsplug` package.
     sys.path += paths
 
-    plugins.load_plugins(config['plugins'].as_str_seq())
-    plugins.send("pluginload")
+    # If we were given any plugins on the command line, use those.
+    if options.plugins is not None:
+        plugin_list = (options.plugins.split(',')
+                       if len(options.plugins) > 0 else [])
+    else:
+        plugin_list = config['plugins'].as_str_seq()
+
+    plugins.load_plugins(plugin_list)
     return plugins
 
 
@@ -1097,7 +1142,20 @@ def _setup(options, lib=None):
 
     config = _configure(options)
 
-    plugins = _load_plugins(config)
+    plugins = _load_plugins(options, config)
+
+    # Add types and queries defined by plugins.
+    plugin_types_album = plugins.types(library.Album)
+    library.Album._types.update(plugin_types_album)
+    item_types = plugin_types_album.copy()
+    item_types.update(library.Item._types)
+    item_types.update(plugins.types(library.Item))
+    library.Item._types = item_types
+
+    library.Item._queries.update(plugins.named_queries(library.Item))
+    library.Album._queries.update(plugins.named_queries(library.Album))
+
+    plugins.send("pluginload")
 
     # Get the default subcommands.
     from beets.ui.commands import default_commands
@@ -1108,8 +1166,6 @@ def _setup(options, lib=None):
     if lib is None:
         lib = _open_library(config)
         plugins.send("library_opened", lib=lib)
-    library.Item._types.update(plugins.types(library.Item))
-    library.Album._types.update(plugins.types(library.Album))
 
     return subcommands, plugins, lib
 
@@ -1121,9 +1177,11 @@ def _configure(options):
     # special handling lets specified plugins get loaded before we
     # finish parsing the command line.
     if getattr(options, 'config', None) is not None:
-        config_path = options.config
+        overlay_path = options.config
         del options.config
-        config.set_file(config_path)
+        config.set_file(overlay_path)
+    else:
+        overlay_path = None
     config.set_args(options)
 
     # Configure the logger.
@@ -1131,6 +1189,10 @@ def _configure(options):
         log.set_global_level(logging.DEBUG)
     else:
         log.set_global_level(logging.INFO)
+
+    if overlay_path:
+        log.debug('overlaying configuration: {0}',
+                  util.displayable_path(overlay_path))
 
     config_path = config.user_config_path()
     if os.path.isfile(config_path):
@@ -1157,10 +1219,11 @@ def _open_library(config):
             get_replacements(),
         )
         lib.get_item(0)  # Test database connection.
-    except (sqlite3.OperationalError, sqlite3.DatabaseError):
+    except (sqlite3.OperationalError, sqlite3.DatabaseError) as db_error:
         log.debug('{}', traceback.format_exc())
-        raise UserError("database file {0} could not be opened".format(
-            util.displayable_path(dbpath)
+        raise UserError("database file {} cannot not be opened: {}".format(
+            util.displayable_path(dbpath),
+            db_error
         ))
     log.debug('library database: {0}\n'
               'library directory: {1}',
@@ -1184,6 +1247,8 @@ def _raw_main(args, lib=None):
                       help='log more details (use twice for even more)')
     parser.add_option('-c', '--config', dest='config',
                       help='path to configuration file')
+    parser.add_option('-p', '--plugins', dest='plugins',
+                      help='a comma-separated list of plugins to load')
     parser.add_option('-h', '--help', dest='help', action='store_true',
                       help='show this help message and exit')
     parser.add_option('--version', dest='version', action='store_true',
@@ -1231,18 +1296,25 @@ def main(args=None):
         log.debug('{}', traceback.format_exc())
         log.error('{}', exc)
         sys.exit(1)
-    except confit.ConfigError as exc:
+    except confuse.ConfigError as exc:
         log.error('configuration error: {0}', exc)
         sys.exit(1)
     except db_query.InvalidQueryError as exc:
         log.error('invalid query: {0}', exc)
         sys.exit(1)
-    except IOError as exc:
+    except OSError as exc:
         if exc.errno == errno.EPIPE:
             # "Broken pipe". End silently.
-            pass
+            sys.stderr.close()
         else:
             raise
     except KeyboardInterrupt:
         # Silently ignore ^C except in verbose mode.
         log.debug('{}', traceback.format_exc())
+    except db.DBAccessError as exc:
+        log.error(
+            'database access error: {0}\n'
+            'the library file might have a permissions problem',
+            exc
+        )
+        sys.exit(1)

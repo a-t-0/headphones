@@ -16,8 +16,8 @@ from pynma import pynma
 import cherrypy
 import headphones
 import gntp.notifier
-import oauth2 as oauth
-import pythontwitter as twitter
+#import oauth2 as oauth
+#import pythontwitter as twitter
 
 
 class GROWL(object):

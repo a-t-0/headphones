@@ -438,10 +438,11 @@ class WebInterface(object):
         raise cherrypy.HTTPRedirect(redirect)
 
     @cherrypy.expose
+    @cherrypy.tools.json_out()
     def choose_specific_download(self, AlbumID):
         results = searcher.searchforalbum(AlbumID, choose_specific_download=True)
 
-        results_as_dicts = []
+        data = []
 
         for result in results:
             result_dict = {
@@ -452,12 +453,11 @@ class WebInterface(object):
                 'kind': result[4],
                 'matches': result[5]
             }
-            results_as_dicts.append(result_dict)
-        s = json.dumps(results_as_dicts)
-        cherrypy.response.headers['Content-type'] = 'application/json'
-        return s
+            data.append(result_dict)
+        return data
 
     @cherrypy.expose
+    @cherrypy.tools.json_out()
     def download_specific_release(self, AlbumID, title, size, url, provider, kind, **kwargs):
         # Handle situations where the torrent url contains arguments that are parsed
         if kwargs:
@@ -474,9 +474,9 @@ class WebInterface(object):
             myDB = db.DBConnection()
             album = myDB.action('SELECT * from albums WHERE AlbumID=?', [AlbumID]).fetchone()
             searcher.send_to_downloader(data, bestqual, album)
-            return json.dumps({'result': 'success'})
+            return {'result': 'success'}
         else:
-            return json.dumps({'result': 'failure'})
+            return {'result': 'failure'}
 
     @cherrypy.expose
     def unqueueAlbum(self, AlbumID, ArtistID):
@@ -959,6 +959,7 @@ class WebInterface(object):
         raise cherrypy.HTTPRedirect("logs")
 
     @cherrypy.expose
+    @cherrypy.tools.json_out()
     def getLog(self, iDisplayStart=0, iDisplayLength=100, iSortCol_0=0, sSortDir_0="desc",
                sSearch="", **kwargs):
         iDisplayStart = int(iDisplayStart)
@@ -981,13 +982,14 @@ class WebInterface(object):
         rows = filtered[iDisplayStart:(iDisplayStart + iDisplayLength)]
         rows = [[row[0], row[2], row[1]] for row in rows]
 
-        return json.dumps({
+        return {
             'iTotalDisplayRecords': len(filtered),
             'iTotalRecords': len(headphones.LOG_LIST),
             'aaData': rows,
-        })
+        }
 
     @cherrypy.expose
+    @cherrypy.tools.json_out()
     def getArtists_json(self, iDisplayStart=0, iDisplayLength=100, sSearch="", iSortCol_0='0',
                         sSortDir_0='asc', **kwargs):
         iDisplayStart = int(iDisplayStart)
@@ -1055,48 +1057,45 @@ class WebInterface(object):
 
             rows.append(row)
 
-        dict = {'iTotalDisplayRecords': len(filtered),
+        data = {'iTotalDisplayRecords': len(filtered),
                 'iTotalRecords': totalcount,
                 'aaData': rows,
                 }
-        s = json.dumps(dict)
-        cherrypy.response.headers['Content-type'] = 'application/json'
-        return s
+        return data
 
     @cherrypy.expose
+    @cherrypy.tools.json_out()
     def getAlbumsByArtist_json(self, artist=None):
         myDB = db.DBConnection()
-        album_json = {}
+        data = {}
         counter = 0
         album_list = myDB.select("SELECT AlbumTitle from albums WHERE ArtistName=?", [artist])
         for album in album_list:
-            album_json[counter] = album['AlbumTitle']
+            data[counter] = album['AlbumTitle']
             counter += 1
-        json_albums = json.dumps(album_json)
 
-        cherrypy.response.headers['Content-type'] = 'application/json'
-        return json_albums
+        return data 
 
     @cherrypy.expose
+    @cherrypy.tools.json_out()
     def getArtistjson(self, ArtistID, **kwargs):
         myDB = db.DBConnection()
         artist = myDB.action('SELECT * FROM artists WHERE ArtistID=?', [ArtistID]).fetchone()
-        artist_json = json.dumps({
+        return {
             'ArtistName': artist['ArtistName'],
             'Status': artist['Status']
-        })
-        return artist_json
+        }
 
     @cherrypy.expose
+    @cherrypy.tools.json_out()
     def getAlbumjson(self, AlbumID, **kwargs):
         myDB = db.DBConnection()
         album = myDB.action('SELECT * from albums WHERE AlbumID=?', [AlbumID]).fetchone()
-        album_json = json.dumps({
+        return {
             'AlbumTitle': album['AlbumTitle'],
             'ArtistName': album['ArtistName'],
             'Status': album['Status']
-        })
-        return album_json
+        }
 
     @cherrypy.expose
     def clearhistory(self, type=None, date_added=None, title=None):
@@ -1648,12 +1647,13 @@ class WebInterface(object):
         return a.fetchData()
 
     @cherrypy.expose
+    @cherrypy.tools.json_out()
     def getInfo(self, ArtistID=None, AlbumID=None):
 
         from headphones import cache
         info_dict = cache.getInfo(ArtistID, AlbumID)
 
-        return json.dumps(info_dict)
+        return info_dict
 
     @cherrypy.expose
     def getArtwork(self, ArtistID=None, AlbumID=None):
@@ -1670,6 +1670,7 @@ class WebInterface(object):
     # If you just want to get the last.fm image links for an album, make sure
     # to pass a releaseid and not a releasegroupid
     @cherrypy.expose
+    @cherrypy.tools.json_out()
     def getImageLinks(self, ArtistID=None, AlbumID=None):
         from headphones import cache
         image_dict = cache.getImageLinks(ArtistID, AlbumID)
@@ -1687,7 +1688,7 @@ class WebInterface(object):
                 image_dict[
                     'thumbnail'] = "http://coverartarchive.org/release/%s/front-250.jpg" % AlbumID
 
-        return json.dumps(image_dict)
+        return image_dict
 
     @cherrypy.expose
     def twitterStep1(self):

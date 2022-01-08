@@ -38,24 +38,24 @@ is_py3 = (_ver[0] == 3)
 # ---------
 
 if is_py2:
-	from io import StringIO
-	from urllib.request import HTTPPasswordMgr, HTTPDigestAuthHandler, Request, HTTPHandler, build_opener
-	from urllib.error import HTTPError, URLError
-	from http.client import BadStatusLine, HTTPException
-	from urllib.parse import urlunparse
-	from urllib.parse import urlencode
+	from StringIO import StringIO
+	from urllib2 import HTTPPasswordMgr, HTTPDigestAuthHandler, Request,\
+						HTTPHandler, build_opener, HTTPError, URLError
+	from httplib import BadStatusLine, HTTPException
+	from urlparse import urlunparse
+	from urllib import urlencode, quote_plus
 
 	bytes = str
-	str = str
-	str = str
+	unicode = unicode
+	basestring = basestring
 elif is_py3:
 	from io import StringIO
 	from urllib.request import HTTPPasswordMgr, HTTPDigestAuthHandler, Request,\
 								HTTPHandler, build_opener
 	from urllib.error import HTTPError, URLError
 	from http.client import HTTPException, BadStatusLine
-	from urllib.parse import urlunparse, urlencode
+	from urllib.parse import urlunparse, urlencode, quote_plus
 
-	str = str
+	unicode = str
 	bytes = bytes
-	str = (str,bytes)
+	basestring = (str,bytes)

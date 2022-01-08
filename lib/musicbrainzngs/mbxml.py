@@ -7,29 +7,26 @@ import re
 import xml.etree.ElementTree as ET
 import logging
 
-from musicbrainzngs import util
+from . import util
 
-try:
-    from ET import fixtag
-except:
-    # Python < 2.7
-    def fixtag(tag, namespaces):
-        # given a decorated tag (of the form {uri}tag), return prefixed
-        # tag and namespace declaration, if any
-        if isinstance(tag, ET.QName):
-            tag = tag.text
-        namespace_uri, tag = tag[1:].split("}", 1)
-        prefix = namespaces.get(namespace_uri)
-        if prefix is None:
-            prefix = "ns%d" % len(namespaces)
-            namespaces[namespace_uri] = prefix
-            if prefix == "xml":
-                xmlns = None
-            else:
-                xmlns = ("xmlns:%s" % prefix, namespace_uri)
-        else:
+
+def fixtag(tag, namespaces):
+    # given a decorated tag (of the form {uri}tag), return prefixed
+    # tag and namespace declaration, if any
+    if isinstance(tag, ET.QName):
+        tag = tag.text
+    namespace_uri, tag = tag[1:].split("}", 1)
+    prefix = namespaces.get(namespace_uri)
+    if prefix is None:
+        prefix = "ns%d" % len(namespaces)
+        namespaces[namespace_uri] = prefix
+        if prefix == "xml":
             xmlns = None
-        return "%s:%s" % (prefix, tag), xmlns
+        else:
+            xmlns = ("xmlns:%s" % prefix, namespace_uri)
+    else:
+        xmlns = None
+    return "%s:%s" % (prefix, tag), xmlns
 
 
 NS_MAP = {"http://musicbrainz.org/ns/mmd-2.0#": "ws2",
@@ -96,7 +93,7 @@ def parse_elements(valid_els, inner_els, element):
             t = t.split(":")[1]
         if t in valid_els:
             result[t] = sub.text or ""
-        elif t in list(inner_els.keys()):
+        elif t in inner_els.keys():
             inner_result = inner_els[t](sub)
             if isinstance(inner_result, tuple) and inner_result[0]:
                 result.update(inner_result[1])
@@ -377,7 +374,7 @@ def parse_relation(relation):
     result.update(parse_elements(elements, inner_els, relation))
     # We parse attribute-list again to get attributes that have both
     # text and attribute values
-    result.update(parse_elements([], {"attribute-list": parse_relation_attribute_list}, relation))
+    result.update(parse_elements(['target-credit'], {"attribute-list": parse_relation_attribute_list}, relation))
 
     return result
 
@@ -505,7 +502,6 @@ def parse_recording(recording):
                  "user-tag-list": parse_tag_list,
                  "rating": parse_rating,
                  "isrc-list": parse_external_id_list,
-                 "echoprint-list": parse_external_id_list,
                  "relation-list": parse_relation_list,
                  "annotation": parse_annotation}
 
@@ -760,7 +756,7 @@ def make_barcode_request(release2barcode):
     NS = "http://musicbrainz.org/ns/mmd-2.0#"
     root = ET.Element("{%s}metadata" % NS)
     rel_list = ET.SubElement(root, "{%s}release-list" % NS)
-    for release, barcode in list(release2barcode.items()):
+    for release, barcode in release2barcode.items():
         rel_xml = ET.SubElement(rel_list, "{%s}release" % NS)
         bar_xml = ET.SubElement(rel_xml, "{%s}barcode" % NS)
         rel_xml.set("{%s}id" % NS, release)
@@ -775,7 +771,7 @@ def make_tag_request(**kwargs):
         entity_tags = kwargs.pop(entity_type + '_tags', None)
         if entity_tags is not None:
             e_list = ET.SubElement(root, "{%s}%s-list" % (NS, entity_type.replace('_', '-')))
-            for e, tags in list(entity_tags.items()):
+            for e, tags in entity_tags.items():
                 e_xml = ET.SubElement(e_list, "{%s}%s" % (NS, entity_type.replace('_', '-')))
                 e_xml.set("{%s}id" % NS, e)
                 taglist = ET.SubElement(e_xml, "{%s}user-tag-list" % NS)
@@ -783,7 +779,7 @@ def make_tag_request(**kwargs):
                     usertag_xml = ET.SubElement(taglist, "{%s}user-tag" % NS)
                     name_xml = ET.SubElement(usertag_xml, "{%s}name" % NS)
                     name_xml.text = tag
-    if list(kwargs.keys()):
+    if kwargs.keys():
         raise TypeError("make_tag_request() got an unexpected keyword argument '%s'" % kwargs.popitem()[0])
 
     return ET.tostring(root, "utf-8")
@@ -795,12 +791,12 @@ def make_rating_request(**kwargs):
         entity_ratings = kwargs.pop(entity_type + '_ratings', None)
         if entity_ratings is not None:
             e_list = ET.SubElement(root, "{%s}%s-list" % (NS, entity_type.replace('_', '-')))
-            for e, rating in list(entity_ratings.items()):
+            for e, rating in entity_ratings.items():
                 e_xml = ET.SubElement(e_list, "{%s}%s" % (NS, entity_type.replace('_', '-')))
                 e_xml.set("{%s}id" % NS, e)
                 rating_xml = ET.SubElement(e_xml, "{%s}user-rating" % NS)
                 rating_xml.text = str(rating)
-    if list(kwargs.keys()):
+    if kwargs.keys():
         raise TypeError("make_rating_request() got an unexpected keyword argument '%s'" % kwargs.popitem()[0])
 
     return ET.tostring(root, "utf-8")
@@ -809,7 +805,7 @@ def make_isrc_request(recording2isrcs):
     NS = "http://musicbrainz.org/ns/mmd-2.0#"
     root = ET.Element("{%s}metadata" % NS)
     rec_list = ET.SubElement(root, "{%s}recording-list" % NS)
-    for rec, isrcs in list(recording2isrcs.items()):
+    for rec, isrcs in recording2isrcs.items():
         if len(isrcs) > 0:
             rec_xml = ET.SubElement(rec_list, "{%s}recording" % NS)
             rec_xml.set("{%s}id" % NS, rec)

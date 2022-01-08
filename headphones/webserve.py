@@ -22,8 +22,8 @@ import random
 import urllib.request, urllib.parse, urllib.error
 import json
 import time
-import cgi
 import sys
+from html import escape as html_escape
 import urllib.request, urllib.error, urllib.parse
 
 import os
@@ -158,8 +158,8 @@ class WebInterface(object):
         else:
             searchresults = mb.findSeries(name, limit=100)
         return serve_template(templatename="searchresults.html",
-                              title='Search Results for: "' + cgi.escape(name) + '"',
-                              searchresults=searchresults, name=cgi.escape(name), type=type)
+                              title='Search Results for: "' + html_escape(name) + '"',
+                              searchresults=searchresults, name=html_escape(name), type=type)
 
     @cherrypy.expose
     def addArtist(self, artistid):

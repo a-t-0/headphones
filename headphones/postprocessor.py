@@ -25,7 +25,7 @@ import headphones
 from beets import autotag
 from beets import config as beetsconfig
 from beets import logging as beetslogging
-from beets.mediafile import MediaFile, FileTypeError, UnreadableFileError
+from mediafile import MediaFile, FileTypeError, UnreadableFileError
 from beetsplug import lyrics as beetslyrics
 from headphones import notifiers, utorrent, transmission, deluge, qbittorrent
 from headphones import db, albumart, librarysync

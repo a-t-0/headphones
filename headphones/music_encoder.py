@@ -21,7 +21,7 @@ import multiprocessing
 import os
 import headphones
 from headphones import logger
-from beets.mediafile import MediaFile
+from mediafile import MediaFile
 
 
 # xld

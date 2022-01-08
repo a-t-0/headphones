@@ -16,7 +16,7 @@
 import time
 
 from headphones import logger, helpers, db, mb, lastfm, metacritic
-from beets.mediafile import MediaFile
+from mediafile import MediaFile
 import headphones
 
 blacklisted_special_artist_names = ['[anonymous]', '[data]', '[no artist]',

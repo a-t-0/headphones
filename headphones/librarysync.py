@@ -17,7 +17,7 @@ import os
 import math
 
 import headphones
-from beets.mediafile import MediaFile, FileTypeError, UnreadableFileError
+from mediafile import MediaFile, FileTypeError, UnreadableFileError
 from headphones import db, logger, helpers, importer, lastfm
 
 

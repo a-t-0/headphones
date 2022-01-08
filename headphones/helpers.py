@@ -30,7 +30,7 @@ from contextlib import contextmanager
 import fnmatch
 import re
 import os
-from beets.mediafile import MediaFile, FileTypeError, UnreadableFileError
+from mediafile import MediaFile, FileTypeError, UnreadableFileError
 import headphones
 
 

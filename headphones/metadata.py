@@ -18,7 +18,7 @@ Track/album metadata handling routines.
 """
 
 
-from beets.mediafile import MediaFile, UnreadableFileError
+from mediafile import MediaFile, UnreadableFileError
 import headphones
 from headphones import logger
 import os.path

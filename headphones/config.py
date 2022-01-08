@@ -326,10 +326,8 @@ class Config(object):
     def __init__(self, config_file):
         """ Initialize the config with values from a file """
         self._config_file = config_file
-        try:
-            self._config = ConfigParser().read_file(open(self._config_file, 'r'))
-        except FileNotFoundError:
-            self._config = ConfigParser()
+        self._config = ConfigParser()
+        self._config.read(self._config_file)
         for key in list(_CONFIG_DEFINITIONS.keys()):
             self.check_setting(key)
         self.ENCODER_MULTICORE_COUNT = max(0, self.ENCODER_MULTICORE_COUNT)

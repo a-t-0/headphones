@@ -14,7 +14,7 @@ from .events import *
 class EmitterError(YAMLError):
     pass
 
-class ScalarAnalysis(object):
+class ScalarAnalysis:
     def __init__(self, scalar, empty, multiline,
             allow_flow_plain, allow_block_plain,
             allow_single_quoted, allow_double_quoted,
@@ -28,7 +28,7 @@ class ScalarAnalysis(object):
         self.allow_double_quoted = allow_double_quoted
         self.allow_block = allow_block
 
-class Emitter(object):
+class Emitter:
 
     DEFAULT_TAG_PREFIXES = {
         '!' : '!',
@@ -41,7 +41,7 @@ class Emitter(object):
         # The stream should have the methods `write` and possibly `flush`.
         self.stream = stream
 
-        # Encoding can be overriden by STREAM-START.
+        # Encoding can be overridden by STREAM-START.
         self.encoding = None
 
         # Emitter is a state machine with a stack of states to handle nested
@@ -159,7 +159,7 @@ class Emitter(object):
 
     def expect_stream_start(self):
         if isinstance(self.event, StreamStartEvent):
-            if self.event.encoding and not getattr(self.stream, 'encoding', None):
+            if self.event.encoding and not hasattr(self.stream, 'encoding'):
                 self.encoding = self.event.encoding
             self.write_stream_start()
             self.state = self.expect_first_document_start
@@ -185,8 +185,7 @@ class Emitter(object):
                 self.write_version_directive(version_text)
             self.tag_prefixes = self.DEFAULT_TAG_PREFIXES.copy()
             if self.event.tags:
-                handles = list(self.event.tags.keys())
-                handles.sort()
+                handles = sorted(self.event.tags.keys())
                 for handle in handles:
                     prefix = self.event.tags[handle]
                     self.tag_prefixes[prefix] = handle
@@ -547,13 +546,12 @@ class Emitter(object):
         if not handle:
             raise EmitterError("tag handle must not be empty")
         if handle[0] != '!' or handle[-1] != '!':
-            raise EmitterError("tag handle must start and end with '!': %r"
-                    % (handle.encode('utf-8')))
+            raise EmitterError("tag handle must start and end with '!': %r" % handle)
         for ch in handle[1:-1]:
-            if not ('0' <= ch <= '9' or 'A' <= ch <= 'Z' or 'a' <= ch <= 'z'  \
+            if not ('0' <= ch <= '9' or 'A' <= ch <= 'Z' or 'a' <= ch <= 'z'    \
                     or ch in '-_'):
                 raise EmitterError("invalid character %r in the tag handle: %r"
-                        % (ch.encode('utf-8'), handle.encode('utf-8')))
+                        % (ch, handle))
         return handle
 
     def prepare_tag_prefix(self, prefix):
@@ -565,7 +563,7 @@ class Emitter(object):
             end = 1
         while end < len(prefix):
             ch = prefix[end]
-            if '0' <= ch <= '9' or 'A' <= ch <= 'Z' or 'a' <= ch <= 'z'   \
+            if '0' <= ch <= '9' or 'A' <= ch <= 'Z' or 'a' <= ch <= 'z' \
                     or ch in '-;/?!:@&=+$,_.~*\'()[]':
                 end += 1
             else:
@@ -586,8 +584,7 @@ class Emitter(object):
             return tag
         handle = None
         suffix = tag
-        prefixes = list(self.tag_prefixes.keys())
-        prefixes.sort()
+        prefixes = sorted(self.tag_prefixes.keys())
         for prefix in prefixes:
             if tag.startswith(prefix)   \
                     and (prefix == '!' or len(prefix) < len(tag)):
@@ -597,7 +594,7 @@ class Emitter(object):
         start = end = 0
         while end < len(suffix):
             ch = suffix[end]
-            if '0' <= ch <= '9' or 'A' <= ch <= 'Z' or 'a' <= ch <= 'z'   \
+            if '0' <= ch <= '9' or 'A' <= ch <= 'Z' or 'a' <= ch <= 'z' \
                     or ch in '-;/?:@&=+$,_.~*\'()[]'   \
                     or (ch == '!' and handle != '!'):
                 end += 1
@@ -607,7 +604,7 @@ class Emitter(object):
                 start = end = end+1
                 data = ch.encode('utf-8')
                 for ch in data:
-                    chunks.append('%%%02X' % ord(ch))
+                    chunks.append('%%%02X' % ch)
         if start < end:
             chunks.append(suffix[start:end])
         suffix_text = ''.join(chunks)
@@ -620,10 +617,10 @@ class Emitter(object):
         if not anchor:
             raise EmitterError("anchor must not be empty")
         for ch in anchor:
-            if not ('0' <= ch <= '9' or 'A' <= ch <= 'Z' or 'a' <= ch <= 'z'  \
+            if not ('0' <= ch <= '9' or 'A' <= ch <= 'Z' or 'a' <= ch <= 'z'    \
                     or ch in '-_'):
                 raise EmitterError("invalid character %r in the anchor: %r"
-                        % (ch.encode('utf-8'), anchor.encode('utf-8')))
+                        % (ch, anchor))
         return anchor
 
     def analyze_scalar(self, scalar):
@@ -655,7 +652,7 @@ class Emitter(object):
             flow_indicators = True
 
         # First character or preceded by a whitespace.
-        preceeded_by_whitespace = True
+        preceded_by_whitespace = True
 
         # Last character or followed by a whitespace.
         followed_by_whitespace = (len(scalar) == 1 or
@@ -692,7 +689,7 @@ class Emitter(object):
                     flow_indicators = True
                     if followed_by_whitespace:
                         block_indicators = True
-                if ch == '#' and preceeded_by_whitespace:
+                if ch == '#' and preceded_by_whitespace:
                     flow_indicators = True
                     block_indicators = True
 
@@ -701,7 +698,8 @@ class Emitter(object):
                 line_breaks = True
             if not (ch == '\n' or '\x20' <= ch <= '\x7E'):
                 if (ch == '\x85' or '\xA0' <= ch <= '\uD7FF'
-                        or '\uE000' <= ch <= '\uFFFD') and ch != '\uFEFF':
+                        or '\uE000' <= ch <= '\uFFFD'
+                        or '\U00010000' <= ch < '\U0010ffff') and ch != '\uFEFF':
                     unicode_characters = True
                     if not self.allow_unicode:
                         special_characters = True
@@ -733,7 +731,7 @@ class Emitter(object):
 
             # Prepare for the next character.
             index += 1
-            preceeded_by_whitespace = (ch in '\0 \t\r\n\x85\u2028\u2029')
+            preceded_by_whitespace = (ch in '\0 \t\r\n\x85\u2028\u2029')
             followed_by_whitespace = (index+1 >= len(scalar) or
                     scalar[index+1] in '\0 \t\r\n\x85\u2028\u2029')
 
@@ -908,21 +906,21 @@ class Emitter(object):
         self.write_indicator('\'', False)
 
     ESCAPE_REPLACEMENTS = {
-        '\0':      '0',
-        '\x07':    'a',
-        '\x08':    'b',
-        '\x09':    't',
-        '\x0A':    'n',
-        '\x0B':    'v',
-        '\x0C':    'f',
-        '\x0D':    'r',
-        '\x1B':    'e',
-        '\"':      '\"',
-        '\\':      '\\',
-        '\x85':    'N',
-        '\xA0':    '_',
-        '\u2028':  'L',
-        '\u2029':  'P',
+        '\0':       '0',
+        '\x07':     'a',
+        '\x08':     'b',
+        '\x09':     't',
+        '\x0A':     'n',
+        '\x0B':     'v',
+        '\x0C':     'f',
+        '\x0D':     'r',
+        '\x1B':     'e',
+        '\"':       '\"',
+        '\\':       '\\',
+        '\x85':     'N',
+        '\xA0':     '_',
+        '\u2028':   'L',
+        '\u2029':   'P',
     }
 
     def write_double_quoted(self, text, split=True):
@@ -958,7 +956,7 @@ class Emitter(object):
                         data = data.encode(self.encoding)
                     self.stream.write(data)
                     start = end+1
-            if 0 < end < len(text)-1 and (ch == ' ' or start >= end)   \
+            if 0 < end < len(text)-1 and (ch == ' ' or start >= end)    \
                     and self.column+(end-start) > self.best_width and split:
                 data = text[start:end]+'\\'
                 if start < end:
@@ -1006,7 +1004,7 @@ class Emitter(object):
                 ch = text[end]
             if breaks:
                 if ch is None or ch not in '\n\x85\u2028\u2029':
-                    if not leading_space and ch is not None and ch != ' '  \
+                    if not leading_space and ch is not None and ch != ' '   \
                             and text[start] == '\n':
                         self.write_line_break()
                     leading_space = (ch == ' ')
@@ -1137,4 +1135,3 @@ class Emitter(object):
                 spaces = (ch == ' ')
                 breaks = (ch in '\n\x85\u2028\u2029')
             end += 1
-

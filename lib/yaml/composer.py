@@ -8,7 +8,7 @@ from .nodes import *
 class ComposerError(MarkedYAMLError):
     pass
 
-class Composer(object):
+class Composer:
 
     def __init__(self):
         self.anchors = {}
@@ -66,15 +66,15 @@ class Composer(object):
             anchor = event.anchor
             if anchor not in self.anchors:
                 raise ComposerError(None, None, "found undefined alias %r"
-                        % anchor.encode('utf-8'), event.start_mark)
+                        % anchor, event.start_mark)
             return self.anchors[anchor]
         event = self.peek_event()
         anchor = event.anchor
         if anchor is not None:
             if anchor in self.anchors:
-                raise ComposerError("found duplicate anchor %r; first occurence"
-                        % anchor.encode('utf-8'), self.anchors[anchor].start_mark,
-                        "second occurence", event.start_mark)
+                raise ComposerError("found duplicate anchor %r; first occurrence"
+                        % anchor, self.anchors[anchor].start_mark,
+                        "second occurrence", event.start_mark)
         self.descend_resolver(parent, index)
         if self.check_event(ScalarEvent):
             node = self.compose_scalar_node(anchor)

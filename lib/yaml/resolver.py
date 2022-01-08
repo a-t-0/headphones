@@ -9,7 +9,7 @@ import re
 class ResolverError(YAMLError):
     pass
 
-class BaseResolver(object):
+class BaseResolver:
 
     DEFAULT_SCALAR_TAG = 'tag:yaml.org,2002:str'
     DEFAULT_SEQUENCE_TAG = 'tag:yaml.org,2002:seq'
@@ -22,15 +22,19 @@ class BaseResolver(object):
         self.resolver_exact_paths = []
         self.resolver_prefix_paths = []
 
+    @classmethod
     def add_implicit_resolver(cls, tag, regexp, first):
         if not 'yaml_implicit_resolvers' in cls.__dict__:
-            cls.yaml_implicit_resolvers = cls.yaml_implicit_resolvers.copy()
+            implicit_resolvers = {}
+            for key in cls.yaml_implicit_resolvers:
+                implicit_resolvers[key] = cls.yaml_implicit_resolvers[key][:]
+            cls.yaml_implicit_resolvers = implicit_resolvers
         if first is None:
             first = [None]
         for ch in first:
             cls.yaml_implicit_resolvers.setdefault(ch, []).append((tag, regexp))
-    add_implicit_resolver = classmethod(add_implicit_resolver)
 
+    @classmethod
     def add_path_resolver(cls, tag, path, kind=None):
         # Note: `add_path_resolver` is experimental.  The API could be changed.
         # `new_path` is a pattern that is matched against the path from the
@@ -66,10 +70,10 @@ class BaseResolver(object):
             elif node_check is dict:
                 node_check = MappingNode
             elif node_check not in [ScalarNode, SequenceNode, MappingNode]  \
-                    and not isinstance(node_check, str)  \
+                    and not isinstance(node_check, str) \
                     and node_check is not None:
                 raise ResolverError("Invalid node checker: %s" % node_check)
-            if not isinstance(index_check, (str, int))   \
+            if not isinstance(index_check, (str, int))  \
                     and index_check is not None:
                 raise ResolverError("Invalid index checker: %s" % index_check)
             new_path.append((node_check, index_check))
@@ -83,7 +87,6 @@ class BaseResolver(object):
                 and kind is not None:
             raise ResolverError("Invalid node kind: %s" % kind)
         cls.yaml_path_resolvers[tuple(new_path), kind] = tag
-    add_path_resolver = classmethod(add_path_resolver)
 
     def descend_resolver(self, current_node, current_index):
         if not self.yaml_path_resolvers:
@@ -143,8 +146,8 @@ class BaseResolver(object):
                 resolvers = self.yaml_implicit_resolvers.get('', [])
             else:
                 resolvers = self.yaml_implicit_resolvers.get(value[0], [])
-            resolvers += self.yaml_implicit_resolvers.get(None, [])
-            for tag, regexp in resolvers:
+            wildcard_resolvers = self.yaml_implicit_resolvers.get(None, [])
+            for tag, regexp in resolvers + wildcard_resolvers:
                 if regexp.match(value):
                     return tag
             implicit = implicit[1]
@@ -174,7 +177,7 @@ Resolver.add_implicit_resolver(
 Resolver.add_implicit_resolver(
         'tag:yaml.org,2002:float',
         re.compile(r'''^(?:[-+]?(?:[0-9][0-9_]*)\.[0-9_]*(?:[eE][-+][0-9]+)?
-                    |\.[0-9_]+(?:[eE][-+][0-9]+)?
+                    |\.[0-9][0-9_]*(?:[eE][-+][0-9]+)?
                     |[-+]?[0-9][0-9_]*(?::[0-5]?[0-9])+\.[0-9_]*
                     |[-+]?\.(?:inf|Inf|INF)
                     |\.(?:nan|NaN|NAN))$''', re.X),

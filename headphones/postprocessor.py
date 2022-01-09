@@ -589,9 +589,10 @@ def doPostProcessing(albumid, albumpath, release, tracks, downloaded_track_list,
         telegram.notify(statusmessage, pushmessage)
 
     if headphones.CONFIG.TWITTER_ENABLED:
-        logger.info("Sending Twitter notification")
-        twitter = notifiers.TwitterNotifier()
-        twitter.notify_download(pushmessage)
+        logger.info("Twitter notifications temporarily disabled")
+        #logger.info("Sending Twitter notification")
+        #twitter = notifiers.TwitterNotifier()
+        #twitter.notify_download(pushmessage)
 
     if headphones.CONFIG.OSX_NOTIFY_ENABLED:
         from headphones import cache

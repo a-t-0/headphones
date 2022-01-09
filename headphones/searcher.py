@@ -1091,9 +1091,10 @@ def send_to_downloader(data, bestqual, album):
         message = 'Snatched from ' + provider + '. ' + name
         telegram.notify(message, "Snatched: " + title, rgid, image=album_art)
     if headphones.CONFIG.TWITTER_ENABLED and headphones.CONFIG.TWITTER_ONSNATCH:
-        logger.info("Sending Twitter notification")
-        twitter = notifiers.TwitterNotifier()
-        twitter.notify_snatch(name)
+        logger.info("Twitter notifications temporarily disabled")
+        #logger.info("Sending Twitter notification")
+        #twitter = notifiers.TwitterNotifier()
+        #twitter.notify_snatch(name)
     if headphones.CONFIG.NMA_ENABLED and headphones.CONFIG.NMA_ONSNATCH:
         logger.info("Sending NMA notification")
         nma = notifiers.NMA()

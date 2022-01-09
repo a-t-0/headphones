@@ -1116,7 +1116,7 @@ class WebInterface(object):
 
     @cherrypy.expose
     def generateAPI(self):
-        apikey = secrets.token_hex(nbytes=32)
+        apikey = secrets.token_hex(nbytes=16)
         logger.info("New API generated")
         return apikey
 

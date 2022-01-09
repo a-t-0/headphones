@@ -361,13 +361,11 @@ class Config(object):
         if definition_type == list:
             definition_type = ast.literal_eval
 
-        config_key = self._config[section][ini_key]
-
         try:
-            my_val = definition_type(config_key)
+            my_val = definition_type(self._config[section][ini_key])
         except Exception:
             my_val = default
-            config_key = str(my_val)
+            self._config[section][ini_key] = str(my_val)
         return my_val
 
     def write(self):

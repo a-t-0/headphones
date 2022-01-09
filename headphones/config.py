@@ -356,14 +356,18 @@ class Config(object):
         """ Cast any value in the config to the right type or use the default """
         key, definition_type, section, ini_key, default = self._define(key)
         self.check_section(section)
+
+        # ConfigParser values are strings, so need to convert to actual list
+        if definition_type == list:
+            definition_type = ast.literal_eval
+
+        config_key = self._config[section][ini_key]
+
         try:
-            if definition_type == list:
-                my_val = ast.literal_eval(self._config[section][ini_key])
-            else:
-                my_val = definition_type(self._config[section][ini_key])
+            my_val = definition_type(config_key)
         except Exception:
             my_val = default
-            self._config[section][ini_key] = str(my_val)
+            config_key = str(my_val)
         return my_val
 
     def write(self):

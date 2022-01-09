@@ -356,7 +356,7 @@ def command(encoder, musicSource, musicDest, albumPath, xldProfile):
 
     process = subprocess.Popen(cmd, startupinfo=startupinfo,
                                stdin=open(os.devnull, 'rb'), stdout=subprocess.PIPE,
-                               stderr=subprocess.PIPE)
+                               stderr=subprocess.PIPE, text=True)
     stdout, stderr = process.communicate(headphones.CONFIG.ENCODER)
 
     # Error if return code not zero
@@ -364,7 +364,7 @@ def command(encoder, musicSource, musicDest, albumPath, xldProfile):
         logger.error(f"Encoding failed for {musicSource}")
         out = stdout or stderr
         outlast2lines = '\n'.join(out.splitlines()[-2:])
-        logger.error('%s error details: %s' % (headphones.CONFIG.ENCODER, outlast2lines))
+        logger.error(f"{headphones.CONFIG.ENCODER} error details: {outlast2lines}")
         out = out.rstrip("\n")
         logger.debug(out)
         encoded = False

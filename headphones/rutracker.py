@@ -114,7 +114,7 @@ class Rutracker(object):
         try:
             headers = {'Referer': self.search_referer}
             r = self.session.get(url=searchurl, headers=headers, timeout=self.timeout)
-            soup = BeautifulSoup(r.content, 'html5lib')
+            soup = BeautifulSoup(r.content, 'html.parser')
 
             # Debug
             # logger.debug (soup.prettify())
@@ -123,7 +123,7 @@ class Rutracker(object):
             if not self.still_logged_in(soup):
                 self.login()
                 r = self.session.get(url=searchurl, timeout=self.timeout)
-                soup = BeautifulSoup(r.content, 'html5lib')
+                soup = BeautifulSoup(r.content, 'html.parser')
                 if not self.still_logged_in(soup):
                     logger.error("Error getting rutracker data")
                     return None

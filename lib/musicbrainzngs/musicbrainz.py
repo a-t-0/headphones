@@ -705,8 +705,10 @@ def _mb_request(path, method='GET', auth_required=AUTH_NO,
 
     # Add headphones credentials
     if mb_auth:
-        base64string = base64.encodestring('%s:%s' % (hpuser, hppassword)).replace('\n', '')
-        req.add_header("Authorization", "Basic %s" % base64string)
+        credentials = f"{hpuser}:{hppassword}"
+        base64bytes = base64.encodebytes(credentials.encode('utf-8'))
+        base64string = base64bytes.decode('utf-8').replace('\n', '')
+        req.add_header("Authorization", f"Basic {base64string}")
 
     _log.debug("requesting with UA %s" % _useragent)
     if body:

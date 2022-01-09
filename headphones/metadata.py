@@ -184,9 +184,7 @@ def file_metadata(path, release):
     try:
         f = MediaFile(path)
     except UnreadableFileError as ex:
-        logger.info("MediaFile couldn't parse: %s (%s)",
-                    path.decode(headphones.SYS_ENCODING, 'replace'),
-                    str(ex))
+        logger.info(f"MediaFile couldn't parse {path}: {e}")
         return None, None
 
     res = MetadataDict()
@@ -207,8 +205,7 @@ def file_metadata(path, release):
         track_number = '%02d' % f.track
 
     if not f.title:
-        basename = os.path.basename(
-            path.decode(headphones.SYS_ENCODING, 'replace'))
+        basename = os.path.basename(path)
         title = os.path.splitext(basename)[0]
         from_metadata = False
     else:
@@ -293,12 +290,10 @@ def album_metadata(path, release, common_tags):
     # Get from temp path
     if "_@hp@_" in path:
         orig_folder = path.rsplit("headphones_", 1)[1].split("_@hp@_")[0]
-        orig_folder = orig_folder.decode(headphones.SYS_ENCODING, 'replace')
     else:
         for r, d, f in os.walk(path):
             try:
-                orig_folder = os.path.basename(
-                    os.path.normpath(r).decode(headphones.SYS_ENCODING, 'replace'))
+                orig_folder = os.path.basename(os.path.normpath(r))
                 break
             except:
                 pass

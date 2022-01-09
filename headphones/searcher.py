@@ -534,9 +534,9 @@ def searchNZB(album, new=False, losslessOnly=False, albumlength=None,
         else:
             term = cleanartist + ' ' + cleanalbum
 
-    # Replace bad characters in the term and unicode it
-    term = re.sub('[\.\-\/]', ' ', term).encode('utf-8')
-    artistterm = re.sub('[\.\-\/]', ' ', cleanartist).encode('utf-8')
+    # Replace bad characters in the term
+    term = re.sub('[\.\-\/]', ' ', term)
+    artistterm = re.sub('[\.\-\/]', ' ', cleanartist)
 
     # If Preferred Bitrate and High Limit and Allow Lossless then get both lossy and lossless
     if headphones.CONFIG.PREFERRED_QUALITY == 2 and headphones.CONFIG.PREFERRED_BITRATE and headphones.CONFIG.PREFERRED_BITRATE_HIGH_BUFFER and headphones.CONFIG.PREFERRED_BITRATE_ALLOW_LOSSLESS:

@@ -28,6 +28,7 @@ import six
 from contextlib import contextmanager
 
 import fnmatch
+import functools
 import re
 import os
 from mediafile import MediaFile, FileTypeError, UnreadableFileError
@@ -40,6 +41,17 @@ RE_FEATURING = re.compile(r"[fF]t\.|[fF]eaturing|[fF]eat\.|\b[wW]ith\b|&|vs\.")
 RE_CD_ALBUM = re.compile(r"\(?((CD|disc)\s*[0-9]+)\)?", re.I)
 RE_CD = re.compile(r"^(CD|dics)\s*[0-9]+$", re.I)
 
+def cmp(x, y):
+    """
+    Replacement for built-in function cmp that was removed in Python 3
+
+    Compare the two objects x and y and return an integer according to
+    the outcome. The return value is negative if x < y, zero if x == y
+    and strictly positive if x > y.
+
+    https://portingguide.readthedocs.io/en/latest/comparisons.html#the-cmp-function
+    """
+    return (x > y) - (x < y)
 
 def multikeysort(items, columns):
     comparers = [
@@ -54,7 +66,7 @@ def multikeysort(items, columns):
         else:
             return 0
 
-    return sorted(items, cmp=comparer)
+    return sorted(items, key=functools.cmp_to_key(comparer))
 
 
 def checked(variable):

@@ -17,7 +17,7 @@
 
 from operator import itemgetter
 import threading
-import hashlib
+import secrets
 import random
 import urllib.request, urllib.parse, urllib.error
 import json
@@ -1116,7 +1116,7 @@ class WebInterface(object):
 
     @cherrypy.expose
     def generateAPI(self):
-        apikey = hashlib.sha224(str(random.getrandbits(256))).hexdigest()[0:32]
+        apikey = secrets.token_hex(nbytes=32)
         logger.info("New API generated")
         return apikey
 

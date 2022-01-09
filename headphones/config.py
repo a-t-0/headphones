@@ -2,6 +2,7 @@ import itertools
 
 import os
 import re
+import ast
 from configparser import ConfigParser
 import headphones.logger
 
@@ -356,7 +357,10 @@ class Config(object):
         key, definition_type, section, ini_key, default = self._define(key)
         self.check_section(section)
         try:
-            my_val = definition_type(self._config[section][ini_key])
+            if definition_type == list:
+                my_val = ast.literal_eval(self._config[section][ini_key])
+            else:
+                my_val = definition_type(self._config[section][ini_key])
         except Exception:
             my_val = default
             self._config[section][ini_key] = str(my_val)

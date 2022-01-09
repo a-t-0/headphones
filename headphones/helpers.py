@@ -452,8 +452,7 @@ def expand_subfolders(f):
 
     if difference > 0:
         logger.info(
-            "Found %d media folders, but depth difference between lowest and deepest media folder is %d (expected zero). If this is a discography or a collection of albums, make sure albums are per folder.",
-            len(media_folders), difference)
+            f"Found {len(media_folders)} media folders, but depth difference between lowest and deepest media folder is {difference} (expected zero). If this is a discography or a collection of albums, make sure albums are per folder.")
 
         # While already failed, advice the user what he could try. We assume the
         # directory may contain separate CD's and maybe some extra's. The
@@ -465,8 +464,7 @@ def expand_subfolders(f):
             set([os.path.join(*media_folder) for media_folder in extra_media_folders]))
 
         logger.info(
-            "Please look at the following folder(s), since they cause the depth difference: %s",
-            extra_media_folders)
+            f"Please look at the following folder(s), since they cause the depth difference: {extra_media_folders}")
         return
 
     # Convert back to paths and remove duplicates, which may be there after
@@ -480,7 +478,7 @@ def expand_subfolders(f):
         logger.debug("Did not expand subfolder, as it resulted in one folder.")
         return
 
-    logger.debug("Expanded subfolders in folder: %s", media_folders)
+    logger.debug(f"Expanded subfolders in folder: {media_folders}")
     return media_folders
 
 
@@ -498,7 +496,7 @@ def path_match_patterns(path, patterns):
     return False
 
 
-def path_filter_patterns(paths, patterns, root=None):
+def path_filter_patterns(paths, patterns, root=''):
     """
     Scan for ignored paths based on glob patterns. Note that the whole path
     will be matched, therefore paths should only contain the relative paths.
@@ -512,8 +510,7 @@ def path_filter_patterns(paths, patterns, root=None):
 
     for path in paths[:]:
         if path_match_patterns(path, patterns):
-            logger.debug("Path ignored by pattern: %s",
-                         os.path.join(root or "", path))
+            logger.debug(f"Path ignored by pattern: {os.path.join(root, path)}")
 
             ignored += 1
             paths.remove(path)
@@ -595,7 +592,7 @@ def extract_metadata(f):
     count_ratio = 0.75
 
     if count < (count_ratio * len(results)):
-        logger.info("Counted %d media files, but only %d have tags, ignoring.", count, len(results))
+        logger.info(f"Counted {count} media files, but only {len(results)} have tags, ignoring.")
         return (None, None, None)
 
     # Count distinct values
@@ -613,8 +610,7 @@ def extract_metadata(f):
                 old_album = new_albums[index]
                 new_albums[index] = RE_CD_ALBUM.sub("", album).strip()
 
-                logger.debug("Stripped albumd number identifier: %s -> %s", old_album,
-                             new_albums[index])
+                logger.debug(f"Stripped album number identifier: {old_album} -> {new_albums[index]}")
 
         # Remove duplicates
         new_albums = list(set(new_albums))
@@ -632,7 +628,7 @@ def extract_metadata(f):
     if len(artists) > 1 and len(albums) == 1:
         split_artists = [RE_FEATURING.split(x) for x in artists]
         featurings = [len(split_artist) - 1 for split_artist in split_artists]
-        logger.info("Album seem to feature %d different artists", sum(featurings))
+        logger.info("Album seem to feature {sum(featurings)} different artists")
 
         if sum(featurings) > 0:
             # Find the artist of which the least splits have been generated.
@@ -644,9 +640,11 @@ def extract_metadata(f):
             return (artist, albums[0], years[0])
 
     # Not sure what to do here.
-    logger.info("Found %d artists, %d albums and %d years in metadata, so ignoring", len(artists),
-                len(albums), len(years))
-    logger.debug("Artists: %s, Albums: %s, Years: %s", artists, albums, years)
+    logger.info(
+        f"Found {len(artists)} artists, {len(albums)} albums and "
+        f"{len(years)} years in metadata, so ignoring"
+    )
+    logger.debug("Artists: {artists}, Albums: {albums}, Years: {years}")
 
     return (None, None, None)
 
@@ -678,8 +676,7 @@ def preserve_torrent_directory(albumpath, forced=False, single=False):
     else:
         tempdir = tempfile.gettempdir()
 
-    logger.info("Preparing to copy to a temporary directory for post processing: " + albumpath.decode(
-            headphones.SYS_ENCODING, 'replace'))
+    logger.info(f"Preparing to copy to a temporary directory for post processing: {albumpath}")
 
     try:
         file_name = os.path.basename(os.path.normpath(albumpath))
@@ -689,8 +686,7 @@ def preserve_torrent_directory(albumpath, forced=False, single=False):
             prefix = "headphones_" + os.path.splitext(file_name)[0] + "_@hp@_"
         new_folder = tempfile.mkdtemp(prefix=prefix, dir=tempdir)
     except Exception as e:
-        logger.error("Cannot create temp directory: " + tempdir.decode(
-            headphones.SYS_ENCODING, 'replace') + ". Error: " + str(e))
+        logger.error(f"Cannot create temp directory: {tempdir}. Error: {e}")
         return None
 
     # Attempt to stop multiple temp dirs being created for the same albumpath
@@ -701,17 +697,21 @@ def preserve_torrent_directory(albumpath, forced=False, single=False):
             workdir = re.sub(r'(?<!\[)\]', '[]]', workdir)
             if len(glob.glob(workdir + '*/')) >= 3:
                 logger.error(
-                    "Looks like a temp directory has previously been created for this albumpath, not continuing " + workdir.decode(
-                        headphones.SYS_ENCODING, 'replace'))
+                    "Looks like a temp directory has previously been created "
+                    "for this albumpath, not continuing "
+                )
                 shutil.rmtree(new_folder)
                 return None
         except Exception as e:
-            logger.warn("Cannot determine if already copied/processed, will copy anyway: Warning: " + str(e))
+            logger.warn(
+                "Cannot determine if already copied/processed, will copy anyway. "
+                f"Warning: {e}"
+            )
 
     # Copy to temp dir
     try:
         subdir = os.path.join(new_folder, "headphones")
-        logger.info("Copying files to " + subdir.decode(headphones.SYS_ENCODING, 'replace'))
+        logger.info(f"Copying files to {subdir}")
         if not single:
             shutil.copytree(albumpath, subdir)
         else:
@@ -720,9 +720,10 @@ def preserve_torrent_directory(albumpath, forced=False, single=False):
         # Update the album path with the new location
         return subdir
     except Exception as e:
-        logger.warn("Cannot copy/move files to temp directory: " + new_folder.decode(headphones.SYS_ENCODING,
-                                                                                  'replace') + ". Not continuing. Error: " + str(
-            e))
+        logger.warn(
+            f"Cannot copy/move files to temp directory: {new_folder}. "
+            f"Not continuing. Error: {e}"
+        )
         shutil.rmtree(new_folder)
         return None
 
@@ -767,7 +768,7 @@ def cue_split(albumpath, keep_original_folder=False):
                 cuesplit.split(cue_dir)
             except Exception as e:
                 os.chdir(cwd)
-                logger.warn("Cue not split: " + str(e))
+                logger.warn(f"Cue not split. Error: {e}")
                 return None
 
         os.chdir(cwd)
@@ -805,7 +806,7 @@ def extract_song_data(s):
         year = match.group("year")
         return (name, album, year)
     else:
-        logger.info("Couldn't parse %s into a valid default format", s)
+        logger.info(f"Couldn't parse {s} into a valid default format")
 
     # newzbin default format
     pattern = re.compile(r'(?P<name>.*?)\s\-\s(?P<album>.*?)\s\((?P<year>\d+?\))', re.VERBOSE)
@@ -816,7 +817,7 @@ def extract_song_data(s):
         year = match.group("year")
         return (name, album, year)
     else:
-        logger.info("Couldn't parse %s into a valid Newbin format", s)
+        logger.info(f"Couldn't parse {s} into a valid Newbin format")
         return (name, album, year)
 
 
@@ -829,7 +830,7 @@ def smartMove(src, dest, delete=True):
     dest_path = os.path.join(dest, filename)
 
     if os.path.isfile(dest_path):
-        logger.info('Destination file exists: %s', dest_path)
+        logger.info(f"Destination file exists: {dest_path}")
         title = os.path.splitext(filename)[0]
         ext = os.path.splitext(filename)[1]
         i = 1
@@ -838,13 +839,12 @@ def smartMove(src, dest, delete=True):
             if os.path.isfile(os.path.join(dest, newfile)):
                 i += 1
             else:
-                logger.info('Renaming to %s', newfile)
+                logger.info(f"Renaming to {newfile}")
                 try:
                     os.rename(src, os.path.join(source_dir, newfile))
                     filename = newfile
                 except Exception as e:
-                    logger.warn('Error renaming %s: %s',
-                                src.decode(headphones.SYS_ENCODING, 'replace'), e)
+                    logger.warn(f"Error renaming {src}: {e}")
                 break
 
     if delete:
@@ -854,8 +854,9 @@ def smartMove(src, dest, delete=True):
         except Exception as e:
             exists = os.path.exists(dest_path)
             if exists and os.path.getsize(source_path) == os.path.getsize(dest_path):
-                logger.warn('Successfully moved file "%s", but something went wrong: %s',
-                    filename.decode(headphones.SYS_ENCODING, 'replace'), e)
+                logger.warn(
+                    f"Successfully moved {filename}, but something went wrong: {e}"
+                )
                 os.unlink(source_path)
             else:
                 # remove faultly copied file
@@ -864,12 +865,11 @@ def smartMove(src, dest, delete=True):
                 raise
     else:
         try:
-            logger.info('Copying "%s" to "%s"', source_path, dest_path)
+            logger.info(f"Copying {source_path} to {dest_path}")
             shutil.copy(source_path, dest_path)
             return True
         except Exception as e:
-            logger.warn('Error copying file %s: %s', filename.decode(headphones.SYS_ENCODING, 'replace'),
-                        e)
+            logger.warn(f"Error copying {filename}: {e}") 
 
 
 def walk_directory(basedir, followlinks=True):
@@ -892,8 +892,10 @@ def walk_directory(basedir, followlinks=True):
                 real_path = os.path.abspath(os.readlink(path))
 
                 if real_path in traversed:
-                    logger.debug("Skipping '%s' since it is a symlink to "
-                                 "'%s', which is already visited.", path, real_path)
+                    logger.debug(
+                        f"Skipping {path} since it is a symlink to "
+                        f"{real_path}, which is already visited."
+                    )
                 else:
                     traversed.append(real_path)
 
@@ -935,22 +937,13 @@ def sab_sanitize_foldername(name):
     FL_ILLEGAL = CH_ILLEGAL + ':\x92"'
     FL_LEGAL = CH_LEGAL + "-''"
 
-    uFL_ILLEGAL = FL_ILLEGAL.decode('latin-1')
-    uFL_LEGAL = FL_LEGAL.decode('latin-1')
-
     if not name:
-        return name
-    if isinstance(name, str):
-        illegal = uFL_ILLEGAL
-        legal = uFL_LEGAL
-    else:
-        illegal = FL_ILLEGAL
-        legal = FL_LEGAL
+        return
 
     lst = []
     for ch in name.strip():
-        if ch in illegal:
-            ch = legal[illegal.find(ch)]
+        if ch in FL_ILLEGAL:
+            ch = FL_LEGAL[FL_ILLEGAL.find(ch)]
             lst.append(ch)
         else:
             lst.append(ch)
@@ -1006,7 +999,7 @@ def create_https_certificates(ssl_cert, ssl_key):
         with open(ssl_cert, "w") as fp:
             fp.write(crypto.dump_certificate(crypto.FILETYPE_PEM, cert))
     except IOError as e:
-        logger.error("Error creating SSL key and certificate: %s", e)
+        logger.error(f"Error creating SSL key and certificate: e")
         return False
 
     return True

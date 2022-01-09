@@ -74,10 +74,9 @@ def sendNZB(nzb):
 
     # if we get a raw data result we want to upload it to SAB
     elif nzb.resultType == "nzbdata":
-        # Sanitize the file a bit, since we can only use ascii chars with MultiPartPostHandler
-        nzbdata = helpers.latinToAscii(nzb.extraInfo[0])
+        nzbdata = nzb.extraInfo[0]
         params['mode'] = 'addfile'
-        files = {"nzbfile": (helpers.latinToAscii(nzb.name) + ".nzb", nzbdata)}
+        files = {"nzbfile": (nzb.name + ".nzb", nzbdata)}
         headers = {'User-Agent': USER_AGENT}
 
     logger.info("Attempting to connect to SABnzbd on url: %s" % headphones.CONFIG.SAB_HOST)

@@ -14,6 +14,7 @@
 #  along with Headphones.  If not, see <http://www.gnu.org/licenses/>.
 
 import time
+import datetime
 import shutil
 import subprocess
 import multiprocessing
@@ -368,17 +369,13 @@ def command(encoder, musicSource, musicDest, albumPath, xldProfile):
         logger.debug(out)
         encoded = False
     else:
-        logger.info('%s encoded in %s', musicSource, getTimeEncode(startMusicTime))
+        logger.info(f"{musicSource} encoded in {getTimeEncode(startMusicTime)}")
         encoded = True
 
     return encoded
 
 
 def getTimeEncode(start):
-    seconds = int(time.time() - start)
-    hours = seconds / 3600
-    seconds -= 3600 * hours
-    minutes = seconds / 60
-    seconds -= 60 * minutes
-    print(hours, minutes, seconds)
-    return "%02d:%02d:%02d" % (hours, minutes, seconds)
+    finish = time.time()
+    seconds = int(finish - start)
+    return datetime.timedelta(seconds=seconds)

@@ -103,8 +103,6 @@ def libraryScan(dir=None, append=False, ArtistID=None, ArtistName=None,
                 subdirectory = r.replace(dir, '')
                 latest_subdirectory.append(subdirectory)
 
-                logger.info(f"[{dir}] Now scanning subdirectory: {subdirectory}")
-
                 track_path = os.path.join(r, files)
 
                 # Try to read the metadata
@@ -193,36 +191,45 @@ def libraryScan(dir=None, append=False, ArtistID=None, ArtistName=None,
 
     # Now we start track matching
     logger.info(f"{new_track_count} new/modified tracks found and added to the database")
-    track_list = myDB.action(
+    dbtracks = myDB.action(
             "SELECT * FROM have WHERE Matched IS NULL AND LOCATION LIKE ?",
             [f"{dir}%"]
         )
-    logger.info(f"Found {len(track_list)} new/modified tracks in `{dir}`")
+    dbtracks_count = myDB.action(
+            "SELECT COUNT(*) FROM have WHERE Matched IS NULL AND LOCATION LIKE ?",
+            [f"{dir}%"]
+        ).fetchone()[0]
+    logger.info(f"Found {dbtracks_count} new/modified tracks in `{dir}`")
     logger.info("Matching tracks to the appropriate releases....")
 
-    # Sort the track_list by most vague (e.g. no trackid or releaseid) to most specific (both trackid & releaseid)
-    # When we insert into the database, the tracks with the most specific information will overwrite the more general matches
 
-    # track_list = helpers.multikeysort(track_list, ['ReleaseID', 'TrackID'])
-    track_list = helpers.multikeysort(track_list, ['ArtistName', 'AlbumTitle'])
 
-    # We'll use this to give a % completion, just because the track matching might take a while
-    track_count = 0
-    latest_artist = []
+    # Sort the track_list by most vague (e.g. no trackid or releaseid)
+    # to most specific (both trackid & releaseid)
+    # When we insert into the database, the tracks with the most 
+    # specific information will overwrite the more general matches
+
+    sorted_dbtracks = helpers.multikeysort(dbtracks, ['ArtistName', 'AlbumTitle'])
+
+
+    # We'll use this to give a % completion, just because the
+    # track matching might take a while
+    tracks_completed = 0
+    latest_artist = None
     last_completion_percentage = 0
     prev_artist_name = None
     artistid = None
 
-    for track in track_list:
+    for track in sorted_dbtracks:
 
-        latest_artist.append(track['ArtistName'])
-        if track_count == 0:
-            logger.info("Now matching tracks by %s" % track['ArtistName'])
-        elif latest_artist[track_count] != latest_artist[track_count - 1] and track_count != 0:
-            logger.info("Now matching tracks by %s" % track['ArtistName'])
+        if latest_artist != track['ArtistName']:
+            logger.info(f"Now matching tracks by {track['ArtistName']}")
+            latest_artist = track['ArtistName']
 
-        track_count += 1
-        completion_percentage = math.floor(float(track_count) / total_number_of_tracks * 1000) / 10
+        tracks_completed += 1
+        completion_percentage = math.floor(
+                float(tracks_completed) / dbtracks_count * 1000
+            ) / 10
 
         if completion_percentage >= (last_completion_percentage + 10):
             logger.info("Track matching is " + str(completion_percentage) + "% complete")
@@ -275,9 +282,9 @@ def libraryScan(dir=None, append=False, ArtistID=None, ArtistName=None,
                 # matching on CleanName should be enough, ensure it's the same artist just in case
 
                 # Update tracks
-                track = myDB.action('SELECT AlbumID, ArtistName FROM tracks WHERE CleanName = ? AND ArtistID = ?', [clean_name, artistid]).fetchone()
-                if track:
-                    albumid = track['AlbumID']
+                dbtrack = myDB.action('SELECT AlbumID, ArtistName FROM tracks WHERE CleanName = ? AND ArtistID = ?', [clean_name, artistid]).fetchone()
+                if dbtrack:
+                    albumid = dbtrack['AlbumID']
                     myDB.action(
                         'UPDATE tracks SET Location = ?, BitRate = ?, Format = ? WHERE CleanName = ? AND ArtistID = ?',
                         [track['Location'], track['BitRate'], track['Format'], clean_name, artistid])

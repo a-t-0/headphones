@@ -1129,11 +1129,11 @@ def updateFilePermissions(albumpaths):
         for r, d, f in os.walk(folder):
             for files in f:
                 full_path = os.path.join(r, files)
-                    try:
-                        os.chmod(full_path, int(headphones.CONFIG.FILE_PERMISSIONS, 8))
-                    except:
-                        logger.error(f"Could not change permissions for `{full_path}`")
-                        continue
+                try:
+                    os.chmod(full_path, int(headphones.CONFIG.FILE_PERMISSIONS, 8))
+                except:
+                    logger.error(f"Could not change permissions for `{full_path}`")
+                    continue
 
 def renameUnprocessedFolder(path, tag):
     """

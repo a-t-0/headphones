@@ -30,6 +30,10 @@ def libraryScan(dir=None, append=False, ArtistID=None, ArtistName=None,
 
     if not dir:
         if not headphones.CONFIG.MUSIC_DIR:
+            logger.info(
+                "No music directory configured. Add it under "
+                "Manage -> Scan Music Library"
+            )
             return
         else:
             dir = headphones.CONFIG.MUSIC_DIR
@@ -55,32 +59,27 @@ def libraryScan(dir=None, append=False, ArtistID=None, ArtistName=None,
             dbtracks = myDB.action(
                 'SELECT Location FROM alltracks WHERE Location IS NOT NULL UNION SELECT Location FROM tracks WHERE Location IS NOT NULL')
 
-        locations = []
         for track in dbtracks:
-            locations.append(track['Location'])
-        for location in locations:
-            if not os.path.isfile(location):
+            track_location = track['Location']
+            if not os.path.isfile(track_location):
                 myDB.action('UPDATE tracks SET Location=?, BitRate=?, Format=? WHERE Location=?',
-                            [None, None, None, location])
+                            [None, None, None, track_location])
                 myDB.action('UPDATE alltracks SET Location=?, BitRate=?, Format=? WHERE Location=?',
-                            [None, None, None, location])
+                            [None, None, None, track_location])
 
         if ArtistName:
             del_have_tracks = myDB.select('SELECT Location, Matched, ArtistName FROM have WHERE ArtistName = ? COLLATE NOCASE', [ArtistName])
         else:
             del_have_tracks = myDB.select('SELECT Location, Matched, ArtistName FROM have')
 
-        locations = []
         for track in del_have_tracks:
-            locations.append([track['Location'], track['ArtistName']])
-        for location in locations:
-            if not os.path.isfile(location):
-                if location[1]:
+            if not os.path.isfile(track['Location']):
+                if track['ArtistName']:
                     # Make sure deleted files get accounted for when updating artist track counts
-                    new_artists.append(location[1])
-                myDB.action('DELETE FROM have WHERE Location=?', [location[0]])
+                    new_artists.append(track['ArtistName'])
+                myDB.action('DELETE FROM have WHERE Location=?', [Track['Location']])
                 logger.info(
-                    f"{location} removed from Headphones, as it "
+                    f"{Track['Location']} removed from Headphones, as it "
                     f"is no longer on disk"
                 )
 

@@ -87,7 +87,7 @@ def check_splitter(command):
 
 def split_baby(split_file, split_cmd):
     '''Let's split baby'''
-    logger.info('Splitting %s...', split_file.decode(headphones.SYS_ENCODING, 'replace'))
+    logger.info(f"Splitting {split_file}...")
     logger.debug(subprocess.list2cmdline(split_cmd))
 
     # Prevent Windows from opening a terminal window
@@ -108,16 +108,16 @@ def split_baby(split_file, split_cmd):
 
     process = subprocess.Popen(split_cmd, startupinfo=startupinfo,
                                stdin=open(os.devnull, 'rb'), stdout=subprocess.PIPE,
-                               stderr=subprocess.PIPE, env=env)
+                               stderr=subprocess.PIPE, env=env, text=True)
     stdout, stderr = process.communicate()
 
     if process.returncode:
-        logger.error('Split failed for %s', split_file.decode(headphones.SYS_ENCODING, 'replace'))
-        out = stdout if stdout else stderr
-        logger.error('Error details: %s', out.decode(headphones.SYS_ENCODING, 'replace'))
+        logger.error(f"Split failed for {split_file}")
+        out = stdout or stderr
+        logger.error(f"Error details: {out}")
         return False
     else:
-        logger.info('Split success %s', split_file.decode(headphones.SYS_ENCODING, 'replace'))
+        logger.info(f"Split succeeded for {split_file}")
         return True
 
 

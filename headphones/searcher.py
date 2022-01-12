@@ -340,12 +340,6 @@ def do_sorted_search(album, new, losslessOnly, choose_specific_download=False):
         send_to_downloader(data, bestqual, album)
 
 
-def removeDisallowedFilenameChars(filename):
-    validFilenameChars = "-_.() %s%s" % (string.ascii_letters, string.digits)
-    cleanedFilename = unicodedata.normalize('NFKD', filename).encode('ASCII', 'ignore').lower()
-    return ''.join(c for c in cleanedFilename if c in validFilenameChars)
-
-
 def more_filtering(results, album, albumlength, new):
     low_size_limit = None
     high_size_limit = None

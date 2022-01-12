@@ -57,9 +57,6 @@ def fix_url(s, charset="utf-8"):
     Fix the URL so it is proper formatted and encoded.
     """
 
-    if isinstance(s, str):
-        s = s.encode(charset, 'ignore')
-
     scheme, netloc, path, qs, anchor = urllib.parse.urlsplit(s)
     path = urllib.parse.quote(path, '/%')
     qs = urllib.parse.quote_plus(qs, ':&=')
@@ -89,14 +86,10 @@ def torrent_to_file(target_file, data):
         try:
             os.chmod(target_file, int(headphones.CONFIG.FILE_PERMISSIONS, 8))
         except OSError as e:
-            logger.warn(
-                "Could not change permissions for file '%s': %s. Continuing.",
-                target_file.decode(headphones.SYS_ENCODING, "replace"),
-                e.message)
+            logger.warn(f"Could not change permissions for `{target_file}`: {e}")
     else:
         logger.debug(
-            "Not changing file permissions, since it is disabled: %s",
-            target_file.decode(headphones.SYS_ENCODING, "replace"))
+            f"Not changing file permissions for `{target_file}, since it is disabled")
 
     # Done
     return True
@@ -826,8 +819,8 @@ def send_to_downloader(data, bestqual, album):
                 return
     else:
         folder_name = '%s - %s [%s]' % (
-            helpers.latinToAscii(album['ArtistName']).encode('UTF-8').replace('/', '_'),
-            helpers.latinToAscii(album['AlbumTitle']).encode('UTF-8').replace('/', '_'),
+            helpers.latinToAscii(album['ArtistName']).replace('/', '_'),
+            helpers.latinToAscii(album['AlbumTitle']).replace('/', '_'),
             get_year_from_release_date(album['ReleaseDate']))
 
         # Blackhole
@@ -1248,12 +1241,12 @@ def searchTorrent(album, new=False, losslessOnly=False, albumlength=None,
     else:
         usersearchterm = ''
 
-    semi_clean_artist_term = re.sub('[\.\-\/]', ' ', semi_cleanartist).encode('utf-8', 'replace')
-    semi_clean_album_term = re.sub('[\.\-\/]', ' ', semi_cleanalbum).encode('utf-8', 'replace')
-    # Replace bad characters in the term and unicode it
-    term = re.sub('[\.\-\/]', ' ', term).encode('utf-8')
-    artistterm = re.sub('[\.\-\/]', ' ', cleanartist).encode('utf-8', 'replace')
-    albumterm = re.sub('[\.\-\/]', ' ', cleanalbum).encode('utf-8', 'replace')
+    semi_clean_artist_term = re.sub('[\.\-\/]', ' ', semi_cleanartist)
+    semi_clean_album_term = re.sub('[\.\-\/]', ' ', semi_cleanalbum)
+    # Replace bad characters in the term
+    term = re.sub('[\.\-\/]', ' ', term)
+    artistterm = re.sub('[\.\-\/]', ' ', cleanartist)
+    albumterm = re.sub('[\.\-\/]', ' ', cleanalbum)
 
     # If Preferred Bitrate and High Limit and Allow Lossless then get both lossy and lossless
     if headphones.CONFIG.PREFERRED_QUALITY == 2 and headphones.CONFIG.PREFERRED_BITRATE and headphones.CONFIG.PREFERRED_BITRATE_HIGH_BUFFER and headphones.CONFIG.PREFERRED_BITRATE_ALLOW_LOSSLESS:

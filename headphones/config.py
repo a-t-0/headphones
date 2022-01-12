@@ -363,6 +363,12 @@ class Config(object):
 
         try:
             my_val = definition_type(self._config[section][ini_key])
+            # ConfigParser interprets empty strings in the config
+            # literally, so we need to sanitize it. It's not really
+            # a config upgrade, since a user can at any time put 
+            # some_key = ''
+            if my_val == '""' or my_val == "''":
+                my_val = ''
         except Exception:
             my_val = default
             self._config[section][ini_key] = str(my_val)
@@ -468,7 +474,8 @@ class Config(object):
 
     def _upgrade(self):
         """
-        Bring old configs up to date
+        Bring old configs up to date. Although this is kind of a dumb
+        way to do it because it doesn't handle multi-step upgrades
         """
         if self.CONFIG_VERSION == '2':
             # Update the config to use direct path to the encoder rather than the encoder folder

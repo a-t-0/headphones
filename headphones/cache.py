@@ -15,7 +15,6 @@
 
 import os
 
-
 import headphones
 from headphones import db, helpers, lastfm, logger, mb, request
 

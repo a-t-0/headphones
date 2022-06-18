@@ -189,7 +189,7 @@ class qbittorrentclient:
         )
 
     def remove(self, hash, remove_data=False):
-        logger.debug("qb.remove({},{})".format(hash, remove_data))
+        logger.debug(f"qb.remove({hash},{remove_data})")
 
         args = {"hashes": hash}
         if remove_data:
@@ -202,7 +202,7 @@ class qbittorrentclient:
 
 
 def removeTorrent(hash, remove_data=False):
-    logger.debug("removeTorrent({},{})".format(hash, remove_data))
+    logger.debug(f"removeTorrent({hash},{remove_data})")
 
     qbclient = qbittorrentclient()
     if qbclient.version == 2:

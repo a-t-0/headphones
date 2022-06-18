@@ -57,7 +57,7 @@ def runGit(args):
 
             logger.debug("Git output: " + output)
         except OSError as e:
-            logger.debug("Command failed: {}. Error: {}".format(cmd, e))
+            logger.debug(f"Command failed: {cmd}. Error: {e}")
             continue
 
         if (
@@ -233,9 +233,11 @@ def update():
                 logger.info("Output: " + str(output))
 
     else:
-        tar_download_url = "https://github.com/{}/headphones/tarball/{}".format(
-            headphones.CONFIG.GIT_USER,
-            headphones.CONFIG.GIT_BRANCH,
+        tar_download_url = (
+            "https://github.com/{}/headphones/tarball/{}".format(
+                headphones.CONFIG.GIT_USER,
+                headphones.CONFIG.GIT_BRANCH,
+            )
         )
         update_dir = os.path.join(headphones.PROG_DIR, "update")
         version_path = os.path.join(headphones.PROG_DIR, "version.txt")

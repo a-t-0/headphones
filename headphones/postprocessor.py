@@ -895,7 +895,7 @@ def cleanupFiles(albumpath):
                     os.remove(os.path.join(r, file))
                 except Exception as e:
                     logger.error(
-                        "Could not remove file: {}. Error: {}".format(file, e)
+                        f"Could not remove file: {file}. Error: {e}"
                     )
 
 
@@ -1437,7 +1437,7 @@ def renameUnprocessedFolder(path, tag):
 
     for i in itertools.count():
         if i == 0:
-            new_path = "{} ({})".format(path, tag)
+            new_path = f"{path} ({tag})"
         else:
             new_path = "%s (%s[%d])" % (path, tag, i)
 

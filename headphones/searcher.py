@@ -31,6 +31,7 @@ from headphones.common import USER_AGENT
 from headphones.downloader import send_to_downloader
 from headphones.piratebay_searcher import fix_url, search_piratebay
 from headphones.preprocessor import preprocess
+from headphones.searcher_helper import get_year_from_release_date
 from headphones.types import Result
 
 # Magnet to torrent services, for Black hole. Stolen from CouchPotato.
@@ -183,15 +184,18 @@ def do_sorted_search(album, new, losslessOnly, choose_specific_download=False):
     elif (
         headphones.CONFIG.PREFER_TORRENTS == 1 and not choose_specific_download
     ):
-
+        print(f"TORRENT_PROVIDERS={TORRENT_PROVIDERS}")
         if TORRENT_PROVIDERS:
             results = searchTorrent(album, new, losslessOnly, albumlength)
 
         if not results and NZB_PROVIDERS and NZB_DOWNLOADERS:
             results = searchNZB(album, new, losslessOnly, albumlength)
 
-    else:
+        logger.info(
+            f"IN headphones.CONFIG.PREFER_TORRENTS={headphones.CONFIG.PREFER_TORRENTS}"
+        )
 
+    else:
         nzb_results = None
         torrent_results = None
 

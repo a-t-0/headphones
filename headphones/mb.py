@@ -910,7 +910,9 @@ def findArtistbyAlbum(name):
             )
     except musicbrainzngs.WebServiceError as e:
         logger.warn(
-            "Attempt to query MusicBrainz for {} failed ({})".format(name, str(e))
+            "Attempt to query MusicBrainz for {} failed ({})".format(
+                name, str(e)
+            )
         )
         mb_lock.snooze(5)
 

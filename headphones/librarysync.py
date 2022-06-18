@@ -551,7 +551,9 @@ def libraryScan(
             )
         except Exception as e:
             logger.warn(
-                "Error updating counts for artist: {}: {}".format(ArtistName, e)
+                "Error updating counts for artist: {}: {}".format(
+                    ArtistName, e
+                )
             )
 
         if havetracks:

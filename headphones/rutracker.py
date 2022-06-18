@@ -195,7 +195,9 @@ class Rutracker:
                     size *= 1024**4
 
                 if size < self.maxsize and minimumseeders < int(seeds):
-                    logger.info("Found {}. Size: {}".format(title, size_formatted))
+                    logger.info(
+                        f"Found {title}. Size: {size_formatted}"
+                    )
                     # Torrent topic page
                     torrent_id = dict(
                         [

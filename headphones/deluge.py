@@ -141,9 +141,9 @@ def addTorrent(link, data=None, name=None):
                         re.findall(r"name([0-9]*)\:.*?\:", str(torrentfile))[0]
                     )
                     logger.debug("Deluge: Getting torrent name")
-                    name = re.findall(r"name[0-9]*\:(.*?)\:", str(torrentfile))[
-                        0
-                    ][:name_length]
+                    name = re.findall(
+                        r"name[0-9]*\:(.*?)\:", str(torrentfile)
+                    )[0][:name_length]
                 except Exception:
                     logger.debug(
                         "Deluge: Could not get torrent name, getting file name"
@@ -185,9 +185,9 @@ def addTorrent(link, data=None, name=None):
                         re.findall(r"name([0-9]*)\:.*?\:", str(torrentfile))[0]
                     )
                     logger.debug("Deluge: Getting torrent name")
-                    name = re.findall(r"name[0-9]*\:(.*?)\:", str(torrentfile))[
-                        0
-                    ][:name_length]
+                    name = re.findall(
+                        r"name[0-9]*\:(.*?)\:", str(torrentfile)
+                    )[0][:name_length]
                 except Exception:
                     logger.debug(
                         "Deluge: Could not get torrent name, getting file name"
@@ -451,7 +451,7 @@ def _get_auth():
     auth = json.loads(response.text)["result"]
     auth_error = json.loads(response.text)["error"]
     logger.debug(
-        "Deluge: Authentication result: {}, Error: {}".format(auth, auth_error)
+        f"Deluge: Authentication result: {auth}, Error: {auth_error}"
     )
     delugeweb_auth = response.cookies
     logger.debug(

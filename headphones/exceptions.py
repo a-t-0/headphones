@@ -26,4 +26,3 @@ class NewzbinAPIThrottled(HeadphonesException):
 
 class SoftChrootError(HeadphonesException):
     """Fatal errors in SoftChroot module."""
-

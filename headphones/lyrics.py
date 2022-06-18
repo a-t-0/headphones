@@ -37,7 +37,7 @@ def getLyrics(artist, song):
     if url:
         lyricsurl = url[0].firstChild.nodeValue
     else:
-        logger.info("No lyrics found for {} - {}".format(artist, song))
+        logger.info(f"No lyrics found for {artist} - {song}")
         return
 
     lyricspage = request.request_content(lyricsurl)

@@ -159,9 +159,7 @@ def check_list(list, ignore=0):
     for i in range(first_none, len(list2)):
         if list2[i]:
             raise ValueError(
-                "non-None entry after None entry in list at index {}".format(
-                    i
-                )
+                f"non-None entry after None entry in list at index {i}"
             )
 
     while True:
@@ -727,9 +725,7 @@ def split(albumpath):
         )
         # check metafile for completeness
         if not base_dir.filter("MetaFile"):
-            raise ValueError(
-                f"Cue Meta file {ALBUM_META_FILE_NAME} missing!"
-            )
+            raise ValueError(f"Cue Meta file {ALBUM_META_FILE_NAME} missing!")
         else:
             CUE_META = base_dir.filter("MetaFile")[0]
 

@@ -235,7 +235,7 @@ class XBMC:
         hosts = [x.strip() for x in self.hosts.split(",")]
 
         header = "Headphones"
-        message = "{} - {} added to your library".format(artist, album)
+        message = f"{artist} - {album} added to your library"
         time = "3000"  # in ms
 
         for host in hosts:
@@ -453,7 +453,7 @@ class Plex:
         hosts = [x.strip() for x in self.client_hosts.split(",")]
 
         header = "Headphones"
-        message = "{} - {} added to your library".format(artist, album)
+        message = f"{artist} - {album} added to your library"
         time = "3000"  # in ms
 
         for host in hosts:

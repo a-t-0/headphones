@@ -29,7 +29,6 @@ from operator import itemgetter
 
 from beets import logging as beetslogging
 from mediafile import FileTypeError, MediaFile, UnreadableFileError
-from six import text_type
 from unidecode import unidecode
 
 import headphones
@@ -602,8 +601,8 @@ def expand_subfolders(f):
         ]
         extra_media_folders = list(
             {
-                    os.path.join(*media_folder)
-                    for media_folder in extra_media_folders
+                os.path.join(*media_folder)
+                for media_folder in extra_media_folders
             }
         )
 

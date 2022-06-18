@@ -483,7 +483,7 @@ class WebInterface:
         else:
             newaction = action
         for mbid in args:
-            logger.info("Marking {} as {}".format(mbid, newaction))
+            logger.info(f"Marking {mbid} as {newaction}")
             controlValueDict = {"AlbumID": mbid}
             newValueDict = {"Status": newaction}
             myDB.upsert("albums", newValueDict, controlValueDict)
@@ -761,11 +761,11 @@ class WebInterface:
         # unmatchedalbums = [f for f in have_album_dictionary if f not in [x for x in headphones_album_dictionary]]
 
         check = {
-                (
-                    clean_name(d["ArtistName"]).lower(),
-                    clean_name(d["AlbumTitle"]).lower(),
-                )
-                for d in headphones_album_dictionary
+            (
+                clean_name(d["ArtistName"]).lower(),
+                clean_name(d["AlbumTitle"]).lower(),
+            )
+            for d in headphones_album_dictionary
         }
         unmatchedalbums = [
             d
@@ -1344,9 +1344,11 @@ class WebInterface:
             sortbyhavepercent = True
 
         if sSearch == "":
-            query = "SELECT * from artists order by {} COLLATE NOCASE {}".format(
-                sortcolumn,
-                sSortDir_0,
+            query = (
+                "SELECT * from artists order by {} COLLATE NOCASE {}".format(
+                    sortcolumn,
+                    sSortDir_0,
+                )
             )
             filtered = myDB.select(query)
             totalcount = len(filtered)
@@ -1357,7 +1359,9 @@ class WebInterface:
                 + '%" OR LatestAlbum LIKE "%'
                 + sSearch
                 + '%"'
-                + "ORDER BY {} COLLATE NOCASE {}".format(sortcolumn, sSortDir_0)
+                + "ORDER BY {} COLLATE NOCASE {}".format(
+                    sortcolumn, sSortDir_0
+                )
             )
             filtered = myDB.select(query)
             totalcount = myDB.select("SELECT COUNT(*) from artists")[0][0]

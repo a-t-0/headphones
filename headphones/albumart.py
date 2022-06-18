@@ -16,7 +16,6 @@
 import struct
 from io import BytesIO
 
-
 import headphones
 from headphones import db, logger, request
 

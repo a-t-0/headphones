@@ -15,14 +15,14 @@
 
 # NZBGet support added by CurlyMo <curlymoo1@gmail.com> as a part of XBian - XBMC on the Raspberry Pi
 # Pirate Bay
-import re
 import urllib.parse
 
 import urllib3
 
 import headphones
 from headphones import helpers, logger, request
-from headphones.get_magnets import search
+from headphones.get_magnets import search_tpb
+from headphones.searcher_helper import magnets_to_results
 
 # from headphones.searcher import fix_url, set_proxy
 from headphones.types import Result
@@ -57,23 +57,14 @@ def search_piratebay(
         term, losslessOnly, allow_lossless, minimumseeders, resultlist
     )
     print(f"resultlist={resultlist}")
+    return resultlist
 
 
 def updated_piratebay_searcher(
     term, losslessOnly, allow_lossless, minimumseeders, resultlist
 ):
-
-    print(
-        f"headphones.CONFIG.TORRENT_DOWNLOADER={headphones.CONFIG.TORRENT_DOWNLOADER}"
-    )
-    print(f"headphones.CONFIG.MAGNET_LINKS={headphones.CONFIG.MAGNET_LINKS}")
-    logger.info(
-        f"headphones.CONFIG.TORRENT_DOWNLOADER={headphones.CONFIG.TORRENT_DOWNLOADER}"
-    )
-    logger.info(
-        f"headphones.CONFIG.MAGNET_LINKS={headphones.CONFIG.MAGNET_LINKS}"
-    )
-
+    provider = "The Pirate Bay"
+    print(f"before={resultlist}")
     # In GUI: Settings>Search providers>Torrents>The Pirate Bay.
     if headphones.CONFIG.PIRATEBAY:
         # Specify the search provider name.
@@ -102,7 +93,16 @@ def updated_piratebay_searcher(
             # Get titles, size, quality
             # Append to results
             if headphones.CONFIG.MAGNET_LINKS != 0:
-                search(tpb_term)
+                magnets = search_tpb(tpb_term)
+                print(f"magnets={magnets}")
+                resultlist = magnets_to_results(
+                    category,
+                    magnets,
+                    maxsize,
+                    minimumseeders,
+                    provider,
+                    resultlist,
+                )
             else:
                 logger.info(
                     "The pirate bay does not give direct torrent links"
@@ -113,6 +113,7 @@ def updated_piratebay_searcher(
                     + "convert magnet links to Torrent files and export them "
                     + "to a black hole dir. %s" % term
                 )
+    return resultlist
 
 
 def old_pirate_bay_searcher(
@@ -194,6 +195,7 @@ def old_pirate_bay_searcher(
                             "An unknown error occurred in the Old Pirate Bay parser: %s"
                             % e
                         )
+    return resultlist
 
 
 def get_new_piratebay_proxy_url():
@@ -219,24 +221,3 @@ def get_audio_quality_and_size(losslessOnly, allow_lossless):
         category = "101"  # MP3 only
         maxsize = 300000000
     return category, maxsize
-
-
-def filter_magnet_links():
-    # Get the size of the torrent content in ?bytes?.
-    formatted_size = (
-        re.search("Size (.*),", str(item)).group(1).replace("\xa0", " ")
-    )
-    size = helpers.piratesize(formatted_size)
-
-    if size < maxsize and minimumseeders < seeds and url is not None:
-        match = True
-        logger.info(f"Found {title}. Size: {formatted_size}")
-    else:
-        match = False
-        logger.info(
-            "%s is larger than the maxsize or has too little seeders for this category, "
-            "skipping. (Size: %i bytes, Seeders: %i)"
-            % (title, size, int(seeds))
-        )
-
-    resultlist.append(Result(title, size, url, provider, "torrent", match))

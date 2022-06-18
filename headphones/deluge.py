@@ -450,9 +450,7 @@ def _get_auth():
 
     auth = json.loads(response.text)["result"]
     auth_error = json.loads(response.text)["error"]
-    logger.debug(
-        f"Deluge: Authentication result: {auth}, Error: {auth_error}"
-    )
+    logger.debug(f"Deluge: Authentication result: {auth}, Error: {auth_error}")
     delugeweb_auth = response.cookies
     logger.debug(
         "Deluge: Authentication cookies: %s"

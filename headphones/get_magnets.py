@@ -7,6 +7,7 @@
 
 import json
 import re
+import sys
 import urllib
 from os.path import expanduser
 
@@ -14,6 +15,29 @@ import requests
 from rich import box
 from rich.console import Console
 from rich.table import Table
+
+
+class Magnet:
+    def __init__(
+        self, index, href, magnet_url, seeds, size, title, tpb_category
+    ):
+
+        self.index = index
+        self.href = href
+        self.magnet_url = magnet_url
+        self.seeds = seeds
+        self.size = size
+        self.title = title
+        self.tpb_category = tpb_category
+        self.set_headphones_category(tpb_category)
+
+    def set_headphones_category(self, tpb_category):
+        if "FLAC" in tpb_category:
+            self.category = "104"  # losslessOnly
+        else:
+            self.category = "100"  # mp3 (not lossless, no FLAC)
+            # TODO: distinguish between general music (100) and mp3 (101).
+
 
 # PIRATE_URL = "https://thepiratebay.org"
 PIRATE_URL = "https://proxifiedpiratebay.org"
@@ -149,7 +173,10 @@ def get_search_result_list(keyword):
     return json.loads(raw_search_results.content)
 
 
-def search(keyword):
+def search_tpb(keyword):
+    print(f"SEARCH MAGNETS{keyword}")
+    magnets = []
+
     fillin_categories()
     tracker_list = get_trackers()
     search_result = get_search_result_list(keyword)
@@ -170,6 +197,7 @@ def search(keyword):
         href = MAGNET_FORMAT.format(
             search["info_hash"], urllib.parse.quote(search["name"])
         )
+
         # print(f'magnet_link={magnet_link}')
         for tracker in tracker_list:
             magnet_link = (
@@ -187,9 +215,35 @@ def search(keyword):
             get_readable_size(int(search["size"])),
         )
         link_results.append(magnet_link)
-        print(f"link_results={link_results}")
         names.append(search["name"])
+
+        print("MAGNET CREATE")
+        print(f"href={href}")
+        print(f"magnet_url={magnet_link}")
+        print(f'search["seeders"]={search["seeders"]}')
+        print(f'int(search["size"])={int(search["size"])}')
+        print(f'search["name"]={search["name"]}')
+        print(
+            f'get_category(search["category"])={get_category(search["category"])}'
+        )
+        magnet = Magnet(
+            i,
+            href,
+            magnet_link,
+            search["seeders"],
+            int(search["size"]),
+            search["name"],
+            get_category(search["category"]),
+        )
+        # Store data in Magnet object
+        magnets.append(magnet)
+
+        # Move to next search result and update counter.
         i = i + 1
+
+    console = Console()
+    console.print(table)
+    return magnets
 
     if len(link_results) > 0:
         console = Console()
@@ -223,10 +277,9 @@ def search(keyword):
                     exit(0)
 
 
-# if __name__ == "__main__":
-#    if len(sys.argv) > 1:
-#        search(sys.argv[1])
-#    else:
-#        print("缺少搜索关键字!")
-#        print("Search words missing!")
-#
+if __name__ == "__main__":
+    if len(sys.argv) > 1:
+        search_tpb(sys.argv[1])
+    else:
+        print("缺少搜索关键字!")
+        print("Search words missing!")

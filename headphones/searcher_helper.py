@@ -23,6 +23,7 @@ from bencode import encode as bencode
 
 import headphones
 from headphones import logger
+from headphones.types import Result
 
 
 def read_torrent_name(torrent_file, default_name=None):
@@ -163,3 +164,97 @@ def torrent_to_file(target_file, data):
 
     # Done
     return True
+
+
+def magnets_to_results(
+    category, magnets, maxsize, minimumseeders, provider, resultlist
+):
+    for magnet in magnets:
+        print(f"magnet={magnet}")
+        match = filter_magnet(category, magnet, maxsize, minimumseeders)
+
+        # if match:
+        resultlist.append(
+            Result(
+                str(magnet.title),
+                int(magnet.size),
+                str(magnet.magnet_url),
+                str(provider),
+                "torrent",
+                match,
+            )
+        )
+        print(f"appended")
+    return resultlist
+
+
+def filter_magnet(category, magnet, maxsize, minimumseeders):
+    print(f"filtering")
+    if (
+        filter_magnets_on_size(magnet, maxsize)
+        and filter_magnets_on_seeds(magnet, minimumseeders)
+        and filter_magnets_on_audio_quality(category, magnet)
+    ):
+
+        print(f"TRUE")
+        return True
+    else:
+        print(f"False")
+        return False
+
+
+def filter_magnets_on_size(magnet, maxsize):
+
+    # Check file size is acceptable.
+    if magnet.size < maxsize:
+        # logger.info(f"Found {magnet.title}. Size: {get_readable_size(magnet.size)}")
+        return True
+
+    else:
+        logger.info(
+            "%s is larger than the maxsize for this category, "
+            "skipping. (Size: %i bytes, Seeders: %i)"
+            % (magnet.title, magnet.size, int(magnet.seeds))
+        )
+        return False
+
+
+def filter_magnets_on_seeds(magnet, minimumseeders):
+
+    # Check if enough seeders exist.
+    if int(minimumseeders) < int(magnet.seeds):
+        # logger.info(f"Found {magnet.title}. Size: {get_readable_size(magnet.size)}")
+        return True
+
+    else:
+        logger.info(
+            "%s has too little seeders, "
+            "skipping. (Size: %i bytes, Seeders: %i)"
+            % (magnet.title, magnet.size, int(magnet.seeds))
+        )
+        return False
+
+
+def filter_magnets_on_audio_quality(category, magnet):
+    """100=general music, 101 = mp3, and 104 is lossless."""
+    if category in ["100", "101"]:
+        if magnet.category in ["100", "101"]:
+            # Can't distinguish between general music (100) and mp3(101)
+            return True
+        else:
+            logger.info(
+                "%s is lossless quality, not mp3, yet you want only mp3 quality, "
+                "skipping. (Size: %i bytes, Seeders: %i)"
+                % (magnet.title, magnet.size, int(magnet.seeds))
+            )
+            return False
+    elif category == "104":
+        if magnet.category == category:
+            return True
+        else:
+            logger.info(
+                "%s is mp3 quality, not lossless, yet you want only lossless quality"
+                ", skipping. (Size: %i bytes, Seeders: %i)"
+                % (magnet.title, magnet.size, int(magnet.seeds))
+            )
+            return False

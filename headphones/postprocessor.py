@@ -894,9 +894,7 @@ def cleanupFiles(albumpath):
                 try:
                     os.remove(os.path.join(r, file))
                 except Exception as e:
-                    logger.error(
-                        f"Could not remove file: {file}. Error: {e}"
-                    )
+                    logger.error(f"Could not remove file: {file}. Error: {e}")
 
 
 def renameNFO(albumpath):

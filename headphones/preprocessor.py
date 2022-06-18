@@ -94,9 +94,7 @@ def preprocess(resultlist, ruobj):
                 "d10:magnet-uri%d:%se" % (len(magnet_link), magnet_link),
                 result,
             )
-
-        # TODO: Allow result.kind that implies "torrent already downloaded"
-
+            
         else:
             if result.provider == "headphones":
                 return (

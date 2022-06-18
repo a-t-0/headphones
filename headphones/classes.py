@@ -59,7 +59,7 @@ class AuthURLOpener(HeadphonesURLopener):
 
         # if we've tried before then return blank which cancels the request
         else:
-            return ('', '')
+            return ("", "")
 
     # this is pretty much just a hack for convenience
     def openit(self, url):
@@ -103,6 +103,7 @@ class NZBSearchResult(SearchResult):
     """
     Regular NZB result with an URL to the NZB
     """
+
     resultType = "nzb"
 
 
@@ -110,6 +111,7 @@ class NZBDataSearchResult(SearchResult):
     """
     NZB result where the actual NZB XML data is stored in the extraInfo
     """
+
     resultType = "nzbdata"
 
 
@@ -117,6 +119,7 @@ class TorrentSearchResult(SearchResult):
     """
     Torrent result with an URL to the torrent
     """
+
     resultType = "torrent"
 
 
@@ -133,5 +136,14 @@ class Proper:
         self.episode = -1
 
     def __str__(self):
-        return str(self.date) + " " + self.name + " " + str(self.season) + "x" + str(
-            self.episode) + " of " + str(self.tvdbid)
+        return (
+            str(self.date)
+            + " "
+            + self.name
+            + " "
+            + str(self.season)
+            + "x"
+            + str(self.episode)
+            + " of "
+            + str(self.tvdbid)
+        )

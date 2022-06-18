@@ -5,7 +5,12 @@ from functools import lru_cache
 from typing import Dict, List, Optional, Tuple
 
 from .assets import FREQUENCIES
-from .constant import KO_NAMES, LANGUAGE_SUPPORTED_COUNT, TOO_SMALL_SEQUENCE, ZH_NAMES
+from .constant import (
+    KO_NAMES,
+    LANGUAGE_SUPPORTED_COUNT,
+    TOO_SMALL_SEQUENCE,
+    ZH_NAMES,
+)
 from .md import is_suspiciously_successive_range
 from .models import CoherenceMatches
 from .utils import (
@@ -135,7 +140,9 @@ def alphabet_languages(
     """
     languages = []  # type: List[Tuple[str, float]]
 
-    source_have_accents = any(is_accentuated(character) for character in characters)
+    source_have_accents = any(
+        is_accentuated(character) for character in characters
+    )
 
     for language, language_characters in FREQUENCIES.items():
 
@@ -244,7 +251,9 @@ def alpha_unicode_split(decoded_sequence: str) -> List[str]:
 
         for discovered_range in layers:
             if (
-                is_suspiciously_successive_range(discovered_range, character_range)
+                is_suspiciously_successive_range(
+                    discovered_range, character_range
+                )
                 is False
             ):
                 layer_target_range = discovered_range
@@ -262,7 +271,9 @@ def alpha_unicode_split(decoded_sequence: str) -> List[str]:
     return list(layers.values())
 
 
-def merge_coherence_ratios(results: List[CoherenceMatches]) -> CoherenceMatches:
+def merge_coherence_ratios(
+    results: List[CoherenceMatches],
+) -> CoherenceMatches:
     """
     This function merge results previously given by the function coherence_ratio.
     The return type is the same as coherence_ratio.
@@ -280,7 +291,8 @@ def merge_coherence_ratios(results: List[CoherenceMatches]) -> CoherenceMatches:
         (
             language,
             round(
-                sum(per_language_ratios[language]) / len(per_language_ratios[language]),
+                sum(per_language_ratios[language])
+                / len(per_language_ratios[language]),
                 4,
             ),
         )
@@ -292,7 +304,9 @@ def merge_coherence_ratios(results: List[CoherenceMatches]) -> CoherenceMatches:
 
 @lru_cache(maxsize=2048)
 def coherence_ratio(
-    decoded_sequence: str, threshold: float = 0.1, lg_inclusion: Optional[str] = None
+    decoded_sequence: str,
+    threshold: float = 0.1,
+    lg_inclusion: Optional[str] = None,
 ) -> CoherenceMatches:
     """
     Detect ANY language that can be identified in given sequence. The sequence will be analysed by layers.
@@ -304,7 +318,9 @@ def coherence_ratio(
 
     sufficient_match_count = 0  # type: int
 
-    lg_inclusion_list = lg_inclusion.split(",") if lg_inclusion is not None else []
+    lg_inclusion_list = (
+        lg_inclusion.split(",") if lg_inclusion is not None else []
+    )
     if "Latin Based" in lg_inclusion_list:
         ignore_non_latin = True
         lg_inclusion_list.remove("Latin Based")
@@ -318,7 +334,9 @@ def coherence_ratio(
         if character_count <= TOO_SMALL_SEQUENCE:
             continue
 
-        popular_character_ordered = [c for c, o in most_common]  # type: List[str]
+        popular_character_ordered = [
+            c for c, o in most_common
+        ]  # type: List[str]
 
         for language in lg_inclusion_list or alphabet_languages(
             popular_character_ordered, ignore_non_latin

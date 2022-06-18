@@ -276,7 +276,7 @@ class Tag(compat.with_metaclass(_TagMeta, Node)):
         expressions,
         nonexpressions,
         required,
-        **kwargs
+        **kwargs,
     ):
         r"""construct a new Tag instance.
 
@@ -306,7 +306,7 @@ class Tag(compat.with_metaclass(_TagMeta, Node)):
             raise exceptions.CompileException(
                 "Missing attribute(s): %s"
                 % ",".join([repr(m) for m in missing]),
-                **self.exception_kwargs
+                **self.exception_kwargs,
             )
         self.parent = None
         self.nodes = []
@@ -348,14 +348,14 @@ class Tag(compat.with_metaclass(_TagMeta, Node)):
                     raise exceptions.CompileException(
                         "Attibute '%s' in tag '%s' does not allow embedded "
                         "expressions" % (key, self.keyword),
-                        **self.exception_kwargs
+                        **self.exception_kwargs,
                     )
                 self.parsed_attributes[key] = repr(self.attributes[key])
             else:
                 raise exceptions.CompileException(
                     "Invalid attribute for tag '%s': '%s'"
                     % (self.keyword, key),
-                    **self.exception_kwargs
+                    **self.exception_kwargs,
                 )
         self.expression_undeclared_identifiers = undeclared_identifiers
 
@@ -385,7 +385,7 @@ class IncludeTag(Tag):
             ("file", "import", "args"),
             (),
             ("file",),
-            **kwargs
+            **kwargs,
         )
         self.page_args = ast.PythonCode(
             "__DUMMY(%s)" % attributes.get("args", ""), **self.exception_kwargs
@@ -413,7 +413,7 @@ class NamespaceTag(Tag):
             ("file",),
             ("name", "inheritable", "import", "module"),
             (),
-            **kwargs
+            **kwargs,
         )
 
         self.name = attributes.get("name", "__anon_%s" % hex(abs(id(self))))
@@ -421,12 +421,12 @@ class NamespaceTag(Tag):
             raise exceptions.CompileException(
                 "'name' and/or 'import' attributes are required "
                 "for <%namespace>",
-                **self.exception_kwargs
+                **self.exception_kwargs,
             )
         if "file" in attributes and "module" in attributes:
             raise exceptions.CompileException(
                 "<%namespace> may only have one of 'file' or 'module'",
-                **self.exception_kwargs
+                **self.exception_kwargs,
             )
 
     def declared_identifiers(self):
@@ -464,7 +464,7 @@ class DefTag(Tag):
             expressions,
             ("name", "filter", "decorator"),
             ("name",),
-            **kwargs
+            **kwargs,
         )
         name = attributes["name"]
         if re.match(r"^[\w_]+$", name):
@@ -527,13 +527,13 @@ class BlockTag(Tag):
             expressions,
             ("name", "filter", "decorator"),
             (),
-            **kwargs
+            **kwargs,
         )
         name = attributes.get("name")
         if name and not re.match(r"^[\w_]+$", name):
             raise exceptions.CompileException(
                 "%block may not specify an argument signature",
-                **self.exception_kwargs
+                **self.exception_kwargs,
             )
         if not name and attributes.get("args", None):
             raise exceptions.CompileException(
@@ -603,7 +603,7 @@ class CallNamespaceTag(Tag):
             tuple(attributes.keys()) + ("args",),
             (),
             (),
-            **kwargs
+            **kwargs,
         )
 
         self.expression = "%s.%s(%s)" % (

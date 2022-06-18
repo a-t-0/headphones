@@ -1,4 +1,5 @@
 import sys
+
 if sys.version_info < (2, 7):
     import unittest2 as unittest
     from unittest2 import TestCase as TC
@@ -20,6 +21,7 @@ def _d(f):
         if not _dummy:
             return f(self, *args, **kw)
         return self.assertTrue(True)
+
     return decorate
 
 
@@ -72,7 +74,7 @@ class TestCase(TC):
         return TestCase._TestCaseRaiseStub(self, exc, regex=regex, msg=msg)
 
     class _TestCaseRaiseStub:
-        """ Internal stuff for stubbing `assertRaises*` """
+        """Internal stuff for stubbing `assertRaises*`"""
 
         def __init__(self, test_case, exc, regex=None, msg=None):
             self.exc = exc
@@ -105,11 +107,19 @@ def TestArgs(*parameters):
 
             def method_for_parameter(self, method=method, parameter=parameter):
                 method(self, *parameter)
+
             args_for_parameter = ",".join(repr(v) for v in parameter)
-            name_for_parameter = method.__name__ + "(" + args_for_parameter + ")"
-            frame = sys._getframe(1)    # pylint: disable-msg=W0212
+            name_for_parameter = (
+                method.__name__ + "(" + args_for_parameter + ")"
+            )
+            frame = sys._getframe(1)  # pylint: disable-msg=W0212
             frame.f_locals[name_for_parameter] = method_for_parameter
-            frame.f_locals[name_for_parameter].__doc__ = method.__doc__ + '(' + args_for_parameter + ')'
-            method_for_parameter.__name__ = name_for_parameter + '(' + args_for_parameter + ')'
+            frame.f_locals[name_for_parameter].__doc__ = (
+                method.__doc__ + "(" + args_for_parameter + ")"
+            )
+            method_for_parameter.__name__ = (
+                name_for_parameter + "(" + args_for_parameter + ")"
+            )
         return None
+
     return decorator

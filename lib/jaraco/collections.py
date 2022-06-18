@@ -222,7 +222,9 @@ class RangeMap(dict):
     'not found'
     """
 
-    def __init__(self, source, sort_params={}, key_match_comparator=operator.le):
+    def __init__(
+        self, source, sort_params={}, key_match_comparator=operator.le
+    ):
         dict.__init__(self, source)
         self.sort_params = sort_params
         self.match = key_match_comparator
@@ -258,10 +260,13 @@ class RangeMap(dict):
 
     def bounds(self):
         sorted_keys = sorted(self.keys(), **self.sort_params)
-        return (sorted_keys[RangeMap.first_item], sorted_keys[RangeMap.last_item])
+        return (
+            sorted_keys[RangeMap.first_item],
+            sorted_keys[RangeMap.last_item],
+        )
 
     # some special values for the RangeMap
-    undefined_value = type(str('RangeValueUndefined'), (object,), {})()
+    undefined_value = type(str("RangeValueUndefined"), (object,), {})()
 
     class Item(int):
         "RangeMap Item"
@@ -336,7 +341,9 @@ class KeyTransformingDict(dict):
 
     def setdefault(self, key, *args, **kwargs):
         key = self.transform_key(key)
-        return super(KeyTransformingDict, self).setdefault(key, *args, **kwargs)
+        return super(KeyTransformingDict, self).setdefault(
+            key, *args, **kwargs
+        )
 
     def pop(self, key, *args, **kwargs):
         key = self.transform_key(key)
@@ -517,7 +524,7 @@ class ItemsAsAttributes(object):
             # raise the original exception, but use the original class
             #  name, not 'super'.
             (message,) = e.args
-            message = message.replace('super', self.__class__.__name__, 1)
+            message = message.replace("super", self.__class__.__name__, 1)
             e.args = (message,)
             raise
 
@@ -540,7 +547,7 @@ def invert_map(map):
     """
     res = dict((v, k) for k, v in map.items())
     if not len(res) == len(map):
-        raise ValueError('Key conflict in inverted mapping')
+        raise ValueError("Key conflict in inverted mapping")
     return res
 
 
@@ -597,7 +604,9 @@ class DictStack(list, collections.abc.Mapping):
 
     def __iter__(self):
         dicts = list.__iter__(self)
-        return iter(set(itertools.chain.from_iterable(c.keys() for c in dicts)))
+        return iter(
+            set(itertools.chain.from_iterable(c.keys() for c in dicts))
+        )
 
     def __getitem__(self, key):
         for scope in reversed(tuple(list.__iter__(self))):
@@ -766,7 +775,7 @@ class FrozenDict(collections.abc.Mapping, collections.abc.Hashable):
     True
     """
 
-    __slots__ = ['__data']
+    __slots__ = ["__data"]
 
     def __new__(cls, *args, **kwargs):
         self = super(FrozenDict, cls).__new__(cls)
@@ -994,7 +1003,7 @@ class FreezableDefaultDict(collections.defaultdict):  # type: ignore
     """
 
     def __missing__(self, key):
-        return getattr(self, '_frozen', super().__missing__)(key)
+        return getattr(self, "_frozen", super().__missing__)(key)
 
     def freeze(self):
         self._frozen = lambda key: self.default_factory()
@@ -1048,7 +1057,9 @@ class WeightedLookup(RangeMap):
 
         # allocate keys by weight
         indexes = map(Accumulator(), raw.values())
-        super().__init__(zip(indexes, raw.keys()), key_match_comparator=operator.lt)
+        super().__init__(
+            zip(indexes, raw.keys()), key_match_comparator=operator.lt
+        )
 
     def random(self):
         lower, upper = self.bounds()

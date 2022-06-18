@@ -33,8 +33,14 @@ last_requests = collections.defaultdict(int)
 fake_lock = headphones.lock.FakeLock()
 
 
-def request_response(url, method="get", auto_raise=True,
-                     whitelist_status_code=None, lock=fake_lock, **kwargs):
+def request_response(
+    url,
+    method="get",
+    auto_raise=True,
+    whitelist_status_code=None,
+    lock=fake_lock,
+    **kwargs,
+):
     """
     Convenient wrapper for `requests.get', which will capture the exceptions
     and log them. On success, the Response object is returned. In case of a
@@ -59,6 +65,7 @@ def request_response(url, method="get", auto_raise=True,
     if not headphones.CONFIG.VERIFY_SSL_CERT and sys.version_info >= (2, 7, 9):
         try:
             import ssl
+
             ssl._create_default_https_context = ssl._create_unverified_context
         except:
             pass
@@ -71,7 +78,8 @@ def request_response(url, method="get", auto_raise=True,
         # Request URL and wait for response
         with lock:
             logger.debug(
-                "Requesting URL via %s method: %s", method.upper(), url)
+                "Requesting URL via %s method: %s", method.upper(), url
+            )
             response = request_method(url, **kwargs)
 
         # If status code != OK, then raise exception, except if the status code
@@ -83,7 +91,9 @@ def request_response(url, method="get", auto_raise=True,
                 except:
                     logger.debug(
                         "Response status code %d is not white "
-                        "listed, raised exception", response.status_code)
+                        "listed, raised exception",
+                        response.status_code,
+                    )
                     raise
         elif auto_raise:
             response.raise_for_status()
@@ -96,19 +106,24 @@ def request_response(url, method="get", auto_raise=True,
                 "It is likely that your system cannot verify the validity "
                 "of the certificate. The remote certificate is either "
                 "self-signed, or the remote server uses SNI. See the wiki for "
-                "more information on this topic.")
+                "more information on this topic."
+            )
         else:
             logger.error(
                 "SSL error raised during connection, with certificate "
-                "verification turned off: %s", e)
+                "verification turned off: %s",
+                e,
+            )
     except requests.ConnectionError:
         logger.error(
             "Unable to connect to remote host. Check if the remote "
-            "host is up and running.")
+            "host is up and running."
+        )
     except requests.Timeout:
         logger.error(
             "Request timed out. The remote host did not respond in a timely "
-            "manner.")
+            "manner."
+        )
     except requests.HTTPError as e:
         if e.response is not None:
             if e.response.status_code >= 500:
@@ -121,7 +136,9 @@ def request_response(url, method="get", auto_raise=True,
 
             logger.error(
                 "Request raise HTTP error with status code %d (%s).",
-                e.response.status_code, cause)
+                e.response.status_code,
+                cause,
+            )
 
             # Debug response
             if headphones.VERBOSE:
@@ -219,8 +236,9 @@ def server_message(response):
     message = None
 
     # First attempt is to 'read' the response as HTML
-    if response.headers.get("content-type") and \
-                    "text/html" in response.headers.get("content-type"):
+    if response.headers.get(
+        "content-type"
+    ) and "text/html" in response.headers.get("content-type"):
         try:
             soup = BeautifulSoup(response.content, "html.parser")
         except Exception:

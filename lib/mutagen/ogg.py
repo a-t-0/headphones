@@ -22,8 +22,15 @@ import zlib
 from io import BytesIO
 
 from mutagen import FileType
-from mutagen._util import cdata, resize_bytes, MutagenError, loadfile, \
-    seek_end, bchr, reraise
+from mutagen._util import (
+    cdata,
+    resize_bytes,
+    MutagenError,
+    loadfile,
+    seek_end,
+    bchr,
+    reraise,
+)
 
 
 class error(MutagenError):
@@ -83,15 +90,24 @@ class OggPage(object):
             raise EOFError
 
         try:
-            (oggs, self.version, self.__type_flags,
-             self.position, self.serial, self.sequence,
-             crc, segments) = struct.unpack("<4sBBqIIiB", header)
+            (
+                oggs,
+                self.version,
+                self.__type_flags,
+                self.position,
+                self.serial,
+                self.sequence,
+                crc,
+                segments,
+            ) = struct.unpack("<4sBBqIIiB", header)
         except struct.error:
             raise error("unable to read full header; got %r" % header)
 
         if oggs != b"OggS":
-            raise error("read %r, expected %r, at 0x%x" % (
-                oggs, b"OggS", fileobj.tell() - 27))
+            raise error(
+                "read %r, expected %r, at 0x%x"
+                % (oggs, b"OggS", fileobj.tell() - 27)
+            )
 
         if self.version != 0:
             raise error("version %r unsupported" % self.version)
@@ -117,19 +133,31 @@ class OggPage(object):
     def __eq__(self, other):
         """Two Ogg pages are the same if they write the same data."""
         try:
-            return (self.write() == other.write())
+            return self.write() == other.write()
         except AttributeError:
             return False
 
     __hash__ = object.__hash__
 
     def __repr__(self):
-        attrs = ['version', 'position', 'serial', 'sequence', 'offset',
-                 'complete', 'continued', 'first', 'last']
+        attrs = [
+            "version",
+            "position",
+            "serial",
+            "sequence",
+            "offset",
+            "complete",
+            "continued",
+            "first",
+            "last",
+        ]
         values = ["%s=%r" % (attr, getattr(self, attr)) for attr in attrs]
         return "<%s %s, %d bytes in %d packets>" % (
-            type(self).__name__, " ".join(values), sum(map(len, self.packets)),
-            len(self.packets))
+            type(self).__name__,
+            " ".join(values),
+            sum(map(len, self.packets)),
+            len(self.packets),
+        )
 
     def write(self):
         """Return a string encoding of the page header and data.
@@ -139,8 +167,16 @@ class OggPage(object):
         """
 
         data = [
-            struct.pack("<4sBBqIIi", b"OggS", self.version, self.__type_flags,
-                        self.position, self.serial, self.sequence, 0)
+            struct.pack(
+                "<4sBBqIIi",
+                b"OggS",
+                self.version,
+                self.__type_flags,
+                self.position,
+                self.serial,
+                self.sequence,
+                0,
+            )
         ]
 
         lacing_data = []
@@ -157,7 +193,7 @@ class OggPage(object):
 
         # Python's CRC is swapped relative to Ogg's needs.
         # crc32 returns uint prior to py2.6 on some platforms, so force uint
-        crc = (~zlib.crc32(data.translate(cdata.bitswap), -1)) & 0xffffffff
+        crc = (~zlib.crc32(data.translate(cdata.bitswap), -1)) & 0xFFFFFFFF
         # Although we're using to_uint_be, this actually makes the CRC
         # a proper le integer, since Python's CRC is byteswapped.
         crc = cdata.to_uint_be(crc).translate(cdata.bitswap)
@@ -189,17 +225,20 @@ class OggPage(object):
     continued = property(
         lambda self: cdata.test_bit(self.__type_flags, 0),
         lambda self, v: self.__set_flag(0, v),
-        doc="The first packet is continued from the previous page.")
+        doc="The first packet is continued from the previous page.",
+    )
 
     first = property(
         lambda self: cdata.test_bit(self.__type_flags, 1),
         lambda self, v: self.__set_flag(1, v),
-        doc="This is the first page of a logical bitstream.")
+        doc="This is the first page of a logical bitstream.",
+    )
 
     last = property(
         lambda self: cdata.test_bit(self.__type_flags, 2),
         lambda self, v: self.__set_flag(2, v),
-        doc="This is the last page of a logical bitstream.")
+        doc="This is the last page of a logical bitstream.",
+    )
 
     @staticmethod
     def renumber(fileobj, serial, start):
@@ -303,7 +342,7 @@ class OggPage(object):
             new.continued = old.continued
             new.position = old.position
             for p in old.packets:
-                data, new_data = new_data[:len(p)], new_data[len(p):]
+                data, new_data = new_data[: len(p)], new_data[len(p) :]
                 new.packets.append(data)
             new_pages.append(new)
         assert not new_data
@@ -311,8 +350,7 @@ class OggPage(object):
         return new_pages
 
     @staticmethod
-    def from_packets(packets, sequence=0, default_size=4096,
-                     wiggle_room=2048):
+    def from_packets(packets, sequence=0, default_size=4096, wiggle_room=2048):
         """Construct a list of Ogg pages from a list of packet data.
 
         The algorithm will generate pages of approximately
@@ -389,8 +427,7 @@ class OggPage(object):
 
         # Number the new pages starting from the first old page.
         first = old_pages[0].sequence
-        for page, seq in zip(new_pages,
-                             range(first, first + len(new_pages))):
+        for page, seq in zip(new_pages, range(first, first + len(new_pages))):
             page.sequence = seq
             page.serial = old_pages[0].serial
 
@@ -412,7 +449,7 @@ class OggPage(object):
         if pages_diff > 0:
             new_data.extend([b""] * pages_diff)
         elif pages_diff < 0:
-            new_data[pages_diff - 1:] = [b"".join(new_data[pages_diff - 1:])]
+            new_data[pages_diff - 1 :] = [b"".join(new_data[pages_diff - 1 :])]
 
         # Replace pages one by one. If the sizes match no resize happens.
         offset_adjust = 0
@@ -425,7 +462,7 @@ class OggPage(object):
             fileobj.seek(offset, 0)
             fileobj.write(data)
             new_data_end = offset + data_size
-            offset_adjust += (data_size - old_page.size)
+            offset_adjust += data_size - old_page.size
 
         # Finally, if there's any discrepency in length, we need to
         # renumber the pages for the logical stream.

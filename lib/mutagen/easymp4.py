@@ -42,16 +42,19 @@ class EasyMP4Tags(DictMixin, Tags):
         self.save = self.__mp4.save
         self.delete = self.__mp4.delete
 
-    filename = property(lambda s: s.__mp4.filename,
-                        lambda s, fn: setattr(s.__mp4, 'filename', fn))
+    filename = property(
+        lambda s: s.__mp4.filename,
+        lambda s, fn: setattr(s.__mp4, "filename", fn),
+    )
 
     @property
     def _padding(self):
         return self.__mp4._padding
 
     @classmethod
-    def RegisterKey(cls, key,
-                    getter=None, setter=None, deleter=None, lister=None):
+    def RegisterKey(
+        cls, key, getter=None, setter=None, deleter=None, lister=None
+    ):
         """Register a new key mapping.
 
         A key mapping is four functions, a getter, setter, deleter,
@@ -88,6 +91,7 @@ class EasyMP4Tags(DictMixin, Tags):
 
             EasyMP4Tags.RegisterTextKey("artist", "\xa9ART")
         """
+
         def getter(tags, key):
             return tags[atomid]
 
@@ -95,14 +99,13 @@ class EasyMP4Tags(DictMixin, Tags):
             tags[atomid] = value
 
         def deleter(tags, key):
-            del(tags[atomid])
+            del tags[atomid]
 
         cls.RegisterKey(key, getter, setter, deleter)
 
     @classmethod
-    def RegisterIntKey(cls, key, atomid, min_value=0, max_value=(2 ** 16) - 1):
-        """Register a scalar integer key.
-        """
+    def RegisterIntKey(cls, key, atomid, min_value=0, max_value=(2**16) - 1):
+        """Register a scalar integer key."""
 
         def getter(tags, key):
             return list(map(str, tags[atomid]))
@@ -112,18 +115,19 @@ class EasyMP4Tags(DictMixin, Tags):
             tags[atomid] = [clamp(v) for v in map(int, value)]
 
         def deleter(tags, key):
-            del(tags[atomid])
+            del tags[atomid]
 
         cls.RegisterKey(key, getter, setter, deleter)
 
     @classmethod
-    def RegisterIntPairKey(cls, key, atomid, min_value=0,
-                           max_value=(2 ** 16) - 1):
+    def RegisterIntPairKey(
+        cls, key, atomid, min_value=0, max_value=(2**16) - 1
+    ):
         def getter(tags, key):
             ret = []
             for (track, total) in tags[atomid]:
                 if total:
-                    ret.append(u"%d/%d" % (track, total))
+                    ret.append("%d/%d" % (track, total))
                 else:
                     ret.append(str(track))
             return ret
@@ -143,7 +147,7 @@ class EasyMP4Tags(DictMixin, Tags):
             tags[atomid] = data
 
         def deleter(tags, key):
-            del(tags[atomid])
+            del tags[atomid]
 
         cls.RegisterKey(key, getter, setter, deleter)
 
@@ -172,7 +176,7 @@ class EasyMP4Tags(DictMixin, Tags):
             tags[atomid] = encoded
 
         def deleter(tags, key):
-            del(tags[atomid])
+            del tags[atomid]
 
         cls.RegisterKey(key, getter, setter, deleter)
 
@@ -222,34 +226,35 @@ class EasyMP4Tags(DictMixin, Tags):
                 strings.append("%s=%s" % (key, value))
         return "\n".join(strings)
 
+
 for atomid, key in {
-    '\xa9nam': 'title',
-    '\xa9alb': 'album',
-    '\xa9ART': 'artist',
-    'aART': 'albumartist',
-    '\xa9day': 'date',
-    '\xa9cmt': 'comment',
-    'desc': 'description',
-    '\xa9grp': 'grouping',
-    '\xa9gen': 'genre',
-    'cprt': 'copyright',
-    'soal': 'albumsort',
-    'soaa': 'albumartistsort',
-    'soar': 'artistsort',
-    'sonm': 'titlesort',
-    'soco': 'composersort',
+    "\xa9nam": "title",
+    "\xa9alb": "album",
+    "\xa9ART": "artist",
+    "aART": "albumartist",
+    "\xa9day": "date",
+    "\xa9cmt": "comment",
+    "desc": "description",
+    "\xa9grp": "grouping",
+    "\xa9gen": "genre",
+    "cprt": "copyright",
+    "soal": "albumsort",
+    "soaa": "albumartistsort",
+    "soar": "artistsort",
+    "sonm": "titlesort",
+    "soco": "composersort",
 }.items():
     EasyMP4Tags.RegisterTextKey(key, atomid)
 
 for name, key in {
-    'MusicBrainz Artist Id': 'musicbrainz_artistid',
-    'MusicBrainz Track Id': 'musicbrainz_trackid',
-    'MusicBrainz Album Id': 'musicbrainz_albumid',
-    'MusicBrainz Album Artist Id': 'musicbrainz_albumartistid',
-    'MusicIP PUID': 'musicip_puid',
-    'MusicBrainz Album Status': 'musicbrainz_albumstatus',
-    'MusicBrainz Album Type': 'musicbrainz_albumtype',
-    'MusicBrainz Release Country': 'releasecountry',
+    "MusicBrainz Artist Id": "musicbrainz_artistid",
+    "MusicBrainz Track Id": "musicbrainz_trackid",
+    "MusicBrainz Album Id": "musicbrainz_albumid",
+    "MusicBrainz Album Artist Id": "musicbrainz_albumartistid",
+    "MusicIP PUID": "musicip_puid",
+    "MusicBrainz Album Status": "musicbrainz_albumstatus",
+    "MusicBrainz Album Type": "musicbrainz_albumtype",
+    "MusicBrainz Release Country": "releasecountry",
 }.items():
     EasyMP4Tags.RegisterFreeformKey(key, name)
 

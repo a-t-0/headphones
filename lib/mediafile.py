@@ -59,36 +59,37 @@ import struct
 import traceback
 
 
-__version__ = '0.9.0'
-__all__ = ['UnreadableFileError', 'FileTypeError', 'MediaFile']
+__version__ = "0.9.0"
+__all__ = ["UnreadableFileError", "FileTypeError", "MediaFile"]
 
 log = logging.getLogger(__name__)
 
 # Human-readable type names.
 TYPES = {
-    'mp3':  'MP3',
-    'aac':  'AAC',
-    'alac':  'ALAC',
-    'ogg':  'OGG',
-    'opus': 'Opus',
-    'flac': 'FLAC',
-    'ape':  'APE',
-    'wv':   'WavPack',
-    'mpc':  'Musepack',
-    'asf':  'Windows Media',
-    'aiff': 'AIFF',
-    'dsf':  'DSD Stream File',
-    'wav':  'WAVE',
+    "mp3": "MP3",
+    "aac": "AAC",
+    "alac": "ALAC",
+    "ogg": "OGG",
+    "opus": "Opus",
+    "flac": "FLAC",
+    "ape": "APE",
+    "wv": "WavPack",
+    "mpc": "Musepack",
+    "asf": "Windows Media",
+    "aiff": "AIFF",
+    "dsf": "DSD Stream File",
+    "wav": "WAVE",
 }
 
-PREFERRED_IMAGE_EXTENSIONS = {'jpeg': 'jpg'}
+PREFERRED_IMAGE_EXTENSIONS = {"jpeg": "jpg"}
 
 
 # Exceptions.
 
+
 class UnreadableFileError(Exception):
-    """Mutagen is not able to extract information from the file.
-    """
+    """Mutagen is not able to extract information from the file."""
+
     def __init__(self, filename, msg):
         Exception.__init__(self, msg if msg else repr(filename))
 
@@ -99,21 +100,22 @@ class FileTypeError(UnreadableFileError):
     If passed the `mutagen_type` argument this indicates that the
     mutagen type is not supported by `Mediafile`.
     """
+
     def __init__(self, filename, mutagen_type=None):
         if mutagen_type is None:
-            msg = u'{0!r}: not in a recognized format'.format(filename)
+            msg = "{0!r}: not in a recognized format".format(filename)
         else:
-            msg = u'{0}: of mutagen type {1}'.format(
+            msg = "{0}: of mutagen type {1}".format(
                 repr(filename), mutagen_type
             )
         Exception.__init__(self, msg)
 
 
 class MutagenError(UnreadableFileError):
-    """Raised when Mutagen fails unexpectedly---probably due to a bug.
-    """
+    """Raised when Mutagen fails unexpectedly---probably due to a bug."""
+
     def __init__(self, filename, mutagen_exc):
-        msg = u'{0}: {1}'.format(repr(filename), mutagen_exc)
+        msg = "{0}: {1}".format(repr(filename), mutagen_exc)
         Exception.__init__(self, msg)
 
 
@@ -136,7 +138,7 @@ def mutagen_call(action, filename, func, *args, **kwargs):
     try:
         return func(*args, **kwargs)
     except mutagen.MutagenError as exc:
-        log.debug(u'%s failed: %s', action, six.text_type(exc))
+        log.debug("%s failed: %s", action, six.text_type(exc))
         raise UnreadableFileError(filename, six.text_type(exc))
     except UnreadableFileError:
         # Reraise our errors without changes.
@@ -144,8 +146,8 @@ def mutagen_call(action, filename, func, *args, **kwargs):
         raise
     except Exception as exc:
         # Isolate bugs in Mutagen.
-        log.debug(u'%s', traceback.format_exc())
-        log.error(u'uncaught Mutagen exception in %s: %s', action, exc)
+        log.debug("%s", traceback.format_exc())
+        log.error("uncaught Mutagen exception in %s: %s", action, exc)
         raise MutagenError(filename, exc)
 
 
@@ -157,17 +159,21 @@ def loadfile(method=True, writable=False, create=False):
     decorated function. Should be used as a decorator for functions
     using a `filething` parameter.
     """
+
     def decorator(func):
         f = mutagen._util.loadfile(method, writable, create)(func)
 
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
-            return mutagen_call('loadfile', '', f, *args, **kwargs)
+            return mutagen_call("loadfile", "", f, *args, **kwargs)
+
         return wrapper
+
     return decorator
 
 
 # Utility.
+
 
 def _update_filething(filething):
     """Reopen a `filething` if it's a local file.
@@ -201,11 +207,11 @@ def _safe_cast(out_type, val):
         else:
             # Process any other type as a string.
             if isinstance(val, bytes):
-                val = val.decode('utf-8', 'ignore')
+                val = val.decode("utf-8", "ignore")
             elif not isinstance(val, six.string_types):
                 val = six.text_type(val)
             # Get a number from the front of the string.
-            match = re.match(r'[\+-]?[0-9]+', val.strip())
+            match = re.match(r"[\+-]?[0-9]+", val.strip())
             return int(match.group(0)) if match else 0
 
     elif out_type == bool:
@@ -217,7 +223,7 @@ def _safe_cast(out_type, val):
 
     elif out_type == six.text_type:
         if isinstance(val, bytes):
-            return val.decode('utf-8', 'ignore')
+            return val.decode("utf-8", "ignore")
         elif isinstance(val, six.text_type):
             return val
         else:
@@ -228,11 +234,12 @@ def _safe_cast(out_type, val):
             return float(val)
         else:
             if isinstance(val, bytes):
-                val = val.decode('utf-8', 'ignore')
+                val = val.decode("utf-8", "ignore")
             else:
                 val = six.text_type(val)
-            match = re.match(r'[\+-]?([0-9]+\.?[0-9]*|[0-9]*\.[0-9]+)',
-                             val.strip())
+            match = re.match(
+                r"[\+-]?([0-9]+\.?[0-9]*|[0-9]*\.[0-9]+)", val.strip()
+            )
             if match:
                 val = match.group(0)
                 if val:
@@ -245,6 +252,7 @@ def _safe_cast(out_type, val):
 
 # Image coding for ASF/WMA.
 
+
 def _unpack_asf_image(data):
     """Unpack image data from a WM/Picture tag. Return a tuple
     containing the MIME type, the raw image data, a type indicator, and
@@ -254,34 +262,38 @@ def _unpack_asf_image(data):
     of exceptions (out-of-bounds, etc.). We should clean this up
     sometime so that the failure modes are well-defined.
     """
-    type, size = struct.unpack_from('<bi', data)
+    type, size = struct.unpack_from("<bi", data)
     pos = 5
-    mime = b''
-    while data[pos:pos + 2] != b'\x00\x00':
-        mime += data[pos:pos + 2]
+    mime = b""
+    while data[pos : pos + 2] != b"\x00\x00":
+        mime += data[pos : pos + 2]
         pos += 2
     pos += 2
-    description = b''
-    while data[pos:pos + 2] != b'\x00\x00':
-        description += data[pos:pos + 2]
+    description = b""
+    while data[pos : pos + 2] != b"\x00\x00":
+        description += data[pos : pos + 2]
         pos += 2
     pos += 2
-    image_data = data[pos:pos + size]
-    return (mime.decode("utf-16-le"), image_data, type,
-            description.decode("utf-16-le"))
+    image_data = data[pos : pos + size]
+    return (
+        mime.decode("utf-16-le"),
+        image_data,
+        type,
+        description.decode("utf-16-le"),
+    )
 
 
 def _pack_asf_image(mime, data, type=3, description=""):
-    """Pack image data for a WM/Picture tag.
-    """
-    tag_data = struct.pack('<bi', type, len(data))
-    tag_data += mime.encode("utf-16-le") + b'\x00\x00'
-    tag_data += description.encode("utf-16-le") + b'\x00\x00'
+    """Pack image data for a WM/Picture tag."""
+    tag_data = struct.pack("<bi", type, len(data))
+    tag_data += mime.encode("utf-16-le") + b"\x00\x00"
+    tag_data += description.encode("utf-16-le") + b"\x00\x00"
     tag_data += data
     return tag_data
 
 
 # iTunes Sound Check encoding.
+
 
 def _sc_decode(soundcheck):
     """Convert a Sound Check bytestring value to a (gain, peak) tuple as
@@ -290,13 +302,13 @@ def _sc_decode(soundcheck):
     # We decode binary data. If one of the formats gives us a text
     # string, interpret it as UTF-8.
     if isinstance(soundcheck, six.text_type):
-        soundcheck = soundcheck.encode('utf-8')
+        soundcheck = soundcheck.encode("utf-8")
 
     # SoundCheck tags consist of 10 numbers, each represented by 8
     # characters of ASCII hex preceded by a space.
     try:
-        soundcheck = codecs.decode(soundcheck.replace(b' ', b''), 'hex')
-        soundcheck = struct.unpack('!iiiiiiiiii', soundcheck)
+        soundcheck = codecs.decode(soundcheck.replace(b" ", b""), "hex")
+        soundcheck = struct.unpack("!iiiiiiiiii", soundcheck)
     except (struct.error, TypeError, binascii.Error):
         # SoundCheck isn't in the format we expect, so return default
         # values.
@@ -325,8 +337,7 @@ def _sc_decode(soundcheck):
 
 
 def _sc_encode(gain, peak):
-    """Encode ReplayGain gain/peak values as a Sound Check string.
-    """
+    """Encode ReplayGain gain/peak values as a Sound Check string."""
     # SoundCheck stores the peak value as the actual value of the
     # sample, rather than the percentage of full scale that RG uses, so
     # we do a simple conversion assuming 16 bit samples.
@@ -345,7 +356,7 @@ def _sc_encode(gain, peak):
     # unused so we just use zero.
     uk = 0
     values = (g1, g1, g2, g2, uk, uk, int(peak), int(peak), uk, uk)
-    return (u' %08X' * 10) % values
+    return (" %08X" * 10) % values
 
 
 # Cover art and other images.
@@ -366,30 +377,29 @@ def _wider_test_jpeg(data):
     uses the magic bytes rather than just looking for the bytes that
     represent 'JFIF' or 'EXIF' at a fixed position.
     """
-    if data[:2] == b'\xff\xd8':
-        return 'jpeg'
+    if data[:2] == b"\xff\xd8":
+        return "jpeg"
 
 
 def image_mime_type(data):
-    """Return the MIME type of the image data (a bytestring).
-    """
+    """Return the MIME type of the image data (a bytestring)."""
     # This checks for a jpeg file with only the magic bytes (unrecognized by
     # imghdr.what). imghdr.what returns none for that type of file, so
     # _wider_test_jpeg is run in that case. It still returns None if it didn't
     # match such a jpeg file.
     kind = _imghdr_what_wrapper(data)
-    if kind in ['gif', 'jpeg', 'png', 'tiff', 'bmp']:
-        return 'image/{0}'.format(kind)
-    elif kind == 'pgm':
-        return 'image/x-portable-graymap'
-    elif kind == 'pbm':
-        return 'image/x-portable-bitmap'
-    elif kind == 'ppm':
-        return 'image/x-portable-pixmap'
-    elif kind == 'xbm':
-        return 'image/x-xbitmap'
+    if kind in ["gif", "jpeg", "png", "tiff", "bmp"]:
+        return "image/{0}".format(kind)
+    elif kind == "pgm":
+        return "image/x-portable-graymap"
+    elif kind == "pbm":
+        return "image/x-portable-bitmap"
+    elif kind == "ppm":
+        return "image/x-portable-pixmap"
+    elif kind == "xbm":
+        return "image/x-xbitmap"
     else:
-        return 'image/x-{0}'.format(kind)
+        return "image/x-{0}".format(kind)
 
 
 def image_extension(data):
@@ -398,8 +408,8 @@ def image_extension(data):
 
 
 class ImageType(enum.Enum):
-    """Indicates the kind of an `Image` stored in a file's tag.
-    """
+    """Indicates the kind of an `Image` stored in a file's tag."""
+
     other = 0
     icon = 1
     other_icon = 2
@@ -434,6 +444,7 @@ class Image(object):
     * ``mime_type`` Read-only property that contains the mime type of
                     the binary data
     """
+
     def __init__(self, data, desc=None, type=None):
         assert isinstance(data, bytes)
         if desc is not None:
@@ -444,7 +455,7 @@ class Image(object):
             try:
                 type = list(ImageType)[type]
             except IndexError:
-                log.debug(u"ignoring unknown image type index %s", type)
+                log.debug("ignoring unknown image type index %s", type)
                 type = ImageType.other
         self.type = type
 
@@ -464,6 +475,7 @@ class Image(object):
 
 # StorageStyle classes describe strategies for accessing values in
 # Mutagen file objects.
+
 
 class StorageStyle(object):
     """A strategy for storing a value for a certain tag format (or set
@@ -490,13 +502,29 @@ class StorageStyle(object):
     a given audio file.
     """
 
-    formats = ['FLAC', 'OggOpus', 'OggTheora', 'OggSpeex', 'OggVorbis',
-               'OggFlac', 'APEv2File', 'WavPack', 'Musepack', 'MonkeysAudio']
+    formats = [
+        "FLAC",
+        "OggOpus",
+        "OggTheora",
+        "OggSpeex",
+        "OggVorbis",
+        "OggFlac",
+        "APEv2File",
+        "WavPack",
+        "Musepack",
+        "MonkeysAudio",
+    ]
     """List of mutagen classes the StorageStyle can handle.
     """
 
-    def __init__(self, key, as_type=six.text_type, suffix=None,
-                 float_places=2, read_only=False):
+    def __init__(
+        self,
+        key,
+        as_type=six.text_type,
+        suffix=None,
+        float_places=2,
+        read_only=False,
+    ):
         """Create a basic storage strategy. Parameters:
 
         - `key`: The key on the Mutagen file object used to access the
@@ -520,15 +548,17 @@ class StorageStyle(object):
         self.read_only = read_only
 
         # Convert suffix to correct string type.
-        if self.suffix and self.as_type is six.text_type \
-           and not isinstance(self.suffix, six.text_type):
-            self.suffix = self.suffix.decode('utf-8')
+        if (
+            self.suffix
+            and self.as_type is six.text_type
+            and not isinstance(self.suffix, six.text_type)
+        ):
+            self.suffix = self.suffix.decode("utf-8")
 
     # Getter.
 
     def get(self, mutagen_file):
-        """Get the value for the field using this style.
-        """
+        """Get the value for the field using this style."""
         return self.deserialize(self.fetch(mutagen_file))
 
     def fetch(self, mutagen_file):
@@ -544,22 +574,23 @@ class StorageStyle(object):
         """Given a raw value stored on a Mutagen object, decode and
         return the represented value.
         """
-        if self.suffix and isinstance(mutagen_value, six.text_type) \
-           and mutagen_value.endswith(self.suffix):
-            return mutagen_value[:-len(self.suffix)]
+        if (
+            self.suffix
+            and isinstance(mutagen_value, six.text_type)
+            and mutagen_value.endswith(self.suffix)
+        ):
+            return mutagen_value[: -len(self.suffix)]
         else:
             return mutagen_value
 
     # Setter.
 
     def set(self, mutagen_file, value):
-        """Assign the value for the field using this style.
-        """
+        """Assign the value for the field using this style."""
         self.store(mutagen_file, self.serialize(value))
 
     def store(self, mutagen_file, value):
-        """Store a serialized value in the Mutagen file object.
-        """
+        """Store a serialized value in the Mutagen file object."""
         mutagen_file[self.key] = [value]
 
     def serialize(self, value):
@@ -567,14 +598,14 @@ class StorageStyle(object):
         storing in a Mutagen file object.
         """
         if isinstance(value, float) and self.as_type is six.text_type:
-            value = u'{0:.{1}f}'.format(value, self.float_places)
+            value = "{0:.{1}f}".format(value, self.float_places)
             value = self.as_type(value)
         elif self.as_type is six.text_type:
             if isinstance(value, bool):
                 # Store bools as 1/0 instead of True/False.
                 value = six.text_type(int(bool(value)))
             elif isinstance(value, bytes):
-                value = value.decode('utf-8', 'ignore')
+                value = value.decode("utf-8", "ignore")
             else:
                 value = six.text_type(value)
         else:
@@ -586,8 +617,7 @@ class StorageStyle(object):
         return value
 
     def delete(self, mutagen_file):
-        """Remove the tag from the file.
-        """
+        """Remove the tag from the file."""
         if self.key in mutagen_file:
             del mutagen_file[self.key]
 
@@ -607,22 +637,20 @@ class ListStorageStyle(StorageStyle):
     `StorageStyle`) are still called with individual values. This class
     handles packing and unpacking the values into lists.
     """
+
     def get(self, mutagen_file):
-        """Get the first value in the field's value list.
-        """
+        """Get the first value in the field's value list."""
         try:
             return self.get_list(mutagen_file)[0]
         except IndexError:
             return None
 
     def get_list(self, mutagen_file):
-        """Get a list of all values for the field using this style.
-        """
+        """Get a list of all values for the field using this style."""
         return [self.deserialize(item) for item in self.fetch(mutagen_file)]
 
     def fetch(self, mutagen_file):
-        """Get the list of raw (serialized) values.
-        """
+        """Get the list of raw (serialized) values."""
         try:
             return mutagen_file[self.key]
         except KeyError:
@@ -641,8 +669,7 @@ class ListStorageStyle(StorageStyle):
         self.store(mutagen_file, [self.serialize(value) for value in values])
 
     def store(self, mutagen_file, values):
-        """Set the list of all raw (serialized) values for this field.
-        """
+        """Set the list of all raw (serialized) values for this field."""
         mutagen_file[self.key] = values
 
 
@@ -652,6 +679,7 @@ class SoundCheckStorageStyleMixin(object):
     indicates which half of the gain/peak pair---0 or 1---the field
     represents.
     """
+
     def get(self, mutagen_file):
         data = self.fetch(mutagen_file)
         if data is not None:
@@ -669,9 +697,9 @@ class SoundCheckStorageStyleMixin(object):
 
 
 class ASFStorageStyle(ListStorageStyle):
-    """A general storage style for Windows Media/ASF files.
-    """
-    formats = ['ASF']
+    """A general storage style for Windows Media/ASF files."""
+
+    formats = ["ASF"]
 
     def deserialize(self, data):
         if isinstance(data, mutagen.asf.ASFBaseAttribute):
@@ -680,14 +708,14 @@ class ASFStorageStyle(ListStorageStyle):
 
 
 class MP4StorageStyle(StorageStyle):
-    """A general storage style for MPEG-4 tags.
-    """
-    formats = ['MP4']
+    """A general storage style for MPEG-4 tags."""
+
+    formats = ["MP4"]
 
     def serialize(self, value):
         value = super(MP4StorageStyle, self).serialize(value)
-        if self.key.startswith('----:') and isinstance(value, six.text_type):
-            value = value.encode('utf-8')
+        if self.key.startswith("----:") and isinstance(value, six.text_type):
+            value = value.encode("utf-8")
         return value
 
 
@@ -695,6 +723,7 @@ class MP4TupleStorageStyle(MP4StorageStyle):
     """A style for storing values as part of a pair of numbers in an
     MPEG-4 file.
     """
+
     def __init__(self, key, index=0, **kwargs):
         super(MP4TupleStorageStyle, self).__init__(key, **kwargs)
         self.index = index
@@ -741,6 +770,7 @@ class MP4BoolStorageStyle(MP4StorageStyle):
     """A style for booleans in MPEG-4 files. (MPEG-4 has an atom type
     specifically for representing booleans.)
     """
+
     def get(self, mutagen_file):
         try:
             return mutagen_file[self.key]
@@ -748,38 +778,38 @@ class MP4BoolStorageStyle(MP4StorageStyle):
             return None
 
     def get_list(self, mutagen_file):
-        raise NotImplementedError(u'MP4 bool storage does not support lists')
+        raise NotImplementedError("MP4 bool storage does not support lists")
 
     def set(self, mutagen_file, value):
         mutagen_file[self.key] = value
 
     def set_list(self, mutagen_file, values):
-        raise NotImplementedError(u'MP4 bool storage does not support lists')
+        raise NotImplementedError("MP4 bool storage does not support lists")
 
 
 class MP4ImageStorageStyle(MP4ListStorageStyle):
-    """Store images as MPEG-4 image atoms. Values are `Image` objects.
-    """
+    """Store images as MPEG-4 image atoms. Values are `Image` objects."""
+
     def __init__(self, **kwargs):
-        super(MP4ImageStorageStyle, self).__init__(key='covr', **kwargs)
+        super(MP4ImageStorageStyle, self).__init__(key="covr", **kwargs)
 
     def deserialize(self, data):
         return Image(data)
 
     def serialize(self, image):
-        if image.mime_type == 'image/png':
+        if image.mime_type == "image/png":
             kind = mutagen.mp4.MP4Cover.FORMAT_PNG
-        elif image.mime_type == 'image/jpeg':
+        elif image.mime_type == "image/jpeg":
             kind = mutagen.mp4.MP4Cover.FORMAT_JPEG
         else:
-            raise ValueError(u'MP4 files only supports PNG and JPEG images')
+            raise ValueError("MP4 files only supports PNG and JPEG images")
         return mutagen.mp4.MP4Cover(image.data, kind)
 
 
 class MP3StorageStyle(StorageStyle):
-    """Store data in ID3 frames.
-    """
-    formats = ['MP3', 'AIFF', 'DSF', 'WAVE']
+    """Store data in ID3 frames."""
+
+    formats = ["MP3", "AIFF", "DSF", "WAVE"]
 
     def __init__(self, key, id3_lang=None, **kwargs):
         """Create a new ID3 storage style. `id3_lang` is the value for
@@ -800,9 +830,9 @@ class MP3StorageStyle(StorageStyle):
 
 
 class MP3PeopleStorageStyle(MP3StorageStyle):
-    """Store list of people in ID3 frames.
-    """
-    def __init__(self, key, involvement='', **kwargs):
+    """Store list of people in ID3 frames."""
+
+    def __init__(self, key, involvement="", **kwargs):
         self.involvement = involvement
         super(MP3PeopleStorageStyle, self).__init__(key, **kwargs)
 
@@ -822,7 +852,7 @@ class MP3PeopleStorageStyle(MP3StorageStyle):
         if not found:
             frame = mutagen.id3.Frames[self.key](
                 encoding=mutagen.id3.Encoding.UTF8,
-                people=[[self.involvement, value]]
+                people=[[self.involvement, value]],
             )
             mutagen_file.tags.add(frame)
 
@@ -837,8 +867,8 @@ class MP3PeopleStorageStyle(MP3StorageStyle):
 
 
 class MP3ListStorageStyle(ListStorageStyle, MP3StorageStyle):
-    """Store lists of data in multiple ID3 frames.
-    """
+    """Store lists of data in multiple ID3 frames."""
+
     def fetch(self, mutagen_file):
         try:
             return mutagen_file[self.key].text
@@ -851,11 +881,11 @@ class MP3ListStorageStyle(ListStorageStyle, MP3StorageStyle):
 
 
 class MP3UFIDStorageStyle(MP3StorageStyle):
-    """Store string data in a UFID ID3 frame with a particular owner.
-    """
+    """Store string data in a UFID ID3 frame with a particular owner."""
+
     def __init__(self, owner, **kwargs):
         self.owner = owner
-        super(MP3UFIDStorageStyle, self).__init__('UFID:' + owner, **kwargs)
+        super(MP3UFIDStorageStyle, self).__init__("UFID:" + owner, **kwargs)
 
     def fetch(self, mutagen_file):
         try:
@@ -866,7 +896,7 @@ class MP3UFIDStorageStyle(MP3StorageStyle):
     def store(self, mutagen_file, value):
         # This field type stores text data as encoded data.
         assert isinstance(value, six.text_type)
-        value = value.encode('utf-8')
+        value = value.encode("utf-8")
 
         frames = mutagen_file.tags.getall(self.key)
         for frame in frames:
@@ -887,8 +917,10 @@ class MP3DescStorageStyle(MP3StorageStyle):
     ``multispec`` specifies if frame data is ``mutagen.id3.MultiSpec``
     which means that the data is being packed in the list.
     """
-    def __init__(self, desc=u'', key='TXXX', attr='text', multispec=True,
-                 **kwargs):
+
+    def __init__(
+        self, desc="", key="TXXX", attr="text", multispec=True, **kwargs
+    ):
         assert isinstance(desc, six.text_type)
         self.description = desc
         self.attr = attr
@@ -913,7 +945,7 @@ class MP3DescStorageStyle(MP3StorageStyle):
             frame = mutagen.id3.Frames[self.key](
                 desc=self.description,
                 encoding=mutagen.id3.Encoding.UTF8,
-                **{self.attr: value}
+                **{self.attr: value},
             )
             if self.id3_lang:
                 frame.lang = self.id3_lang
@@ -940,7 +972,7 @@ class MP3DescStorageStyle(MP3StorageStyle):
 
 
 class MP3ListDescStorageStyle(MP3DescStorageStyle, ListStorageStyle):
-    def __init__(self, desc=u'', key='TXXX', split_v23=False, **kwargs):
+    def __init__(self, desc="", key="TXXX", split_v23=False, **kwargs):
         self.split_v23 = split_v23
         super(MP3ListDescStorageStyle, self).__init__(
             desc=desc, key=key, **kwargs
@@ -950,7 +982,7 @@ class MP3ListDescStorageStyle(MP3DescStorageStyle, ListStorageStyle):
         for frame in mutagen_file.tags.getall(self.key):
             if frame.desc.lower() == self.description.lower():
                 if mutagen_file.tags.version == (2, 3, 0) and self.split_v23:
-                    return sum((el.split('/') for el in frame.text), [])
+                    return sum((el.split("/") for el in frame.text), [])
                 else:
                     return frame.text
         return []
@@ -971,6 +1003,7 @@ class MP3SlashPackStorageStyle(MP3StorageStyle):
     """Store value as part of pair that is serialized as a slash-
     separated string.
     """
+
     def __init__(self, key, pack_pos=0, **kwargs):
         super(MP3SlashPackStorageStyle, self).__init__(key, **kwargs)
         self.pack_pos = pack_pos
@@ -978,7 +1011,7 @@ class MP3SlashPackStorageStyle(MP3StorageStyle):
     def _fetch_unpacked(self, mutagen_file):
         data = self.fetch(mutagen_file)
         if data:
-            items = six.text_type(data).split('/')
+            items = six.text_type(data).split("/")
         else:
             items = []
         packing_length = 2
@@ -991,10 +1024,10 @@ class MP3SlashPackStorageStyle(MP3StorageStyle):
         items = self._fetch_unpacked(mutagen_file)
         items[self.pack_pos] = value
         if items[0] is None:
-            items[0] = ''
+            items[0] = ""
         if items[1] is None:
             items.pop()  # Do not store last value
-        self.store(mutagen_file, '/'.join(map(six.text_type, items)))
+        self.store(mutagen_file, "/".join(map(six.text_type, items)))
 
     def delete(self, mutagen_file):
         if self.pack_pos == 0:
@@ -1010,14 +1043,16 @@ class MP3ImageStorageStyle(ListStorageStyle, MP3StorageStyle):
     list of ``Image``s. Similarly, the `set_list` method accepts a
     list of ``Image``s as its ``values`` argument.
     """
+
     def __init__(self):
-        super(MP3ImageStorageStyle, self).__init__(key='APIC')
+        super(MP3ImageStorageStyle, self).__init__(key="APIC")
         self.as_type = bytes
 
     def deserialize(self, apic_frame):
         """Convert APIC frame into Image."""
-        return Image(data=apic_frame.data, desc=apic_frame.desc,
-                     type=apic_frame.type)
+        return Image(
+            data=apic_frame.data, desc=apic_frame.desc, type=apic_frame.type
+        )
 
     def fetch(self, mutagen_file):
         return mutagen_file.tags.getall(self.key)
@@ -1029,13 +1064,12 @@ class MP3ImageStorageStyle(ListStorageStyle, MP3StorageStyle):
         mutagen_file.tags.delall(self.key)
 
     def serialize(self, image):
-        """Return an APIC frame populated with data from ``image``.
-        """
+        """Return an APIC frame populated with data from ``image``."""
         assert isinstance(image, Image)
         frame = mutagen.id3.Frames[self.key]()
         frame.data = image.data
         frame.mime = image.mime_type
-        frame.desc = image.desc or u''
+        frame.desc = image.desc or ""
 
         # For compatibility with OS X/iTunes prefer latin-1 if possible.
         # See issue #899
@@ -1050,8 +1084,9 @@ class MP3ImageStorageStyle(ListStorageStyle, MP3StorageStyle):
         return frame
 
 
-class MP3SoundCheckStorageStyle(SoundCheckStorageStyleMixin,
-                                MP3DescStorageStyle):
+class MP3SoundCheckStorageStyle(
+    SoundCheckStorageStyleMixin, MP3DescStorageStyle
+):
     def __init__(self, index=0, **kwargs):
         super(MP3SoundCheckStorageStyle, self).__init__(**kwargs)
         self.index = index
@@ -1061,10 +1096,11 @@ class ASFImageStorageStyle(ListStorageStyle):
     """Store images packed into Windows Media/ASF byte array attributes.
     Values are `Image` objects.
     """
-    formats = ['ASF']
+
+    formats = ["ASF"]
 
     def __init__(self):
-        super(ASFImageStorageStyle, self).__init__(key='WM/Picture')
+        super(ASFImageStorageStyle, self).__init__(key="WM/Picture")
 
     def deserialize(self, asf_picture):
         mime, data, type, desc = _unpack_asf_image(asf_picture.value)
@@ -1072,9 +1108,12 @@ class ASFImageStorageStyle(ListStorageStyle):
 
     def serialize(self, image):
         pic = mutagen.asf.ASFByteArrayAttribute()
-        pic.value = _pack_asf_image(image.mime_type, image.data,
-                                    type=image.type_index,
-                                    description=image.desc or u'')
+        pic.value = _pack_asf_image(
+            image.mime_type,
+            image.data,
+            type=image.type_index,
+            description=image.desc or "",
+        )
         return pic
 
 
@@ -1083,21 +1122,21 @@ class VorbisImageStorageStyle(ListStorageStyle):
     modern METADATA_BLOCK_PICTURE tags are supported. Data is
     base64-encoded. Values are `Image` objects.
     """
-    formats = ['OggOpus', 'OggTheora', 'OggSpeex', 'OggVorbis',
-               'OggFlac']
+
+    formats = ["OggOpus", "OggTheora", "OggSpeex", "OggVorbis", "OggFlac"]
 
     def __init__(self):
         super(VorbisImageStorageStyle, self).__init__(
-            key='metadata_block_picture'
+            key="metadata_block_picture"
         )
         self.as_type = bytes
 
     def fetch(self, mutagen_file):
         images = []
-        if 'metadata_block_picture' not in mutagen_file:
+        if "metadata_block_picture" not in mutagen_file:
             # Try legacy COVERART tags.
-            if 'coverart' in mutagen_file:
-                for data in mutagen_file['coverart']:
+            if "coverart" in mutagen_file:
+                for data in mutagen_file["coverart"]:
                     images.append(Image(base64.b64decode(data)))
             return images
         for data in mutagen_file["metadata_block_picture"]:
@@ -1105,117 +1144,116 @@ class VorbisImageStorageStyle(ListStorageStyle):
                 pic = mutagen.flac.Picture(base64.b64decode(data))
             except (TypeError, AttributeError):
                 continue
-            images.append(Image(data=pic.data, desc=pic.desc,
-                                type=pic.type))
+            images.append(Image(data=pic.data, desc=pic.desc, type=pic.type))
         return images
 
     def store(self, mutagen_file, image_data):
         # Strip all art, including legacy COVERART.
-        if 'coverart' in mutagen_file:
-            del mutagen_file['coverart']
-        if 'coverartmime' in mutagen_file:
-            del mutagen_file['coverartmime']
+        if "coverart" in mutagen_file:
+            del mutagen_file["coverart"]
+        if "coverartmime" in mutagen_file:
+            del mutagen_file["coverartmime"]
         super(VorbisImageStorageStyle, self).store(mutagen_file, image_data)
 
     def serialize(self, image):
-        """Turn a Image into a base64 encoded FLAC picture block.
-        """
+        """Turn a Image into a base64 encoded FLAC picture block."""
         pic = mutagen.flac.Picture()
         pic.data = image.data
         pic.type = image.type_index
         pic.mime = image.mime_type
-        pic.desc = image.desc or u''
+        pic.desc = image.desc or ""
 
         # Encoding with base64 returns bytes on both Python 2 and 3.
         # Mutagen requires the data to be a Unicode string, so we decode
         # it before passing it along.
-        return base64.b64encode(pic.write()).decode('ascii')
+        return base64.b64encode(pic.write()).decode("ascii")
 
 
 class FlacImageStorageStyle(ListStorageStyle):
-    """Converts between ``mutagen.flac.Picture`` and ``Image`` instances.
-    """
-    formats = ['FLAC']
+    """Converts between ``mutagen.flac.Picture`` and ``Image`` instances."""
+
+    formats = ["FLAC"]
 
     def __init__(self):
-        super(FlacImageStorageStyle, self).__init__(key='')
+        super(FlacImageStorageStyle, self).__init__(key="")
 
     def fetch(self, mutagen_file):
         return mutagen_file.pictures
 
     def deserialize(self, flac_picture):
-        return Image(data=flac_picture.data, desc=flac_picture.desc,
-                     type=flac_picture.type)
+        return Image(
+            data=flac_picture.data,
+            desc=flac_picture.desc,
+            type=flac_picture.type,
+        )
 
     def store(self, mutagen_file, pictures):
-        """``pictures`` is a list of mutagen.flac.Picture instances.
-        """
+        """``pictures`` is a list of mutagen.flac.Picture instances."""
         mutagen_file.clear_pictures()
         for pic in pictures:
             mutagen_file.add_picture(pic)
 
     def serialize(self, image):
-        """Turn a Image into a mutagen.flac.Picture.
-        """
+        """Turn a Image into a mutagen.flac.Picture."""
         pic = mutagen.flac.Picture()
         pic.data = image.data
         pic.type = image.type_index
         pic.mime = image.mime_type
-        pic.desc = image.desc or u''
+        pic.desc = image.desc or ""
         return pic
 
     def delete(self, mutagen_file):
-        """Remove all images from the file.
-        """
+        """Remove all images from the file."""
         mutagen_file.clear_pictures()
 
 
 class APEv2ImageStorageStyle(ListStorageStyle):
-    """Store images in APEv2 tags. Values are `Image` objects.
-    """
-    formats = ['APEv2File', 'WavPack', 'Musepack', 'MonkeysAudio', 'OptimFROG']
+    """Store images in APEv2 tags. Values are `Image` objects."""
+
+    formats = ["APEv2File", "WavPack", "Musepack", "MonkeysAudio", "OptimFROG"]
 
     TAG_NAMES = {
-        ImageType.other: 'Cover Art (other)',
-        ImageType.icon: 'Cover Art (icon)',
-        ImageType.other_icon: 'Cover Art (other icon)',
-        ImageType.front: 'Cover Art (front)',
-        ImageType.back: 'Cover Art (back)',
-        ImageType.leaflet: 'Cover Art (leaflet)',
-        ImageType.media: 'Cover Art (media)',
-        ImageType.lead_artist: 'Cover Art (lead)',
-        ImageType.artist: 'Cover Art (artist)',
-        ImageType.conductor: 'Cover Art (conductor)',
-        ImageType.group: 'Cover Art (band)',
-        ImageType.composer: 'Cover Art (composer)',
-        ImageType.lyricist: 'Cover Art (lyricist)',
-        ImageType.recording_location: 'Cover Art (studio)',
-        ImageType.recording_session: 'Cover Art (recording)',
-        ImageType.performance: 'Cover Art (performance)',
-        ImageType.screen_capture: 'Cover Art (movie scene)',
-        ImageType.fish: 'Cover Art (colored fish)',
-        ImageType.illustration: 'Cover Art (illustration)',
-        ImageType.artist_logo: 'Cover Art (band logo)',
-        ImageType.publisher_logo: 'Cover Art (publisher logo)',
+        ImageType.other: "Cover Art (other)",
+        ImageType.icon: "Cover Art (icon)",
+        ImageType.other_icon: "Cover Art (other icon)",
+        ImageType.front: "Cover Art (front)",
+        ImageType.back: "Cover Art (back)",
+        ImageType.leaflet: "Cover Art (leaflet)",
+        ImageType.media: "Cover Art (media)",
+        ImageType.lead_artist: "Cover Art (lead)",
+        ImageType.artist: "Cover Art (artist)",
+        ImageType.conductor: "Cover Art (conductor)",
+        ImageType.group: "Cover Art (band)",
+        ImageType.composer: "Cover Art (composer)",
+        ImageType.lyricist: "Cover Art (lyricist)",
+        ImageType.recording_location: "Cover Art (studio)",
+        ImageType.recording_session: "Cover Art (recording)",
+        ImageType.performance: "Cover Art (performance)",
+        ImageType.screen_capture: "Cover Art (movie scene)",
+        ImageType.fish: "Cover Art (colored fish)",
+        ImageType.illustration: "Cover Art (illustration)",
+        ImageType.artist_logo: "Cover Art (band logo)",
+        ImageType.publisher_logo: "Cover Art (publisher logo)",
     }
 
     def __init__(self):
-        super(APEv2ImageStorageStyle, self).__init__(key='')
+        super(APEv2ImageStorageStyle, self).__init__(key="")
 
     def fetch(self, mutagen_file):
         images = []
         for cover_type, cover_tag in self.TAG_NAMES.items():
             try:
                 frame = mutagen_file[cover_tag]
-                text_delimiter_index = frame.value.find(b'\x00')
+                text_delimiter_index = frame.value.find(b"\x00")
                 if text_delimiter_index > 0:
                     comment = frame.value[0:text_delimiter_index]
-                    comment = comment.decode('utf-8', 'replace')
+                    comment = comment.decode("utf-8", "replace")
                 else:
                     comment = None
-                image_data = frame.value[text_delimiter_index + 1:]
-                images.append(Image(data=image_data, type=cover_type,
-                                    desc=comment))
+                image_data = frame.value[text_delimiter_index + 1 :]
+                images.append(
+                    Image(data=image_data, type=cover_type, desc=comment)
+                )
             except KeyError:
                 pass
 
@@ -1226,14 +1264,13 @@ class APEv2ImageStorageStyle(ListStorageStyle):
 
         for image in values:
             image_type = image.type or ImageType.other
-            comment = image.desc or ''
-            image_data = comment.encode('utf-8') + b'\x00' + image.data
+            comment = image.desc or ""
+            image_data = comment.encode("utf-8") + b"\x00" + image.data
             cover_tag = self.TAG_NAMES[image_type]
             mutagen_file[cover_tag] = image_data
 
     def delete(self, mutagen_file):
-        """Remove all images from the file.
-        """
+        """Remove all images from the file."""
         for cover_tag in self.TAG_NAMES.values():
             try:
                 del mutagen_file[cover_tag]
@@ -1245,10 +1282,12 @@ class APEv2ImageStorageStyle(ListStorageStyle):
 # aggregates several StorageStyles describing how to access the data for
 # each file type.
 
+
 class MediaField(object):
     """A descriptor providing access to a particular (abstract) metadata
     field.
     """
+
     def __init__(self, *styles, **kwargs):
         """Creates a new MediaField.
 
@@ -1261,7 +1300,7 @@ class MediaField(object):
                          getting this property.
 
         """
-        self.out_type = kwargs.get('out_type', six.text_type)
+        self.out_type = kwargs.get("out_type", six.text_type)
         self._styles = styles
 
     def styles(self, mutagen_file):
@@ -1302,7 +1341,7 @@ class MediaField(object):
         elif self.out_type == bool:
             return False
         elif self.out_type == six.text_type:
-            return u''
+            return ""
 
 
 class ListMediaField(MediaField):
@@ -1312,6 +1351,7 @@ class ListMediaField(MediaField):
     Uses ``get_list`` and set_list`` methods of its ``StorageStyle``
     strategies to do the actual work.
     """
+
     def __get__(self, mediafile, _):
         values = []
         for style in self.styles(mediafile.mgfile):
@@ -1327,7 +1367,7 @@ class ListMediaField(MediaField):
         """Returns a ``MediaField`` descriptor that gets and sets the
         first item.
         """
-        options = {'out_type': self.out_type}
+        options = {"out_type": self.out_type}
         return MediaField(*self._styles, **options)
 
 
@@ -1340,6 +1380,7 @@ class DateField(MediaField):
     For granular access to year, month, and day, use the ``*_field``
     methods to create corresponding `DateItemField`s.
     """
+
     def __init__(self, *date_styles, **kwargs):
         """``date_styles`` is a list of ``StorageStyle``s to store and
         retrieve the whole date from. The ``year`` option is an
@@ -1348,7 +1389,7 @@ class DateField(MediaField):
         storage styles do not return a value.
         """
         super(DateField, self).__init__(*date_styles)
-        year_style = kwargs.get('year', None)
+        year_style = kwargs.get("year", None)
         if year_style:
             self._year_field = MediaField(*year_style)
 
@@ -1357,11 +1398,7 @@ class DateField(MediaField):
         if not year:
             return None
         try:
-            return datetime.date(
-                year,
-                month or 1,
-                day or 1
-            )
+            return datetime.date(year, month or 1, day or 1)
         except ValueError:  # Out of range values.
             return None
 
@@ -1373,7 +1410,7 @@ class DateField(MediaField):
 
     def __delete__(self, mediafile):
         super(DateField, self).__delete__(mediafile)
-        if hasattr(self, '_year_field'):
+        if hasattr(self, "_year_field"):
             self._year_field.__delete__(mediafile)
 
     def _get_date_tuple(self, mediafile):
@@ -1384,8 +1421,8 @@ class DateField(MediaField):
         # Get the underlying data and split on hyphens and slashes.
         datestring = super(DateField, self).__get__(mediafile, None)
         if isinstance(datestring, six.string_types):
-            datestring = re.sub(r'[Tt ].*$', '', six.text_type(datestring))
-            items = re.split('[-/]', six.text_type(datestring))
+            datestring = re.sub(r"[Tt ].*$", "", six.text_type(datestring))
+            items = re.split("[-/]", six.text_type(datestring))
         else:
             items = []
 
@@ -1396,7 +1433,7 @@ class DateField(MediaField):
             items += [None] * (3 - len(items))
 
         # Use year field if year is missing.
-        if not items[0] and hasattr(self, '_year_field'):
+        if not items[0] and hasattr(self, "_year_field"):
             items[0] = self._year_field.__get__(mediafile)
 
         # Convert each component to an integer if possible.
@@ -1417,15 +1454,15 @@ class DateField(MediaField):
             self.__delete__(mediafile)
             return
 
-        date = [u'{0:04d}'.format(int(year))]
+        date = ["{0:04d}".format(int(year))]
         if month:
-            date.append(u'{0:02d}'.format(int(month)))
+            date.append("{0:02d}".format(int(month)))
         if month and day:
-            date.append(u'{0:02d}'.format(int(day)))
+            date.append("{0:02d}".format(int(day)))
         date = map(six.text_type, date)
-        super(DateField, self).__set__(mediafile, u'-'.join(date))
+        super(DateField, self).__set__(mediafile, "-".join(date))
 
-        if hasattr(self, '_year_field'):
+        if hasattr(self, "_year_field"):
             self._year_field.__set__(mediafile, year)
 
     def year_field(self):
@@ -1442,6 +1479,7 @@ class DateItemField(MediaField):
     """Descriptor that gets and sets constituent parts of a `DateField`:
     the month, day, or year.
     """
+
     def __init__(self, date_field, item_pos):
         self.date_field = date_field
         self.item_pos = item_pos
@@ -1466,6 +1504,7 @@ class CoverArtField(MediaField):
     When there are multiple images we try to pick the most likely to be a front
     cover.
     """
+
     def __init__(self):
         pass
 
@@ -1492,7 +1531,7 @@ class CoverArtField(MediaField):
             mediafile.images = []
 
     def __delete__(self, mediafile):
-        delattr(mediafile, 'images')
+        delattr(mediafile, "images")
 
 
 class QNumberField(MediaField):
@@ -1502,6 +1541,7 @@ class QNumberField(MediaField):
     `fraction_bits` binary digits to the left and then rounded, yielding a
     simple integer.
     """
+
     def __init__(self, fraction_bits, *args, **kwargs):
         super(QNumberField, self).__init__(out_type=int, *args, **kwargs)
         self.__fraction_bits = fraction_bits
@@ -1525,6 +1565,7 @@ class ImageListField(ListMediaField):
     the tags. The setter accepts a list of `Image` instances to be
     written to the tags.
     """
+
     def __init__(self):
         # The storage styles used here must implement the
         # `ListStorageStyle` interface and get and set lists of
@@ -1542,10 +1583,12 @@ class ImageListField(ListMediaField):
 
 # MediaFile is a collection of fields.
 
+
 class MediaFile(object):
     """Represents a multimedia file on disk and provides access to its
     metadata.
     """
+
     @loadfile()
     def __init__(self, filething, id3v23=False):
         """Constructs a new `MediaFile` reflecting the provided file.
@@ -1561,40 +1604,40 @@ class MediaFile(object):
         self.filething = filething
 
         self.mgfile = mutagen_call(
-            'open', self.filename, mutagen.File, filething
+            "open", self.filename, mutagen.File, filething
         )
 
         if self.mgfile is None:
             # Mutagen couldn't guess the type
             raise FileTypeError(self.filename)
-        elif type(self.mgfile).__name__ in ['M4A', 'MP4']:
+        elif type(self.mgfile).__name__ in ["M4A", "MP4"]:
             info = self.mgfile.info
-            if info.codec and info.codec.startswith('alac'):
-                self.type = 'alac'
+            if info.codec and info.codec.startswith("alac"):
+                self.type = "alac"
             else:
-                self.type = 'aac'
-        elif type(self.mgfile).__name__ in ['ID3', 'MP3']:
-            self.type = 'mp3'
-        elif type(self.mgfile).__name__ == 'FLAC':
-            self.type = 'flac'
-        elif type(self.mgfile).__name__ == 'OggOpus':
-            self.type = 'opus'
-        elif type(self.mgfile).__name__ == 'OggVorbis':
-            self.type = 'ogg'
-        elif type(self.mgfile).__name__ == 'MonkeysAudio':
-            self.type = 'ape'
-        elif type(self.mgfile).__name__ == 'WavPack':
-            self.type = 'wv'
-        elif type(self.mgfile).__name__ == 'Musepack':
-            self.type = 'mpc'
-        elif type(self.mgfile).__name__ == 'ASF':
-            self.type = 'asf'
-        elif type(self.mgfile).__name__ == 'AIFF':
-            self.type = 'aiff'
-        elif type(self.mgfile).__name__ == 'DSF':
-            self.type = 'dsf'
-        elif type(self.mgfile).__name__ == 'WAVE':
-            self.type = 'wav'
+                self.type = "aac"
+        elif type(self.mgfile).__name__ in ["ID3", "MP3"]:
+            self.type = "mp3"
+        elif type(self.mgfile).__name__ == "FLAC":
+            self.type = "flac"
+        elif type(self.mgfile).__name__ == "OggOpus":
+            self.type = "opus"
+        elif type(self.mgfile).__name__ == "OggVorbis":
+            self.type = "ogg"
+        elif type(self.mgfile).__name__ == "MonkeysAudio":
+            self.type = "ape"
+        elif type(self.mgfile).__name__ == "WavPack":
+            self.type = "wv"
+        elif type(self.mgfile).__name__ == "Musepack":
+            self.type = "mpc"
+        elif type(self.mgfile).__name__ == "ASF":
+            self.type = "asf"
+        elif type(self.mgfile).__name__ == "AIFF":
+            self.type = "aiff"
+        elif type(self.mgfile).__name__ == "DSF":
+            self.type = "dsf"
+        elif type(self.mgfile).__name__ == "WAVE":
+            self.type = "wav"
         else:
             raise FileTypeError(self.filename, type(self.mgfile).__name__)
 
@@ -1603,7 +1646,7 @@ class MediaFile(object):
             self.mgfile.add_tags()
 
         # Set the ID3v2.3 flag only for MP3s.
-        self.id3v23 = id3v23 and self.type == 'mp3'
+        self.id3v23 = id3v23 and self.type == "mp3"
 
     @property
     def filename(self):
@@ -1632,11 +1675,10 @@ class MediaFile(object):
 
     @property
     def filesize(self):
-        """The size (in bytes) of the underlying file.
-        """
+        """The size (in bytes) of the underlying file."""
         if self.filething.filename:
             return os.path.getsize(self.filething.filename)
-        if hasattr(self.filething.fileobj, '__len__'):
+        if hasattr(self.filething.fileobj, "__len__"):
             return len(self.filething.fileobj)
         else:
             tell = self.filething.fileobj.tell()
@@ -1653,21 +1695,30 @@ class MediaFile(object):
         # Possibly save the tags to ID3v2.3.
         if self.id3v23:
             id3 = self.mgfile
-            if hasattr(id3, 'tags'):
+            if hasattr(id3, "tags"):
                 # In case this is an MP3 object, not an ID3 object.
                 id3 = id3.tags
             id3.update_to_v23()
-            kwargs['v2_version'] = 3
+            kwargs["v2_version"] = 3
 
-        mutagen_call('save', self.filename, self.mgfile.save,
-                     _update_filething(self.filething), **kwargs)
+        mutagen_call(
+            "save",
+            self.filename,
+            self.mgfile.save,
+            _update_filething(self.filething),
+            **kwargs,
+        )
 
     def delete(self):
         """Remove the current metadata tag from the file. May
         throw `UnreadableFileError`.
         """
-        mutagen_call('delete', self.filename, self.mgfile.delete,
-                     _update_filething(self.filething))
+        mutagen_call(
+            "delete",
+            self.filename,
+            self.mgfile.delete,
+            _update_filething(self.filething),
+        )
 
     # Convenient access to the set of available fields.
 
@@ -1682,7 +1733,7 @@ class MediaFile(object):
                 if isinstance(property, bytes):
                     # On Python 2, class field names are bytes. This method
                     # produces text strings.
-                    yield property.decode('utf8', 'ignore')
+                    yield property.decode("utf8", "ignore")
                 else:
                     yield property
 
@@ -1697,9 +1748,9 @@ class MediaFile(object):
         make them appear in that order.
         """
         if isinstance(cls.__dict__[name], DateItemField):
-            name = re.sub('year',  'date0', name)
-            name = re.sub('month', 'date1', name)
-            name = re.sub('day',   'date2', name)
+            name = re.sub("year", "date0", name)
+            name = re.sub("month", "date1", name)
+            name = re.sub("day", "date2", name)
         return name
 
     @classmethod
@@ -1721,9 +1772,17 @@ class MediaFile(object):
         """
         for property in cls.fields():
             yield property
-        for property in ('length', 'samplerate', 'bitdepth', 'bitrate',
-                         'bitrate_mode', 'channels', 'encoder_info',
-                         'encoder_settings', 'format'):
+        for property in (
+            "length",
+            "samplerate",
+            "bitdepth",
+            "bitrate",
+            "bitrate_mode",
+            "channels",
+            "encoder_info",
+            "encoder_settings",
+            "format",
+        ):
             yield property
 
     @classmethod
@@ -1737,10 +1796,12 @@ class MediaFile(object):
         """
         if not isinstance(descriptor, MediaField):
             raise ValueError(
-                u'{0} must be an instance of MediaField'.format(descriptor))
+                "{0} must be an instance of MediaField".format(descriptor)
+            )
         if name in cls.__dict__:
             raise ValueError(
-                u'property "{0}" already exists on MediaFile'.format(name))
+                'property "{0}" already exists on MediaFile'.format(name)
+            )
         setattr(cls, name, descriptor)
 
     def update(self, dict):
@@ -1768,272 +1829,274 @@ class MediaFile(object):
     # Field definitions.
 
     title = MediaField(
-        MP3StorageStyle('TIT2'),
-        MP4StorageStyle('\xa9nam'),
-        StorageStyle('TITLE'),
-        ASFStorageStyle('Title'),
+        MP3StorageStyle("TIT2"),
+        MP4StorageStyle("\xa9nam"),
+        StorageStyle("TITLE"),
+        ASFStorageStyle("Title"),
     )
     artist = MediaField(
-        MP3StorageStyle('TPE1'),
-        MP4StorageStyle('\xa9ART'),
-        StorageStyle('ARTIST'),
-        ASFStorageStyle('Author'),
+        MP3StorageStyle("TPE1"),
+        MP4StorageStyle("\xa9ART"),
+        StorageStyle("ARTIST"),
+        ASFStorageStyle("Author"),
     )
     artists = ListMediaField(
-        MP3ListDescStorageStyle(desc=u'ARTISTS'),
-        MP4ListStorageStyle('----:com.apple.iTunes:ARTISTS'),
-        ListStorageStyle('ARTISTS'),
-        ASFStorageStyle('WM/ARTISTS'),
+        MP3ListDescStorageStyle(desc="ARTISTS"),
+        MP4ListStorageStyle("----:com.apple.iTunes:ARTISTS"),
+        ListStorageStyle("ARTISTS"),
+        ASFStorageStyle("WM/ARTISTS"),
     )
     album = MediaField(
-        MP3StorageStyle('TALB'),
-        MP4StorageStyle('\xa9alb'),
-        StorageStyle('ALBUM'),
-        ASFStorageStyle('WM/AlbumTitle'),
+        MP3StorageStyle("TALB"),
+        MP4StorageStyle("\xa9alb"),
+        StorageStyle("ALBUM"),
+        ASFStorageStyle("WM/AlbumTitle"),
     )
     genres = ListMediaField(
-        MP3ListStorageStyle('TCON'),
-        MP4ListStorageStyle('\xa9gen'),
-        ListStorageStyle('GENRE'),
-        ASFStorageStyle('WM/Genre'),
+        MP3ListStorageStyle("TCON"),
+        MP4ListStorageStyle("\xa9gen"),
+        ListStorageStyle("GENRE"),
+        ASFStorageStyle("WM/Genre"),
     )
     genre = genres.single_field()
 
     lyricist = MediaField(
-        MP3StorageStyle('TEXT'),
-        MP4StorageStyle('----:com.apple.iTunes:LYRICIST'),
-        StorageStyle('LYRICIST'),
-        ASFStorageStyle('WM/Writer'),
+        MP3StorageStyle("TEXT"),
+        MP4StorageStyle("----:com.apple.iTunes:LYRICIST"),
+        StorageStyle("LYRICIST"),
+        ASFStorageStyle("WM/Writer"),
     )
     composer = MediaField(
-        MP3StorageStyle('TCOM'),
-        MP4StorageStyle('\xa9wrt'),
-        StorageStyle('COMPOSER'),
-        ASFStorageStyle('WM/Composer'),
+        MP3StorageStyle("TCOM"),
+        MP4StorageStyle("\xa9wrt"),
+        StorageStyle("COMPOSER"),
+        ASFStorageStyle("WM/Composer"),
     )
     composer_sort = MediaField(
-        MP3StorageStyle('TSOC'),
-        MP4StorageStyle('soco'),
-        StorageStyle('COMPOSERSORT'),
-        ASFStorageStyle('WM/Composersortorder'),
+        MP3StorageStyle("TSOC"),
+        MP4StorageStyle("soco"),
+        StorageStyle("COMPOSERSORT"),
+        ASFStorageStyle("WM/Composersortorder"),
     )
     arranger = MediaField(
-        MP3PeopleStorageStyle('TIPL', involvement='arranger'),
-        MP4StorageStyle('----:com.apple.iTunes:Arranger'),
-        StorageStyle('ARRANGER'),
-        ASFStorageStyle('beets/Arranger'),
+        MP3PeopleStorageStyle("TIPL", involvement="arranger"),
+        MP4StorageStyle("----:com.apple.iTunes:Arranger"),
+        StorageStyle("ARRANGER"),
+        ASFStorageStyle("beets/Arranger"),
     )
 
     grouping = MediaField(
-        MP3StorageStyle('TIT1'),
-        MP4StorageStyle('\xa9grp'),
-        StorageStyle('GROUPING'),
-        ASFStorageStyle('WM/ContentGroupDescription'),
+        MP3StorageStyle("TIT1"),
+        MP4StorageStyle("\xa9grp"),
+        StorageStyle("GROUPING"),
+        ASFStorageStyle("WM/ContentGroupDescription"),
     )
     track = MediaField(
-        MP3SlashPackStorageStyle('TRCK', pack_pos=0),
-        MP4TupleStorageStyle('trkn', index=0),
-        StorageStyle('TRACK'),
-        StorageStyle('TRACKNUMBER'),
-        ASFStorageStyle('WM/TrackNumber'),
+        MP3SlashPackStorageStyle("TRCK", pack_pos=0),
+        MP4TupleStorageStyle("trkn", index=0),
+        StorageStyle("TRACK"),
+        StorageStyle("TRACKNUMBER"),
+        ASFStorageStyle("WM/TrackNumber"),
         out_type=int,
     )
     tracktotal = MediaField(
-        MP3SlashPackStorageStyle('TRCK', pack_pos=1),
-        MP4TupleStorageStyle('trkn', index=1),
-        StorageStyle('TRACKTOTAL'),
-        StorageStyle('TRACKC'),
-        StorageStyle('TOTALTRACKS'),
-        ASFStorageStyle('TotalTracks'),
+        MP3SlashPackStorageStyle("TRCK", pack_pos=1),
+        MP4TupleStorageStyle("trkn", index=1),
+        StorageStyle("TRACKTOTAL"),
+        StorageStyle("TRACKC"),
+        StorageStyle("TOTALTRACKS"),
+        ASFStorageStyle("TotalTracks"),
         out_type=int,
     )
     disc = MediaField(
-        MP3SlashPackStorageStyle('TPOS', pack_pos=0),
-        MP4TupleStorageStyle('disk', index=0),
-        StorageStyle('DISC'),
-        StorageStyle('DISCNUMBER'),
-        ASFStorageStyle('WM/PartOfSet'),
+        MP3SlashPackStorageStyle("TPOS", pack_pos=0),
+        MP4TupleStorageStyle("disk", index=0),
+        StorageStyle("DISC"),
+        StorageStyle("DISCNUMBER"),
+        ASFStorageStyle("WM/PartOfSet"),
         out_type=int,
     )
     disctotal = MediaField(
-        MP3SlashPackStorageStyle('TPOS', pack_pos=1),
-        MP4TupleStorageStyle('disk', index=1),
-        StorageStyle('DISCTOTAL'),
-        StorageStyle('DISCC'),
-        StorageStyle('TOTALDISCS'),
-        ASFStorageStyle('TotalDiscs'),
+        MP3SlashPackStorageStyle("TPOS", pack_pos=1),
+        MP4TupleStorageStyle("disk", index=1),
+        StorageStyle("DISCTOTAL"),
+        StorageStyle("DISCC"),
+        StorageStyle("TOTALDISCS"),
+        ASFStorageStyle("TotalDiscs"),
         out_type=int,
     )
 
     url = MediaField(
-        MP3DescStorageStyle(key='WXXX', attr='url', multispec=False),
-        MP4StorageStyle('\xa9url'),
-        StorageStyle('URL'),
-        ASFStorageStyle('WM/URL'),
+        MP3DescStorageStyle(key="WXXX", attr="url", multispec=False),
+        MP4StorageStyle("\xa9url"),
+        StorageStyle("URL"),
+        ASFStorageStyle("WM/URL"),
     )
     lyrics = MediaField(
-        MP3DescStorageStyle(key='USLT', multispec=False),
-        MP4StorageStyle('\xa9lyr'),
-        StorageStyle('LYRICS'),
-        ASFStorageStyle('WM/Lyrics'),
+        MP3DescStorageStyle(key="USLT", multispec=False),
+        MP4StorageStyle("\xa9lyr"),
+        StorageStyle("LYRICS"),
+        ASFStorageStyle("WM/Lyrics"),
     )
     comments = MediaField(
-        MP3DescStorageStyle(key='COMM'),
-        MP4StorageStyle('\xa9cmt'),
-        StorageStyle('DESCRIPTION'),
-        StorageStyle('COMMENT'),
-        ASFStorageStyle('WM/Comments'),
-        ASFStorageStyle('Description')
+        MP3DescStorageStyle(key="COMM"),
+        MP4StorageStyle("\xa9cmt"),
+        StorageStyle("DESCRIPTION"),
+        StorageStyle("COMMENT"),
+        ASFStorageStyle("WM/Comments"),
+        ASFStorageStyle("Description"),
     )
     copyright = MediaField(
-        MP3StorageStyle('TCOP'),
-        MP4StorageStyle('cprt'),
-        StorageStyle('COPYRIGHT'),
-        ASFStorageStyle('Copyright'),
+        MP3StorageStyle("TCOP"),
+        MP4StorageStyle("cprt"),
+        StorageStyle("COPYRIGHT"),
+        ASFStorageStyle("Copyright"),
     )
     bpm = MediaField(
-        MP3StorageStyle('TBPM'),
-        MP4StorageStyle('tmpo', as_type=int),
-        StorageStyle('BPM'),
-        ASFStorageStyle('WM/BeatsPerMinute'),
+        MP3StorageStyle("TBPM"),
+        MP4StorageStyle("tmpo", as_type=int),
+        StorageStyle("BPM"),
+        ASFStorageStyle("WM/BeatsPerMinute"),
         out_type=int,
     )
     comp = MediaField(
-        MP3StorageStyle('TCMP'),
-        MP4BoolStorageStyle('cpil'),
-        StorageStyle('COMPILATION'),
-        ASFStorageStyle('WM/IsCompilation', as_type=bool),
+        MP3StorageStyle("TCMP"),
+        MP4BoolStorageStyle("cpil"),
+        StorageStyle("COMPILATION"),
+        ASFStorageStyle("WM/IsCompilation", as_type=bool),
         out_type=bool,
     )
     albumartist = MediaField(
-        MP3StorageStyle('TPE2'),
-        MP4StorageStyle('aART'),
-        StorageStyle('ALBUM ARTIST'),
-        StorageStyle('ALBUMARTIST'),
-        ASFStorageStyle('WM/AlbumArtist'),
+        MP3StorageStyle("TPE2"),
+        MP4StorageStyle("aART"),
+        StorageStyle("ALBUM ARTIST"),
+        StorageStyle("ALBUMARTIST"),
+        ASFStorageStyle("WM/AlbumArtist"),
     )
     albumartists = ListMediaField(
-        MP3ListDescStorageStyle(desc=u'ALBUMARTISTS'),
-        MP4ListStorageStyle('----:com.apple.iTunes:ALBUMARTISTS'),
-        ListStorageStyle('ALBUMARTISTS'),
-        ASFStorageStyle('WM/AlbumArtists'),
+        MP3ListDescStorageStyle(desc="ALBUMARTISTS"),
+        MP4ListStorageStyle("----:com.apple.iTunes:ALBUMARTISTS"),
+        ListStorageStyle("ALBUMARTISTS"),
+        ASFStorageStyle("WM/AlbumArtists"),
     )
     albumtype = MediaField(
-        MP3DescStorageStyle(u'MusicBrainz Album Type'),
-        MP4StorageStyle('----:com.apple.iTunes:MusicBrainz Album Type'),
-        StorageStyle('RELEASETYPE'),
-        StorageStyle('MUSICBRAINZ_ALBUMTYPE'),
-        ASFStorageStyle('MusicBrainz/Album Type'),
+        MP3DescStorageStyle("MusicBrainz Album Type"),
+        MP4StorageStyle("----:com.apple.iTunes:MusicBrainz Album Type"),
+        StorageStyle("RELEASETYPE"),
+        StorageStyle("MUSICBRAINZ_ALBUMTYPE"),
+        ASFStorageStyle("MusicBrainz/Album Type"),
     )
     label = MediaField(
-        MP3StorageStyle('TPUB'),
-        MP4StorageStyle('----:com.apple.iTunes:LABEL'),
-        MP4StorageStyle('----:com.apple.iTunes:publisher'),
-        MP4StorageStyle('----:com.apple.iTunes:Label', read_only=True),
-        StorageStyle('LABEL'),
-        StorageStyle('PUBLISHER'),  # Traktor
-        ASFStorageStyle('WM/Publisher'),
+        MP3StorageStyle("TPUB"),
+        MP4StorageStyle("----:com.apple.iTunes:LABEL"),
+        MP4StorageStyle("----:com.apple.iTunes:publisher"),
+        MP4StorageStyle("----:com.apple.iTunes:Label", read_only=True),
+        StorageStyle("LABEL"),
+        StorageStyle("PUBLISHER"),  # Traktor
+        ASFStorageStyle("WM/Publisher"),
     )
     artist_sort = MediaField(
-        MP3StorageStyle('TSOP'),
-        MP4StorageStyle('soar'),
-        StorageStyle('ARTISTSORT'),
-        ASFStorageStyle('WM/ArtistSortOrder'),
+        MP3StorageStyle("TSOP"),
+        MP4StorageStyle("soar"),
+        StorageStyle("ARTISTSORT"),
+        ASFStorageStyle("WM/ArtistSortOrder"),
     )
     albumartist_sort = MediaField(
-        MP3DescStorageStyle(u'ALBUMARTISTSORT'),
-        MP4StorageStyle('soaa'),
-        StorageStyle('ALBUMARTISTSORT'),
-        ASFStorageStyle('WM/AlbumArtistSortOrder'),
+        MP3DescStorageStyle("ALBUMARTISTSORT"),
+        MP4StorageStyle("soaa"),
+        StorageStyle("ALBUMARTISTSORT"),
+        ASFStorageStyle("WM/AlbumArtistSortOrder"),
     )
     asin = MediaField(
-        MP3DescStorageStyle(u'ASIN'),
-        MP4StorageStyle('----:com.apple.iTunes:ASIN'),
-        StorageStyle('ASIN'),
-        ASFStorageStyle('MusicBrainz/ASIN'),
+        MP3DescStorageStyle("ASIN"),
+        MP4StorageStyle("----:com.apple.iTunes:ASIN"),
+        StorageStyle("ASIN"),
+        ASFStorageStyle("MusicBrainz/ASIN"),
     )
     catalognum = MediaField(
-        MP3DescStorageStyle(u'CATALOGNUMBER'),
-        MP4StorageStyle('----:com.apple.iTunes:CATALOGNUMBER'),
-        StorageStyle('CATALOGNUMBER'),
-        ASFStorageStyle('WM/CatalogNo'),
+        MP3DescStorageStyle("CATALOGNUMBER"),
+        MP4StorageStyle("----:com.apple.iTunes:CATALOGNUMBER"),
+        StorageStyle("CATALOGNUMBER"),
+        ASFStorageStyle("WM/CatalogNo"),
     )
     barcode = MediaField(
-        MP3DescStorageStyle(u'BARCODE'),
-        MP4StorageStyle('----:com.apple.iTunes:BARCODE'),
-        StorageStyle('BARCODE'),
-        StorageStyle('UPC', read_only=True),
-        StorageStyle('EAN/UPN', read_only=True),
-        StorageStyle('EAN', read_only=True),
-        StorageStyle('UPN', read_only=True),
-        ASFStorageStyle('WM/Barcode'),
+        MP3DescStorageStyle("BARCODE"),
+        MP4StorageStyle("----:com.apple.iTunes:BARCODE"),
+        StorageStyle("BARCODE"),
+        StorageStyle("UPC", read_only=True),
+        StorageStyle("EAN/UPN", read_only=True),
+        StorageStyle("EAN", read_only=True),
+        StorageStyle("UPN", read_only=True),
+        ASFStorageStyle("WM/Barcode"),
     )
     isrc = MediaField(
-        MP3StorageStyle(u'TSRC'),
-        MP4StorageStyle('----:com.apple.iTunes:ISRC'),
-        StorageStyle('ISRC'),
-        ASFStorageStyle('WM/ISRC'),
+        MP3StorageStyle("TSRC"),
+        MP4StorageStyle("----:com.apple.iTunes:ISRC"),
+        StorageStyle("ISRC"),
+        ASFStorageStyle("WM/ISRC"),
     )
     disctitle = MediaField(
-        MP3StorageStyle('TSST'),
-        MP4StorageStyle('----:com.apple.iTunes:DISCSUBTITLE'),
-        StorageStyle('DISCSUBTITLE'),
-        ASFStorageStyle('WM/SetSubTitle'),
+        MP3StorageStyle("TSST"),
+        MP4StorageStyle("----:com.apple.iTunes:DISCSUBTITLE"),
+        StorageStyle("DISCSUBTITLE"),
+        ASFStorageStyle("WM/SetSubTitle"),
     )
     encoder = MediaField(
-        MP3StorageStyle('TENC'),
-        MP4StorageStyle('\xa9too'),
-        StorageStyle('ENCODEDBY'),
-        StorageStyle('ENCODER'),
-        ASFStorageStyle('WM/EncodedBy'),
+        MP3StorageStyle("TENC"),
+        MP4StorageStyle("\xa9too"),
+        StorageStyle("ENCODEDBY"),
+        StorageStyle("ENCODER"),
+        ASFStorageStyle("WM/EncodedBy"),
     )
     script = MediaField(
-        MP3DescStorageStyle(u'Script'),
-        MP4StorageStyle('----:com.apple.iTunes:SCRIPT'),
-        StorageStyle('SCRIPT'),
-        ASFStorageStyle('WM/Script'),
+        MP3DescStorageStyle("Script"),
+        MP4StorageStyle("----:com.apple.iTunes:SCRIPT"),
+        StorageStyle("SCRIPT"),
+        ASFStorageStyle("WM/Script"),
     )
     language = MediaField(
-        MP3StorageStyle('TLAN'),
-        MP4StorageStyle('----:com.apple.iTunes:LANGUAGE'),
-        StorageStyle('LANGUAGE'),
-        ASFStorageStyle('WM/Language'),
+        MP3StorageStyle("TLAN"),
+        MP4StorageStyle("----:com.apple.iTunes:LANGUAGE"),
+        StorageStyle("LANGUAGE"),
+        ASFStorageStyle("WM/Language"),
     )
     country = MediaField(
-        MP3DescStorageStyle(u'MusicBrainz Album Release Country'),
-        MP4StorageStyle('----:com.apple.iTunes:MusicBrainz '
-                        'Album Release Country'),
-        StorageStyle('RELEASECOUNTRY'),
-        ASFStorageStyle('MusicBrainz/Album Release Country'),
+        MP3DescStorageStyle("MusicBrainz Album Release Country"),
+        MP4StorageStyle(
+            "----:com.apple.iTunes:MusicBrainz " "Album Release Country"
+        ),
+        StorageStyle("RELEASECOUNTRY"),
+        ASFStorageStyle("MusicBrainz/Album Release Country"),
     )
     albumstatus = MediaField(
-        MP3DescStorageStyle(u'MusicBrainz Album Status'),
-        MP4StorageStyle('----:com.apple.iTunes:MusicBrainz Album Status'),
-        StorageStyle('RELEASESTATUS'),
-        StorageStyle('MUSICBRAINZ_ALBUMSTATUS'),
-        ASFStorageStyle('MusicBrainz/Album Status'),
+        MP3DescStorageStyle("MusicBrainz Album Status"),
+        MP4StorageStyle("----:com.apple.iTunes:MusicBrainz Album Status"),
+        StorageStyle("RELEASESTATUS"),
+        StorageStyle("MUSICBRAINZ_ALBUMSTATUS"),
+        ASFStorageStyle("MusicBrainz/Album Status"),
     )
     media = MediaField(
-        MP3StorageStyle('TMED'),
-        MP4StorageStyle('----:com.apple.iTunes:MEDIA'),
-        StorageStyle('MEDIA'),
-        ASFStorageStyle('WM/Media'),
+        MP3StorageStyle("TMED"),
+        MP4StorageStyle("----:com.apple.iTunes:MEDIA"),
+        StorageStyle("MEDIA"),
+        ASFStorageStyle("WM/Media"),
     )
     albumdisambig = MediaField(
         # This tag mapping was invented for beets (not used by Picard, etc).
-        MP3DescStorageStyle(u'MusicBrainz Album Comment'),
-        MP4StorageStyle('----:com.apple.iTunes:MusicBrainz Album Comment'),
-        StorageStyle('MUSICBRAINZ_ALBUMCOMMENT'),
-        ASFStorageStyle('MusicBrainz/Album Comment'),
+        MP3DescStorageStyle("MusicBrainz Album Comment"),
+        MP4StorageStyle("----:com.apple.iTunes:MusicBrainz Album Comment"),
+        StorageStyle("MUSICBRAINZ_ALBUMCOMMENT"),
+        ASFStorageStyle("MusicBrainz/Album Comment"),
     )
 
     # Release date.
     date = DateField(
-        MP3StorageStyle('TDRC'),
-        MP4StorageStyle('\xa9day'),
-        StorageStyle('DATE'),
-        ASFStorageStyle('WM/Year'),
-        year=(StorageStyle('YEAR'),))
+        MP3StorageStyle("TDRC"),
+        MP4StorageStyle("\xa9day"),
+        StorageStyle("DATE"),
+        ASFStorageStyle("WM/Year"),
+        year=(StorageStyle("YEAR"),),
+    )
 
     year = date.year_field()
     month = date.month_field()
@@ -2041,10 +2104,11 @@ class MediaFile(object):
 
     # *Original* release date.
     original_date = DateField(
-        MP3StorageStyle('TDOR'),
-        MP4StorageStyle('----:com.apple.iTunes:ORIGINAL YEAR'),
-        StorageStyle('ORIGINALDATE'),
-        ASFStorageStyle('WM/OriginalReleaseYear'))
+        MP3StorageStyle("TDOR"),
+        MP4StorageStyle("----:com.apple.iTunes:ORIGINAL YEAR"),
+        StorageStyle("ORIGINALDATE"),
+        ASFStorageStyle("WM/OriginalReleaseYear"),
+    )
 
     original_year = original_date.year_field()
     original_month = original_date.month_field()
@@ -2052,16 +2116,16 @@ class MediaFile(object):
 
     # Nonstandard metadata.
     artist_credit = MediaField(
-        MP3DescStorageStyle(u'Artist Credit'),
-        MP4StorageStyle('----:com.apple.iTunes:Artist Credit'),
-        StorageStyle('ARTIST_CREDIT'),
-        ASFStorageStyle('beets/Artist Credit'),
+        MP3DescStorageStyle("Artist Credit"),
+        MP4StorageStyle("----:com.apple.iTunes:Artist Credit"),
+        StorageStyle("ARTIST_CREDIT"),
+        ASFStorageStyle("beets/Artist Credit"),
     )
     albumartist_credit = MediaField(
-        MP3DescStorageStyle(u'Album Artist Credit'),
-        MP4StorageStyle('----:com.apple.iTunes:Album Artist Credit'),
-        StorageStyle('ALBUMARTIST_CREDIT'),
-        ASFStorageStyle('beets/Album Artist Credit'),
+        MP3DescStorageStyle("Album Artist Credit"),
+        MP4StorageStyle("----:com.apple.iTunes:Album Artist Credit"),
+        StorageStyle("ALBUMARTIST_CREDIT"),
+        ASFStorageStyle("beets/Album Artist Credit"),
     )
 
     # Legacy album art field
@@ -2072,208 +2136,154 @@ class MediaFile(object):
 
     # MusicBrainz IDs.
     mb_trackid = MediaField(
-        MP3UFIDStorageStyle(owner='http://musicbrainz.org'),
-        MP4StorageStyle('----:com.apple.iTunes:MusicBrainz Track Id'),
-        StorageStyle('MUSICBRAINZ_TRACKID'),
-        ASFStorageStyle('MusicBrainz/Track Id'),
+        MP3UFIDStorageStyle(owner="http://musicbrainz.org"),
+        MP4StorageStyle("----:com.apple.iTunes:MusicBrainz Track Id"),
+        StorageStyle("MUSICBRAINZ_TRACKID"),
+        ASFStorageStyle("MusicBrainz/Track Id"),
     )
     mb_releasetrackid = MediaField(
-        MP3DescStorageStyle(u'MusicBrainz Release Track Id'),
-        MP4StorageStyle('----:com.apple.iTunes:MusicBrainz Release Track Id'),
-        StorageStyle('MUSICBRAINZ_RELEASETRACKID'),
-        ASFStorageStyle('MusicBrainz/Release Track Id'),
+        MP3DescStorageStyle("MusicBrainz Release Track Id"),
+        MP4StorageStyle("----:com.apple.iTunes:MusicBrainz Release Track Id"),
+        StorageStyle("MUSICBRAINZ_RELEASETRACKID"),
+        ASFStorageStyle("MusicBrainz/Release Track Id"),
     )
     mb_workid = MediaField(
-        MP3DescStorageStyle(u'MusicBrainz Work Id'),
-        MP4StorageStyle('----:com.apple.iTunes:MusicBrainz Work Id'),
-        StorageStyle('MUSICBRAINZ_WORKID'),
-        ASFStorageStyle('MusicBrainz/Work Id'),
+        MP3DescStorageStyle("MusicBrainz Work Id"),
+        MP4StorageStyle("----:com.apple.iTunes:MusicBrainz Work Id"),
+        StorageStyle("MUSICBRAINZ_WORKID"),
+        ASFStorageStyle("MusicBrainz/Work Id"),
     )
     mb_albumid = MediaField(
-        MP3DescStorageStyle(u'MusicBrainz Album Id'),
-        MP4StorageStyle('----:com.apple.iTunes:MusicBrainz Album Id'),
-        StorageStyle('MUSICBRAINZ_ALBUMID'),
-        ASFStorageStyle('MusicBrainz/Album Id'),
+        MP3DescStorageStyle("MusicBrainz Album Id"),
+        MP4StorageStyle("----:com.apple.iTunes:MusicBrainz Album Id"),
+        StorageStyle("MUSICBRAINZ_ALBUMID"),
+        ASFStorageStyle("MusicBrainz/Album Id"),
     )
     mb_artistids = ListMediaField(
-        MP3ListDescStorageStyle(u'MusicBrainz Artist Id', split_v23=True),
-        MP4ListStorageStyle('----:com.apple.iTunes:MusicBrainz Artist Id'),
-        ListStorageStyle('MUSICBRAINZ_ARTISTID'),
-        ASFStorageStyle('MusicBrainz/Artist Id'),
+        MP3ListDescStorageStyle("MusicBrainz Artist Id", split_v23=True),
+        MP4ListStorageStyle("----:com.apple.iTunes:MusicBrainz Artist Id"),
+        ListStorageStyle("MUSICBRAINZ_ARTISTID"),
+        ASFStorageStyle("MusicBrainz/Artist Id"),
     )
     mb_artistid = mb_artistids.single_field()
 
     mb_albumartistids = ListMediaField(
         MP3ListDescStorageStyle(
-            u'MusicBrainz Album Artist Id',
+            "MusicBrainz Album Artist Id",
             split_v23=True,
         ),
         MP4ListStorageStyle(
-            '----:com.apple.iTunes:MusicBrainz Album Artist Id',
+            "----:com.apple.iTunes:MusicBrainz Album Artist Id",
         ),
-        ListStorageStyle('MUSICBRAINZ_ALBUMARTISTID'),
-        ASFStorageStyle('MusicBrainz/Album Artist Id'),
+        ListStorageStyle("MUSICBRAINZ_ALBUMARTISTID"),
+        ASFStorageStyle("MusicBrainz/Album Artist Id"),
     )
     mb_albumartistid = mb_albumartistids.single_field()
 
     mb_releasegroupid = MediaField(
-        MP3DescStorageStyle(u'MusicBrainz Release Group Id'),
-        MP4StorageStyle('----:com.apple.iTunes:MusicBrainz Release Group Id'),
-        StorageStyle('MUSICBRAINZ_RELEASEGROUPID'),
-        ASFStorageStyle('MusicBrainz/Release Group Id'),
+        MP3DescStorageStyle("MusicBrainz Release Group Id"),
+        MP4StorageStyle("----:com.apple.iTunes:MusicBrainz Release Group Id"),
+        StorageStyle("MUSICBRAINZ_RELEASEGROUPID"),
+        ASFStorageStyle("MusicBrainz/Release Group Id"),
     )
 
     # Acoustid fields.
     acoustid_fingerprint = MediaField(
-        MP3DescStorageStyle(u'Acoustid Fingerprint'),
-        MP4StorageStyle('----:com.apple.iTunes:Acoustid Fingerprint'),
-        StorageStyle('ACOUSTID_FINGERPRINT'),
-        ASFStorageStyle('Acoustid/Fingerprint'),
+        MP3DescStorageStyle("Acoustid Fingerprint"),
+        MP4StorageStyle("----:com.apple.iTunes:Acoustid Fingerprint"),
+        StorageStyle("ACOUSTID_FINGERPRINT"),
+        ASFStorageStyle("Acoustid/Fingerprint"),
     )
     acoustid_id = MediaField(
-        MP3DescStorageStyle(u'Acoustid Id'),
-        MP4StorageStyle('----:com.apple.iTunes:Acoustid Id'),
-        StorageStyle('ACOUSTID_ID'),
-        ASFStorageStyle('Acoustid/Id'),
+        MP3DescStorageStyle("Acoustid Id"),
+        MP4StorageStyle("----:com.apple.iTunes:Acoustid Id"),
+        StorageStyle("ACOUSTID_ID"),
+        ASFStorageStyle("Acoustid/Id"),
     )
 
     # ReplayGain fields.
     rg_track_gain = MediaField(
         MP3DescStorageStyle(
-            u'REPLAYGAIN_TRACK_GAIN',
-            float_places=2, suffix=u' dB'
+            "REPLAYGAIN_TRACK_GAIN", float_places=2, suffix=" dB"
         ),
         MP3DescStorageStyle(
-            u'replaygain_track_gain',
-            float_places=2, suffix=u' dB'
+            "replaygain_track_gain", float_places=2, suffix=" dB"
         ),
         MP3SoundCheckStorageStyle(
-            key='COMM',
-            index=0, desc=u'iTunNORM',
-            id3_lang='eng'
+            key="COMM", index=0, desc="iTunNORM", id3_lang="eng"
         ),
         MP4StorageStyle(
-            '----:com.apple.iTunes:replaygain_track_gain',
-            float_places=2, suffix=' dB'
+            "----:com.apple.iTunes:replaygain_track_gain",
+            float_places=2,
+            suffix=" dB",
         ),
-        MP4SoundCheckStorageStyle(
-            '----:com.apple.iTunes:iTunNORM',
-            index=0
-        ),
-        StorageStyle(
-            u'REPLAYGAIN_TRACK_GAIN',
-            float_places=2, suffix=u' dB'
-        ),
-        ASFStorageStyle(
-            u'replaygain_track_gain',
-            float_places=2, suffix=u' dB'
-        ),
-        out_type=float
+        MP4SoundCheckStorageStyle("----:com.apple.iTunes:iTunNORM", index=0),
+        StorageStyle("REPLAYGAIN_TRACK_GAIN", float_places=2, suffix=" dB"),
+        ASFStorageStyle("replaygain_track_gain", float_places=2, suffix=" dB"),
+        out_type=float,
     )
     rg_album_gain = MediaField(
         MP3DescStorageStyle(
-            u'REPLAYGAIN_ALBUM_GAIN',
-            float_places=2, suffix=u' dB'
+            "REPLAYGAIN_ALBUM_GAIN", float_places=2, suffix=" dB"
         ),
         MP3DescStorageStyle(
-            u'replaygain_album_gain',
-            float_places=2, suffix=u' dB'
+            "replaygain_album_gain", float_places=2, suffix=" dB"
         ),
         MP4StorageStyle(
-            '----:com.apple.iTunes:replaygain_album_gain',
-            float_places=2, suffix=' dB'
+            "----:com.apple.iTunes:replaygain_album_gain",
+            float_places=2,
+            suffix=" dB",
         ),
-        StorageStyle(
-            u'REPLAYGAIN_ALBUM_GAIN',
-            float_places=2, suffix=u' dB'
-        ),
-        ASFStorageStyle(
-            u'replaygain_album_gain',
-            float_places=2, suffix=u' dB'
-        ),
-        out_type=float
+        StorageStyle("REPLAYGAIN_ALBUM_GAIN", float_places=2, suffix=" dB"),
+        ASFStorageStyle("replaygain_album_gain", float_places=2, suffix=" dB"),
+        out_type=float,
     )
     rg_track_peak = MediaField(
-        MP3DescStorageStyle(
-            u'REPLAYGAIN_TRACK_PEAK',
-            float_places=6
-        ),
-        MP3DescStorageStyle(
-            u'replaygain_track_peak',
-            float_places=6
-        ),
+        MP3DescStorageStyle("REPLAYGAIN_TRACK_PEAK", float_places=6),
+        MP3DescStorageStyle("replaygain_track_peak", float_places=6),
         MP3SoundCheckStorageStyle(
-            key=u'COMM',
-            index=1, desc=u'iTunNORM',
-            id3_lang='eng'
+            key="COMM", index=1, desc="iTunNORM", id3_lang="eng"
         ),
         MP4StorageStyle(
-            '----:com.apple.iTunes:replaygain_track_peak',
-            float_places=6
+            "----:com.apple.iTunes:replaygain_track_peak", float_places=6
         ),
-        MP4SoundCheckStorageStyle(
-            '----:com.apple.iTunes:iTunNORM',
-            index=1
-        ),
-        StorageStyle(u'REPLAYGAIN_TRACK_PEAK', float_places=6),
-        ASFStorageStyle(u'replaygain_track_peak', float_places=6),
+        MP4SoundCheckStorageStyle("----:com.apple.iTunes:iTunNORM", index=1),
+        StorageStyle("REPLAYGAIN_TRACK_PEAK", float_places=6),
+        ASFStorageStyle("replaygain_track_peak", float_places=6),
         out_type=float,
     )
     rg_album_peak = MediaField(
-        MP3DescStorageStyle(
-            u'REPLAYGAIN_ALBUM_PEAK',
-            float_places=6
-        ),
-        MP3DescStorageStyle(
-            u'replaygain_album_peak',
-            float_places=6
-        ),
+        MP3DescStorageStyle("REPLAYGAIN_ALBUM_PEAK", float_places=6),
+        MP3DescStorageStyle("replaygain_album_peak", float_places=6),
         MP4StorageStyle(
-            '----:com.apple.iTunes:replaygain_album_peak',
-            float_places=6
+            "----:com.apple.iTunes:replaygain_album_peak", float_places=6
         ),
-        StorageStyle(u'REPLAYGAIN_ALBUM_PEAK', float_places=6),
-        ASFStorageStyle(u'replaygain_album_peak', float_places=6),
+        StorageStyle("REPLAYGAIN_ALBUM_PEAK", float_places=6),
+        ASFStorageStyle("replaygain_album_peak", float_places=6),
         out_type=float,
     )
 
     # EBU R128 fields.
     r128_track_gain = QNumberField(
         8,
-        MP3DescStorageStyle(
-            u'R128_TRACK_GAIN'
-        ),
-        MP4StorageStyle(
-            '----:com.apple.iTunes:R128_TRACK_GAIN'
-        ),
-        StorageStyle(
-            u'R128_TRACK_GAIN'
-        ),
-        ASFStorageStyle(
-            u'R128_TRACK_GAIN'
-        ),
+        MP3DescStorageStyle("R128_TRACK_GAIN"),
+        MP4StorageStyle("----:com.apple.iTunes:R128_TRACK_GAIN"),
+        StorageStyle("R128_TRACK_GAIN"),
+        ASFStorageStyle("R128_TRACK_GAIN"),
     )
     r128_album_gain = QNumberField(
         8,
-        MP3DescStorageStyle(
-            u'R128_ALBUM_GAIN'
-        ),
-        MP4StorageStyle(
-            '----:com.apple.iTunes:R128_ALBUM_GAIN'
-        ),
-        StorageStyle(
-            u'R128_ALBUM_GAIN'
-        ),
-        ASFStorageStyle(
-            u'R128_ALBUM_GAIN'
-        ),
+        MP3DescStorageStyle("R128_ALBUM_GAIN"),
+        MP4StorageStyle("----:com.apple.iTunes:R128_ALBUM_GAIN"),
+        StorageStyle("R128_ALBUM_GAIN"),
+        ASFStorageStyle("R128_ALBUM_GAIN"),
     )
 
     initial_key = MediaField(
-        MP3StorageStyle('TKEY'),
-        MP4StorageStyle('----:com.apple.iTunes:initialkey'),
-        StorageStyle('INITIALKEY'),
-        ASFStorageStyle('INITIALKEY'),
+        MP3StorageStyle("TKEY"),
+        MP4StorageStyle("----:com.apple.iTunes:initialkey"),
+        StorageStyle("INITIALKEY"),
+        ASFStorageStyle("INITIALKEY"),
     )
 
     @property
@@ -2284,9 +2294,9 @@ class MediaFile(object):
     @property
     def samplerate(self):
         """The audio's sample rate (an int)."""
-        if hasattr(self.mgfile.info, 'sample_rate'):
+        if hasattr(self.mgfile.info, "sample_rate"):
             return self.mgfile.info.sample_rate
-        elif self.type == 'opus':
+        elif self.type == "opus":
             # Opus is always 48kHz internally.
             return 48000
         return 0
@@ -2297,14 +2307,14 @@ class MediaFile(object):
         Only available for certain file formats (zero where
         unavailable).
         """
-        if hasattr(self.mgfile.info, 'bits_per_sample'):
+        if hasattr(self.mgfile.info, "bits_per_sample"):
             return self.mgfile.info.bits_per_sample
         return 0
 
     @property
     def channels(self):
         """The number of channels in the audio (an int)."""
-        if hasattr(self.mgfile.info, 'channels'):
+        if hasattr(self.mgfile.info, "channels"):
             return self.mgfile.info.channels
         return 0
 
@@ -2317,7 +2327,7 @@ class MediaFile(object):
         imprecision is possible because the file header is incorporated
         in the file size.
         """
-        if hasattr(self.mgfile.info, 'bitrate') and self.mgfile.info.bitrate:
+        if hasattr(self.mgfile.info, "bitrate") and self.mgfile.info.bitrate:
             # Many formats provide it explicitly.
             return self.mgfile.info.bitrate
         else:
@@ -2334,14 +2344,14 @@ class MediaFile(object):
         (a string, eg. "CBR", "VBR" or "ABR").
         Only available for the MP3 file format (empty where unavailable).
         """
-        if hasattr(self.mgfile.info, 'bitrate_mode'):
+        if hasattr(self.mgfile.info, "bitrate_mode"):
             return {
-                mutagen.mp3.BitrateMode.CBR: 'CBR',
-                mutagen.mp3.BitrateMode.VBR: 'VBR',
-                mutagen.mp3.BitrateMode.ABR: 'ABR',
-            }.get(self.mgfile.info.bitrate_mode, '')
+                mutagen.mp3.BitrateMode.CBR: "CBR",
+                mutagen.mp3.BitrateMode.VBR: "VBR",
+                mutagen.mp3.BitrateMode.ABR: "ABR",
+            }.get(self.mgfile.info.bitrate_mode, "")
         else:
-            return ''
+            return ""
 
     @property
     def encoder_info(self):
@@ -2349,20 +2359,20 @@ class MediaFile(object):
         (a string, eg. "LAME 3.97.0").
         Only available for some formats (empty where unavailable).
         """
-        if hasattr(self.mgfile.info, 'encoder_info'):
+        if hasattr(self.mgfile.info, "encoder_info"):
             return self.mgfile.info.encoder_info
         else:
-            return ''
+            return ""
 
     @property
     def encoder_settings(self):
         """A guess of the settings used for the encoder (a string, eg. "-V2").
         Only available for the MP3 file format (empty where unavailable).
         """
-        if hasattr(self.mgfile.info, 'encoder_settings'):
+        if hasattr(self.mgfile.info, "encoder_settings"):
             return self.mgfile.info.encoder_settings
         else:
-            return ''
+            return ""
 
     @property
     def format(self):

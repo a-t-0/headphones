@@ -102,7 +102,7 @@ class SOCKSConnection(HTTPConnection):
                 proxy_password=self._socks_options["password"],
                 proxy_rdns=self._socks_options["rdns"],
                 timeout=self.timeout,
-                **extra_kw
+                **extra_kw,
             )
 
         except SocketTimeout:
@@ -125,7 +125,8 @@ class SOCKSConnection(HTTPConnection):
                     )
                 else:
                     raise NewConnectionError(
-                        self, "Failed to establish a new connection: %s" % error
+                        self,
+                        "Failed to establish a new connection: %s" % error,
                     )
             else:
                 raise NewConnectionError(
@@ -174,7 +175,7 @@ class SOCKSProxyManager(PoolManager):
         password=None,
         num_pools=10,
         headers=None,
-        **connection_pool_kw
+        **connection_pool_kw,
     ):
         parsed = parse_url(proxy_url)
 
@@ -195,7 +196,9 @@ class SOCKSProxyManager(PoolManager):
             socks_version = socks.PROXY_TYPE_SOCKS4
             rdns = True
         else:
-            raise ValueError("Unable to determine SOCKS version from %s" % proxy_url)
+            raise ValueError(
+                "Unable to determine SOCKS version from %s" % proxy_url
+            )
 
         self.proxy_url = proxy_url
 

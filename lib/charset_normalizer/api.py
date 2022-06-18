@@ -75,11 +75,15 @@ def from_bytes(
     length = len(sequences)  # type: int
 
     if length == 0:
-        logger.warning("Encoding detection on empty bytes, assuming utf_8 intention.")
+        logger.warning(
+            "Encoding detection on empty bytes, assuming utf_8 intention."
+        )
         if explain:
             logger.removeHandler(explain_handler)
             logger.setLevel(previous_logger_level or logging.WARNING)
-        return CharsetMatches([CharsetMatch(sequences, "utf_8", 0.0, False, [], "")])
+        return CharsetMatches(
+            [CharsetMatch(sequences, "utf_8", 0.0, False, [], "")]
+        )
 
     if cp_isolation is not None:
         logger.debug(
@@ -195,10 +199,13 @@ def from_bytes(
             continue
 
         try:
-            is_multi_byte_decoder = is_multi_byte_encoding(encoding_iana)  # type: bool
+            is_multi_byte_decoder = is_multi_byte_encoding(
+                encoding_iana
+            )  # type: bool
         except (ModuleNotFoundError, ImportError):
             logger.debug(
-                "Encoding %s does not provide an IncrementalDecoder", encoding_iana
+                "Encoding %s does not provide an IncrementalDecoder",
+                encoding_iana,
             )
             continue
 
@@ -310,7 +317,9 @@ def from_bytes(
                         if bom_or_sig_available and strip_sig_or_bom is False:
                             cut_sequence = sig_payload + cut_sequence
 
-                        chunk = cut_sequence.decode(encoding_iana, errors="ignore")
+                        chunk = cut_sequence.decode(
+                            encoding_iana, errors="ignore"
+                        )
 
                         if chunk[:chunk_partial_size_chk] in decoded_payload:
                             break
@@ -348,7 +357,10 @@ def from_bytes(
         mean_mess_ratio = (
             sum(md_ratios) / len(md_ratios) if md_ratios else 0.0
         )  # type: float
-        if mean_mess_ratio >= threshold or early_stop_count >= max_chunk_gave_up:
+        if (
+            mean_mess_ratio >= threshold
+            or early_stop_count >= max_chunk_gave_up
+        ):
             tested_but_soft_failure.append(encoding_iana)
             logger.info(
                 "%s was excluded because of initial chaos probing. Gave up %i time(s). "
@@ -363,7 +375,12 @@ def from_bytes(
                 and not lazy_str_hard_failure
             ):
                 fallback_entry = CharsetMatch(
-                    sequences, encoding_iana, threshold, False, [], decoded_payload
+                    sequences,
+                    encoding_iana,
+                    threshold,
+                    False,
+                    [],
+                    decoded_payload,
                 )
                 if encoding_iana == specified_encoding:
                     fallback_specified = fallback_entry
@@ -380,7 +397,9 @@ def from_bytes(
         )
 
         if not is_multi_byte_decoder:
-            target_languages = encoding_languages(encoding_iana)  # type: List[str]
+            target_languages = encoding_languages(
+                encoding_iana
+            )  # type: List[str]
         else:
             target_languages = mb_encoding_languages(encoding_iana)
 
@@ -398,7 +417,9 @@ def from_bytes(
         if encoding_iana != "ascii":
             for chunk in md_chunks:
                 chunk_languages = coherence_ratio(
-                    chunk, 0.1, ",".join(target_languages) if target_languages else None
+                    chunk,
+                    0.1,
+                    ",".join(target_languages) if target_languages else None,
                 )
 
                 cd_ratios.append(chunk_languages)
@@ -428,7 +449,8 @@ def from_bytes(
             and mean_mess_ratio < 0.1
         ):
             logger.info(
-                "%s is most likely the one. Stopping the process.", encoding_iana
+                "%s is most likely the one. Stopping the process.",
+                encoding_iana,
             )
             if explain:
                 logger.removeHandler(explain_handler)
@@ -453,7 +475,8 @@ def from_bytes(
 
         if fallback_specified:
             logger.debug(
-                "%s will be used as a fallback match", fallback_specified.encoding
+                "%s will be used as a fallback match",
+                fallback_specified.encoding,
             )
             results.append(fallback_specified)
         elif (
@@ -568,7 +591,8 @@ def normalize(
     target_extensions[0] += "-" + result.encoding  # type: ignore
 
     with open(
-        "{}".format(str(path).replace(filename, "".join(target_extensions))), "wb"
+        "{}".format(str(path).replace(filename, "".join(target_extensions))),
+        "wb",
     ) as fp:
         fp.write(result.output())  # type: ignore
 

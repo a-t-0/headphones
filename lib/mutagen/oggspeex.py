@@ -57,7 +57,8 @@ class OggSpeexInfo(StreamInfo):
             page = OggPage(fileobj)
         if not page.first:
             raise OggSpeexHeaderError(
-                "page has ID header, but doesn't start a stream")
+                "page has ID header, but doesn't start a stream"
+            )
         self.sample_rate = cdata.uint_le(page.packets[0][36:40])
         self.channels = cdata.uint_le(page.packets[0][48:52])
         self.bitrate = max(0, cdata.int_le(page.packets[0][52:56]))
@@ -70,7 +71,7 @@ class OggSpeexInfo(StreamInfo):
         self.length = page.position / float(self.sample_rate)
 
     def pprint(self):
-        return u"Ogg Speex, %.2f seconds" % self.length
+        return "Ogg Speex, %.2f seconds" % self.length
 
 
 class OggSpeexVComment(VCommentDict):
@@ -152,7 +153,7 @@ class OggSpeex(OggFileType):
 
     @staticmethod
     def score(filename, fileobj, header):
-        return (header.startswith(b"OggS") * (b"Speex   " in header))
+        return header.startswith(b"OggS") * (b"Speex   " in header)
 
 
 Open = OggSpeex
@@ -161,7 +162,7 @@ Open = OggSpeex
 @convert_error(IOError, error)
 @loadfile(method=False, writable=True)
 def delete(filething):
-    """ delete(filething)
+    """delete(filething)
 
     Arguments:
         filething (filething)

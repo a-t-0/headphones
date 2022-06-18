@@ -123,7 +123,7 @@ class FoldedCase(str):
     def index(self, sub):
         return self.lower().index(sub.lower())
 
-    def split(self, splitter=' ', maxsplit=0):
+    def split(self, splitter=" ", maxsplit=0):
         pattern = re.compile(re.escape(splitter), re.I)
         return pattern.split(self, maxsplit)
 
@@ -201,8 +201,8 @@ def wrap(s):
     molestie eu, feugiat in, orci. In hac habitasse platea dictumst.
     """
     paragraphs = s.splitlines()
-    wrapped = ('\n'.join(textwrap.wrap(para)) for para in paragraphs)
-    return '\n\n'.join(wrapped)
+    wrapped = ("\n".join(textwrap.wrap(para)) for para in paragraphs)
+    return "\n\n".join(wrapped)
 
 
 def unwrap(s):
@@ -220,12 +220,12 @@ def unwrap(s):
     Curabitur pretium tincidunt lacus. Nulla gravida orci ...
 
     """
-    paragraphs = re.split(r'\n\n+', s)
-    cleaned = (para.replace('\n', ' ') for para in paragraphs)
-    return '\n'.join(cleaned)
+    paragraphs = re.split(r"\n\n+", s)
+    cleaned = (para.replace("\n", " ") for para in paragraphs)
+    return "\n".join(cleaned)
 
 
-lorem_ipsum: str = files(__name__).joinpath('Lorem ipsum.txt').read_text()
+lorem_ipsum: str = files(__name__).joinpath("Lorem ipsum.txt").read_text()
 
 
 class Splitter(object):
@@ -243,7 +243,7 @@ class Splitter(object):
         return s.split(*self.args)
 
 
-def indent(string, prefix=' ' * 4):
+def indent(string, prefix=" " * 4):
     """
     >>> indent('foo')
     '    foo'
@@ -305,7 +305,7 @@ class WordSet(tuple):
 
     """
 
-    _pattern = re.compile('([A-Z]?[a-z]+)|([A-Z]+(?![a-z]))')
+    _pattern = re.compile("([A-Z]?[a-z]+)|([A-Z]+(?![a-z]))")
 
     def capitalized(self):
         return WordSet(word.capitalize() for word in self)
@@ -314,22 +314,22 @@ class WordSet(tuple):
         return WordSet(word.lower() for word in self)
 
     def camel_case(self):
-        return ''.join(self.capitalized())
+        return "".join(self.capitalized())
 
     def headless_camel_case(self):
         words = iter(self)
         first = next(words).lower()
         new_words = itertools.chain((first,), WordSet(words).camel_case())
-        return ''.join(new_words)
+        return "".join(new_words)
 
     def underscore_separated(self):
-        return '_'.join(self)
+        return "_".join(self)
 
     def dash_separated(self):
-        return '-'.join(self)
+        return "-".join(self)
 
     def space_separated(self):
-        return ' '.join(self)
+        return " ".join(self)
 
     def trim_right(self, item):
         """
@@ -405,9 +405,9 @@ def simple_html_strip(s):
     What about
     multiple lines?
     """
-    html_stripper = re.compile('(<!--.*?-->)|(<[^>]*>)|([^<]+)', re.DOTALL)
-    texts = (match.group(3) or '' for match in html_stripper.finditer(s))
-    return ''.join(texts)
+    html_stripper = re.compile("(<!--.*?-->)|(<[^>]*>)|([^<]+)", re.DOTALL)
+    texts = (match.group(3) or "" for match in html_stripper.finditer(s))
+    return "".join(texts)
 
 
 class SeparatedValues(str):
@@ -424,7 +424,7 @@ class SeparatedValues(str):
     ['a', 'b', 'c']
     """
 
-    separator = ','
+    separator = ","
 
     def __iter__(self):
         parts = self.split(self.separator)
@@ -524,6 +524,6 @@ def normalize_newlines(text):
     >>> normalize_newlines('Lorem Ipsum\x85')
     'Lorem Ipsum\n'
     """
-    newlines = ['\r\n', '\r', '\n', '\u0085', '\u2028', '\u2029']
-    pattern = '|'.join(newlines)
-    return re.sub(pattern, '\n', text)
+    newlines = ["\r\n", "\r", "\n", "\u0085", "\u2028", "\u2029"]
+    pattern = "|".join(newlines)
+    return re.sub(pattern, "\n", text)

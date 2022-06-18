@@ -11,5 +11,7 @@ def weibo_compliance_fix(session):
         return r
 
     session._client.default_token_placement = "query"
-    session.register_compliance_hook("access_token_response", _missing_token_type)
+    session.register_compliance_hook(
+        "access_token_response", _missing_token_type
+    )
     return session

@@ -22,24 +22,27 @@ from .torrent import Torrent
 from .category import Category
 from .inbox import Mailbox
 
+
 class LoginException(Exception):
     pass
+
 
 class RequestException(Exception):
     pass
 
-class GazelleAPI(object):
-    last_request = time.time() # share amongst all api objects
-    default_headers = {
-        'Connection': 'keep-alive',
-        'Cache-Control': 'max-age=0',
-        'User-Agent': 'Headphones/%s' % headphones.CURRENT_VERSION,
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9'\
-                  ',*/*;q=0.8',
-        'Accept-Encoding': 'gzip,deflate,sdch',
-        'Accept-Language': 'en-US,en;q=0.8',
-        'Accept-Charset': 'ISO-8859-1,utf-8;q=0.7,*;q=0.3'}
 
+class GazelleAPI(object):
+    last_request = time.time()  # share amongst all api objects
+    default_headers = {
+        "Connection": "keep-alive",
+        "Cache-Control": "max-age=0",
+        "User-Agent": "Headphones/%s" % headphones.CURRENT_VERSION,
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9"
+        ",*/*;q=0.8",
+        "Accept-Encoding": "gzip,deflate,sdch",
+        "Accept-Language": "en-US,en;q=0.8",
+        "Accept-Charset": "ISO-8859-1,utf-8;q=0.7,*;q=0.3",
+    }
 
     def __init__(self, username=None, password=None, url=None):
         self.session = requests.session()
@@ -76,12 +79,17 @@ class GazelleAPI(object):
                     break
 
             if slice_point:
-                self.past_request_timestamps = self.past_request_timestamps[slice_point:]
+                self.past_request_timestamps = self.past_request_timestamps[
+                    slice_point:
+                ]
             else:
                 time.sleep(0.1)
 
     def logged_in(self):
-        return self.logged_in_user is not None and self.logged_in_user.id == self.userid
+        return (
+            self.logged_in_user is not None
+            and self.logged_in_user.id == self.userid
+        )
 
     def _login(self):
         """
@@ -94,24 +102,33 @@ class GazelleAPI(object):
 
         self.wait_for_rate_limit()
 
-        loginpage = self.site + 'login.php'
-        data = {'username': self.username,
-                'password': self.password,
-                'keeplogged': '1'}
-        r = self.session.post(loginpage, data=data, timeout=self.default_timeout, headers=self.default_headers)
+        loginpage = self.site + "login.php"
+        data = {
+            "username": self.username,
+            "password": self.password,
+            "keeplogged": "1",
+        }
+        r = self.session.post(
+            loginpage,
+            data=data,
+            timeout=self.default_timeout,
+            headers=self.default_headers,
+        )
         self.past_request_timestamps.append(time.time())
         if r.status_code != 200:
-            raise LoginException("Login returned status code %s" % r.status_code)
+            raise LoginException(
+                "Login returned status code %s" % r.status_code
+            )
 
         try:
-            accountinfo = self.request('index', autologin=False)
+            accountinfo = self.request("index", autologin=False)
         except RequestException as e:
             raise LoginException("Login probably incorrect")
-        if not accountinfo or 'id' not in accountinfo:
+        if not accountinfo or "id" not in accountinfo:
             raise LoginException("Login probably incorrect")
-        self.userid = accountinfo['id']
-        self.authkey = accountinfo['authkey']
-        self.passkey = accountinfo['passkey']
+        self.userid = accountinfo["id"]
+        self.authkey = accountinfo["authkey"]
+        self.passkey = accountinfo["passkey"]
         self.logged_in_user = User(self.userid, self)
         self.logged_in_user.set_index_data(accountinfo)
 
@@ -120,16 +137,17 @@ class GazelleAPI(object):
         Makes an AJAX request at a given action.
         Pass an action and relevant arguments for that action.
         """
+
         def make_request(action, **kwargs):
-            ajaxpage = 'ajax.php'
+            ajaxpage = "ajax.php"
             content = self.unparsed_request(ajaxpage, action, **kwargs)
             try:
                 if not isinstance(content, text_type):
-                    content = content.decode('utf-8')
+                    content = content.decode("utf-8")
                 parsed = json.loads(content)
-                if parsed['status'] != 'success':
+                if parsed["status"] != "success":
                     raise RequestException
-                return parsed['response']
+                return parsed["response"]
             except ValueError:
                 raise RequestException
 
@@ -150,13 +168,18 @@ class GazelleAPI(object):
         self.wait_for_rate_limit()
 
         url = "%s%s" % (self.site, sitepage)
-        params = {'action': action}
+        params = {"action": action}
         if self.authkey:
-            params['auth'] = self.authkey
+            params["auth"] = self.authkey
         params.update(kwargs)
-        r = self.session.get(url, params=params, allow_redirects=False, timeout=self.default_timeout)
+        r = self.session.get(
+            url,
+            params=params,
+            allow_redirects=False,
+            timeout=self.default_timeout,
+        )
 
-        if r.status_code == 302 and r.raw.headers['location'] == 'login.php':
+        if r.status_code == 302 and r.raw.headers["location"] == "login.php":
             self.logged_in_user = None
             raise LoginException("User login expired")
 
@@ -184,28 +207,28 @@ class GazelleAPI(object):
         information from an 'index' API call. Otherwise only the limited info returned by the search will be pre-pop'd.
         You can query more information with User.update_user_data(). This is done on demand to reduce unnecessary API calls.
         """
-        response = self.request(action='usersearch', search=search_query)
-        results = response['results']
+        response = self.request(action="usersearch", search=search_query)
+        results = response["results"]
 
         found_users = []
         for result in results:
-            user = self.get_user(result['userId'])
+            user = self.get_user(result["userId"])
             user.set_search_result_data(result)
             found_users.append(user)
 
         return found_users
 
-    def get_inbox(self, page='1', sort='unread'):
+    def get_inbox(self, page="1", sort="unread"):
         """
         Returns the inbox Mailbox for the logged in user
         """
-        return Mailbox(self, 'inbox', page, sort)
+        return Mailbox(self, "inbox", page, sort)
 
-    def get_sentbox(self, page='1', sort='unread'):
+    def get_sentbox(self, page="1", sort="unread"):
         """
         Returns the sentbox Mailbox for the logged in user
         """
-        return Mailbox(self, 'sentbox', page, sort)
+        return Mailbox(self, "sentbox", page, sort)
 
     def get_artist(self, id=None, name=None):
         """
@@ -224,7 +247,9 @@ class GazelleAPI(object):
             artist = Artist(-1, self)
             artist.name = html.unescape(name)
         else:
-            raise Exception("You must specify either an ID or a Name to get an artist.")
+            raise Exception(
+                "You must specify either an ID or a Name to get an artist."
+            )
 
         return artist
 
@@ -275,11 +300,11 @@ class GazelleAPI(object):
         Returns a Torrent for the passed info hash (if one exists), associated with this API object.
         """
         try:
-            response = self.request(action='torrent', hash=info_hash.upper())
+            response = self.request(action="torrent", hash=info_hash.upper())
         except RequestException:
             return None
 
-        id = int(response['torrent']['id'])
+        id = int(response["torrent"]["id"])
         if id in list(self.cached_torrents.keys()):
             torrent = self.cached_torrents[id]
         else:
@@ -309,34 +334,39 @@ class GazelleAPI(object):
         contains a list of objects appropriate to the passed <type>.
         """
 
-        response = self.request(action='top10', type=type, limit=limit)
+        response = self.request(action="top10", type=type, limit=limit)
         top_items = []
         if not response:
             raise RequestException
         for category in response:
             results = []
             if type == "torrents":
-                for item in category['results']:
-                    torrent = self.get_torrent(item['torrentId'])
+                for item in category["results"]:
+                    torrent = self.get_torrent(item["torrentId"])
                     torrent.set_torrent_top_10_data(item)
                     results.append(torrent)
             elif type == "tags":
-                for item in category['results']:
-                    tag = self.get_tag(item['name'])
+                for item in category["results"]:
+                    tag = self.get_tag(item["name"])
                     results.append(tag)
             elif type == "users":
-                for item in category['results']:
-                    user = self.get_user(item['id'])
+                for item in category["results"]:
+                    user = self.get_user(item["id"])
                     results.append(user)
             else:
-                raise Exception("%s is an invalid type argument for GazelleAPI.get_top_ten()" % type)
+                raise Exception(
+                    "%s is an invalid type argument for GazelleAPI.get_top_ten()"
+                    % type
+                )
 
-            top_items.append({
-                "caption": category['caption'],
-                "tag": category['tag'],
-                "limit": category['limit'],
-                "results": results
-            })
+            top_items.append(
+                {
+                    "caption": category["caption"],
+                    "tag": category["tag"],
+                    "limit": category["limit"],
+                    "results": results,
+                }
+            )
 
         return top_items
 
@@ -379,39 +409,59 @@ class GazelleAPI(object):
         (they have a reference to their parent TorrentGroup).
         """
 
-        response = self.request(action='browse', **kwargs)
-        results = response['results']
+        response = self.request(action="browse", **kwargs)
+        results = response["results"]
         if len(results):
-            curr_page = response['currentPage']
-            pages = response['pages']
+            curr_page = response["currentPage"]
+            pages = response["pages"]
         else:
             curr_page = 1
             pages = 1
 
         matching_torrents = []
         for torrent_group_dict in results:
-            torrent_group = self.get_torrent_group(torrent_group_dict['groupId'])
+            torrent_group = self.get_torrent_group(
+                torrent_group_dict["groupId"]
+            )
             torrent_group.set_torrent_search_data(torrent_group_dict)
 
-            for torrent_dict in torrent_group_dict['torrents']:
-                torrent_dict['groupId'] = torrent_group.id
-                torrent = self.get_torrent(torrent_dict['torrentId'])
+            for torrent_dict in torrent_group_dict["torrents"]:
+                torrent_dict["groupId"] = torrent_group.id
+                torrent = self.get_torrent(torrent_dict["torrentId"])
                 torrent.set_torrent_search_data(torrent_dict)
                 matching_torrents.append(torrent)
 
-        return {'curr_page': curr_page, 'pages': pages, 'results': matching_torrents}
+        return {
+            "curr_page": curr_page,
+            "pages": pages,
+            "results": matching_torrents,
+        }
 
     def generate_torrent_link(self, id, use_token=False):
-        url = "%storrents.php?action=download&id=%s&authkey=%s&torrent_pass=%s&usetoken=%d" %\
-              (self.site, id, self.logged_in_user.authkey, self.logged_in_user.passkey, use_token)
+        url = (
+            "%storrents.php?action=download&id=%s&authkey=%s&torrent_pass=%s&usetoken=%d"
+            % (
+                self.site,
+                id,
+                self.logged_in_user.authkey,
+                self.logged_in_user.passkey,
+                use_token,
+            )
+        )
         return url
 
     def save_torrent_file(self, id, dest, use_token=False):
-        file_data = self.unparsed_request("torrents.php", 'download',
-            id=id, authkey=self.logged_in_user.authkey, torrent_pass=self.logged_in_user.passkey,
-            usetoken=int(use_token))
-        with open(dest, 'w+') as dest_file:
+        file_data = self.unparsed_request(
+            "torrents.php",
+            "download",
+            id=id,
+            authkey=self.logged_in_user.authkey,
+            torrent_pass=self.logged_in_user.passkey,
+            usetoken=int(use_token),
+        )
+        with open(dest, "w+") as dest_file:
             dest_file.write(file_data)
+
 
 if sys.version_info[0] == 3:
     text_type = str

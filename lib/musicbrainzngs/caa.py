@@ -4,10 +4,14 @@
 # See the COPYING file for more information.
 
 __all__ = [
-    'set_caa_hostname', 'get_image_list', 'get_release_group_image_list',
-    'get_release_group_image_front', 'get_image_front', 'get_image_back',
-    'get_image'
-    ]
+    "set_caa_hostname",
+    "get_image_list",
+    "get_release_group_image_list",
+    "get_release_group_image_front",
+    "get_image_front",
+    "get_image_back",
+    "get_image",
+]
 
 import json
 
@@ -25,8 +29,7 @@ def set_caa_hostname(new_hostname, use_https=False):
     For backwards compatibility, `use_https` is False by default.
 
     :param str new_hostname: The hostname (and port) of the CAA server to connect to
-    :param bool use_https: `True` if the host should be accessed using https. Default is `False`
-"""
+    :param bool use_https: `True` if the host should be accessed using https. Default is `False`"""
     global hostname
     global https
     hostname = new_hostname
@@ -34,7 +37,7 @@ def set_caa_hostname(new_hostname, use_https=False):
 
 
 def _caa_request(mbid, imageid=None, size=None, entitytype="release"):
-    """ Make a CAA request.
+    """Make a CAA request.
 
     :param imageid: ``front``, ``back`` or a number from the listing obtained
                     with :meth:`get_image_list`.
@@ -53,15 +56,17 @@ def _caa_request(mbid, imageid=None, size=None, entitytype="release"):
         path.append("%s-%s" % (imageid, size))
     elif imageid:
         path.append(imageid)
-    url = compat.urlunparse((
-        'https' if https else 'http',
-        hostname,
-        '/%s' % '/'.join(path),
-        '',
-        '',
-        ''
-    ))
-    musicbrainz._log.debug("GET request for %s" % (url, ))
+    url = compat.urlunparse(
+        (
+            "https" if https else "http",
+            hostname,
+            "/%s" % "/".join(path),
+            "",
+            "",
+            "",
+        )
+    )
+    musicbrainz._log.debug("GET request for %s" % (url,))
 
     # Set up HTTP request handler and URL opener.
     httpHandler = compat.HTTPHandler(debuglevel=0)
@@ -73,8 +78,10 @@ def _caa_request(mbid, imageid=None, size=None, entitytype="release"):
     req = musicbrainz._MusicbrainzHttpRequest("GET", url, None)
     # Useragent isn't needed for CAA, but we'll add it if it exists
     if musicbrainz._useragent != "":
-        req.add_header('User-Agent', musicbrainz._useragent)
-        musicbrainz._log.debug("requesting with UA %s" % musicbrainz._useragent)
+        req.add_header("User-Agent", musicbrainz._useragent)
+        musicbrainz._log.debug(
+            "requesting with UA %s" % musicbrainz._useragent
+        )
 
     resp = musicbrainz._safe_read(opener, req, None)
 
@@ -132,8 +139,9 @@ def get_release_group_image_front(releasegroupid, size=None):
     The `size` argument and the possible error conditions are the same as for
     :meth:`get_image`.
     """
-    return get_image(releasegroupid, "front", size=size,
-                     entitytype="release-group")
+    return get_image(
+        releasegroupid, "front", size=size, entitytype="release-group"
+    )
 
 
 def get_image_front(releaseid, size=None):
@@ -184,7 +192,7 @@ def get_image(mbid, coverid, size=None, entitytype="release"):
     :type: str
     """
     if isinstance(coverid, int):
-        coverid = "%d" % (coverid, )
+        coverid = "%d" % (coverid,)
     if isinstance(size, int):
-        size = "%d" % (size, )
+        size = "%d" % (size,)
     return _caa_request(mbid, coverid, size=size, entitytype=entitytype)

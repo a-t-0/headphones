@@ -1,4 +1,4 @@
 try:
-    from .cjellyfish import *   # noqa
+    from .cjellyfish import *  # noqa
 except ImportError:
-    from ._jellyfish import *   # noqa
+    from ._jellyfish import *  # noqa

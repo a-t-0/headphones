@@ -1,5 +1,6 @@
 from collections import namedtuple
 import re
+
 try:
     from urllib.parse import urlparse
 except ImportError:
@@ -7,20 +8,36 @@ except ImportError:
 
 from twitter.twitter_utils import enf_type
 
-EndpointRateLimit = namedtuple('EndpointRateLimit',
-                               ['limit', 'remaining', 'reset'])
+EndpointRateLimit = namedtuple(
+    "EndpointRateLimit", ["limit", "remaining", "reset"]
+)
 
-ResourceEndpoint = namedtuple('ResourceEndpoint', ['regex', 'resource'])
+ResourceEndpoint = namedtuple("ResourceEndpoint", ["regex", "resource"])
 
 
-GEO_ID_PLACE_ID = ResourceEndpoint(re.compile(r'/geo/id/\d+'), "/geo/id/:place_id")
-SAVED_SEARCHES_DESTROY_ID = ResourceEndpoint(re.compile(r'/saved_searches/destroy/\d+'), "/saved_searches/destroy/:id")
-SAVED_SEARCHES_SHOW_ID = ResourceEndpoint(re.compile(r'/saved_searches/show/\d+'), "/saved_searches/show/:id")
-STATUSES_RETWEETS_ID = ResourceEndpoint(re.compile(r'/statuses/retweets/\d+'), "/statuses/retweets/:id")
-STATUSES_SHOW_ID = ResourceEndpoint(re.compile(r'/statuses/show'), "/statuses/show/:id")
-USERS_SHOW_ID = ResourceEndpoint(re.compile(r'/users/show'), "/users/show/:id")
-USERS_SUGGESTIONS_SLUG = ResourceEndpoint(re.compile(r'/users/suggestions/\w+$'), "/users/suggestions/:slug")
-USERS_SUGGESTIONS_SLUG_MEMBERS = ResourceEndpoint(re.compile(r'/users/suggestions/.+/members'), "/users/suggestions/:slug/members")
+GEO_ID_PLACE_ID = ResourceEndpoint(
+    re.compile(r"/geo/id/\d+"), "/geo/id/:place_id"
+)
+SAVED_SEARCHES_DESTROY_ID = ResourceEndpoint(
+    re.compile(r"/saved_searches/destroy/\d+"), "/saved_searches/destroy/:id"
+)
+SAVED_SEARCHES_SHOW_ID = ResourceEndpoint(
+    re.compile(r"/saved_searches/show/\d+"), "/saved_searches/show/:id"
+)
+STATUSES_RETWEETS_ID = ResourceEndpoint(
+    re.compile(r"/statuses/retweets/\d+"), "/statuses/retweets/:id"
+)
+STATUSES_SHOW_ID = ResourceEndpoint(
+    re.compile(r"/statuses/show"), "/statuses/show/:id"
+)
+USERS_SHOW_ID = ResourceEndpoint(re.compile(r"/users/show"), "/users/show/:id")
+USERS_SUGGESTIONS_SLUG = ResourceEndpoint(
+    re.compile(r"/users/suggestions/\w+$"), "/users/suggestions/:slug"
+)
+USERS_SUGGESTIONS_SLUG_MEMBERS = ResourceEndpoint(
+    re.compile(r"/users/suggestions/.+/members"),
+    "/users/suggestions/:slug/members",
+)
 
 NON_STANDARD_ENDPOINTS = [
     GEO_ID_PLACE_ID,
@@ -36,7 +53,7 @@ NON_STANDARD_ENDPOINTS = [
 
 class RateLimit(object):
 
-    """ Object to hold the rate limit status of various endpoints for
+    """Object to hold the rate limit status of various endpoints for
     the twitter.Api object.
 
     This object is generally attached to the API as Api.rate_limit, but is not
@@ -75,7 +92,7 @@ class RateLimit(object):
     """
 
     def __init__(self, **kwargs):
-        """ Instantiates the RateLimitObject. Takes a json dict as
+        """Instantiates the RateLimitObject. Takes a json dict as
         kwargs and maps to the object's dictionary. So for something like:
 
         {"resources": {
@@ -97,12 +114,12 @@ class RateLimit(object):
         and a dictionary of limit, remaining, and reset will be returned.
 
         """
-        self.__dict__['resources'] = {}
+        self.__dict__["resources"] = {}
         self.__dict__.update(kwargs)
 
     @staticmethod
     def url_to_resource(url):
-        """ Take a fully qualified URL and attempts to return the rate limit
+        """Take a fully qualified URL and attempts to return the rate limit
         resource family corresponding to it. For example:
 
             >>> RateLimit.url_to_resource('https://api.twitter.com/1.1/statuses/lookup.json?id=317')
@@ -114,7 +131,7 @@ class RateLimit(object):
         Returns:
             string: Resource family corresponding to the URL.
         """
-        resource = urlparse(url).path.replace('/1.1', '').replace('.json', '')
+        resource = urlparse(url).path.replace("/1.1", "").replace(".json", "")
         for non_std_endpoint in NON_STANDARD_ENDPOINTS:
             if re.match(non_std_endpoint.regex, resource):
                 return non_std_endpoint.resource
@@ -124,7 +141,7 @@ class RateLimit(object):
         return self.set_limit(url, limit, remaining, reset)
 
     def set_limit(self, url, limit, remaining, reset):
-        """ If a resource family is unknown, add it to the object's
+        """If a resource family is unknown, add it to the object's
         dictionary. This is to deal with new endpoints being added to
         the API, but not necessarily to the information returned by
         ``/account/rate_limit_status.json`` endpoint.
@@ -148,22 +165,24 @@ class RateLimit(object):
                 Epoch time at which the rate limit window will reset.
         """
         endpoint = self.url_to_resource(url)
-        resource_family = endpoint.split('/')[1]
-        new_endpoint = {endpoint: {
-            "limit": enf_type('limit', int, limit),
-            "remaining": enf_type('remaining', int, remaining),
-            "reset": enf_type('reset', int, reset)
-        }}
+        resource_family = endpoint.split("/")[1]
+        new_endpoint = {
+            endpoint: {
+                "limit": enf_type("limit", int, limit),
+                "remaining": enf_type("remaining", int, remaining),
+                "reset": enf_type("reset", int, reset),
+            }
+        }
 
         if not self.resources.get(resource_family, None):
             self.resources[resource_family] = {}
 
-        self.__dict__['resources'][resource_family].update(new_endpoint)
+        self.__dict__["resources"][resource_family].update(new_endpoint)
 
         return self.get_limit(url)
 
     def get_limit(self, url):
-        """ Gets a EndpointRateLimit object for the given url.
+        """Gets a EndpointRateLimit object for the given url.
 
         Args:
             url (str, optional):
@@ -175,7 +194,7 @@ class RateLimit(object):
             information.
         """
         endpoint = self.url_to_resource(url)
-        resource_family = endpoint.split('/')[1]
+        resource_family = endpoint.split("/")[1]
 
         try:
             family_rates = self.resources.get(resource_family).get(endpoint)
@@ -186,6 +205,8 @@ class RateLimit(object):
             self.set_unknown_limit(url, limit=15, remaining=15, reset=0)
             return EndpointRateLimit(limit=15, remaining=15, reset=0)
 
-        return EndpointRateLimit(family_rates['limit'],
-                                 family_rates['remaining'],
-                                 family_rates['reset'])
+        return EndpointRateLimit(
+            family_rates["limit"],
+            family_rates["remaining"],
+            family_rates["reset"],
+        )

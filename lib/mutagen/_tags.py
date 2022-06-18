@@ -71,7 +71,10 @@ class PaddingInfo(object):
 
     def __repr__(self):
         return "<%s size=%d padding=%d>" % (
-            type(self).__name__, self.size, self.padding)
+            type(self).__name__,
+            self.size,
+            self.padding,
+        )
 
 
 class Tags(object):

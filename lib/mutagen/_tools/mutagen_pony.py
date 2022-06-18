@@ -49,8 +49,10 @@ class Report(object):
             return strings[0] + "\n" + "No MP3 files found.\n"
 
         good = self.files - len(self.errors)
-        strings.append("Loaded %d/%d files (%d%%)" % (
-            good, self.files, (float(good) / self.files) * 100))
+        strings.append(
+            "Loaded %d/%d files (%d%%)"
+            % (good, self.files, (float(good) / self.files) * 100)
+        )
         strings.append("%d files with unsynchronized frames." % self.unsync)
         strings.append("%d files without tags." % self.missings)
 
@@ -72,22 +74,23 @@ class Report(object):
             for filename, Ex, value, trace in self.errors:
                 strings.append("\nReading %s:" % filename)
                 strings.append(
-                    "".join(traceback.format_exception(Ex, value, trace)[1:]))
+                    "".join(traceback.format_exception(Ex, value, trace)[1:])
+                )
         else:
             strings.append("\nNo errors!")
 
-        return("\n".join(strings))
+        return "\n".join(strings)
 
 
 def check_dir(path):
     from mutagen.mp3 import MP3
 
     rep = Report(path)
-    print_(u"Scanning", path)
+    print_("Scanning", path)
     for path, dirs, files in os.walk(path):
         files.sort()
         for fn in files:
-            if not fn.lower().endswith('.mp3'):
+            if not fn.lower().endswith(".mp3"):
                 continue
             ffn = os.path.join(path, fn)
             try:
@@ -105,7 +108,7 @@ def check_dir(path):
 
 def main(argv):
     if len(argv) == 1:
-        print_(u"Usage:", argv[0], u"directory ...")
+        print_("Usage:", argv[0], "directory ...")
     else:
         for path in argv[1:]:
             check_dir(path)

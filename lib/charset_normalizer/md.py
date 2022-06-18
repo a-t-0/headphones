@@ -1,7 +1,10 @@
 from functools import lru_cache
 from typing import List, Optional
 
-from .constant import COMMON_SAFE_ASCII_CHARACTERS, UNICODE_SECONDARY_RANGE_KEYWORD
+from .constant import (
+    COMMON_SAFE_ASCII_CHARACTERS,
+    UNICODE_SECONDARY_RANGE_KEYWORD,
+)
 from .utils import (
     is_accentuated,
     is_ascii,
@@ -178,7 +181,9 @@ class SuspiciousDuplicateAccentPlugin(MessDetectorPlugin):
             if character.isupper() and self._last_latin_character.isupper():
                 self._successive_count += 1
             # Worse if its the same char duplicated with different accent.
-            if remove_accent(character) == remove_accent(self._last_latin_character):
+            if remove_accent(character) == remove_accent(
+                self._last_latin_character
+            ):
                 self._successive_count += 1
         self._last_latin_character = character
 
@@ -286,7 +291,9 @@ class SuperWeirdWordPlugin(MessDetectorPlugin):
         if not self._buffer:
             return
         if (
-            character.isspace() or is_punctuation(character) or is_separator(character)
+            character.isspace()
+            or is_punctuation(character)
+            or is_separator(character)
         ) and self._buffer:
             self._word_count += 1
             buffer_length = len(self._buffer)  # type: int
@@ -298,7 +305,10 @@ class SuperWeirdWordPlugin(MessDetectorPlugin):
                     self._is_current_word_bad = True
                 # Word/Buffer ending with a upper case accentuated letter are so rare,
                 # that we will consider them all as suspicious. Same weight as foreign_long suspicious.
-                if is_accentuated(self._buffer[-1]) and self._buffer[-1].isupper():
+                if (
+                    is_accentuated(self._buffer[-1])
+                    and self._buffer[-1].isupper()
+                ):
                     self._foreign_long_count += 1
                     self._is_current_word_bad = True
             if buffer_length >= 24 and self._foreign_long_watch:
@@ -500,7 +510,10 @@ def is_suspiciously_successive_range(
     if "Hangul" in unicode_range_a or "Hangul" in unicode_range_b:
         if "CJK" in unicode_range_a or "CJK" in unicode_range_b:
             return False
-        if unicode_range_a == "Basic Latin" or unicode_range_b == "Basic Latin":
+        if (
+            unicode_range_a == "Basic Latin"
+            or unicode_range_b == "Basic Latin"
+        ):
             return False
 
     # Chinese/Japanese use dedicated range for punctuation and/or separators.
@@ -508,7 +521,10 @@ def is_suspiciously_successive_range(
         unicode_range_a in ["Katakana", "Hiragana"]
         and unicode_range_b in ["Katakana", "Hiragana"]
     ):
-        if "Punctuation" in unicode_range_a or "Punctuation" in unicode_range_b:
+        if (
+            "Punctuation" in unicode_range_a
+            or "Punctuation" in unicode_range_b
+        ):
             return False
         if "Forms" in unicode_range_a or "Forms" in unicode_range_b:
             return False

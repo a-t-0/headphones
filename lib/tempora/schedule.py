@@ -126,7 +126,7 @@ class PeriodicCommand(DelayedCommand):
         return cmd
 
     def __setattr__(self, key, value):
-        if key == 'delay' and not value > datetime.timedelta():
+        if key == "delay" and not value > datetime.timedelta():
             raise ValueError(
                 "A PeriodicCommand must have a positive, " "non-zero delay."
             )

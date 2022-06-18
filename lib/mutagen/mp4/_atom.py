@@ -12,8 +12,18 @@ from mutagen._util import convert_error
 
 # This is not an exhaustive list of container atoms, but just the
 # ones this module needs to peek inside.
-_CONTAINERS = [b"moov", b"udta", b"trak", b"mdia", b"meta", b"ilst",
-               b"stbl", b"minf", b"moof", b"traf"]
+_CONTAINERS = [
+    b"moov",
+    b"udta",
+    b"trak",
+    b"mdia",
+    b"meta",
+    b"ilst",
+    b"stbl",
+    b"minf",
+    b"moof",
+    b"traf",
+]
 _SKIP_SIZE = {b"meta": 4}
 
 
@@ -48,25 +58,22 @@ class Atom(object):
         self._dataoffset = self.offset + 8
         if self.length == 1:
             try:
-                self.length, = struct.unpack(">Q", fileobj.read(8))
+                (self.length,) = struct.unpack(">Q", fileobj.read(8))
             except struct.error:
                 raise AtomError("truncated data")
             self._dataoffset += 8
             if self.length < 16:
-                raise AtomError(
-                    "64 bit atom length can only be 16 and higher")
+                raise AtomError("64 bit atom length can only be 16 and higher")
         elif self.length == 0:
             if level != 0:
-                raise AtomError(
-                    "only a top-level atom can have zero length")
+                raise AtomError("only a top-level atom can have zero length")
             # Only the last atom is supposed to have a zero-length, meaning it
             # extends to the end of file.
             fileobj.seek(0, 2)
             self.length = fileobj.tell() - self.offset
             fileobj.seek(self.offset + 8, 0)
         elif self.length < 8:
-            raise AtomError(
-                "atom length can only be 0, 1 or 8 and higher")
+            raise AtomError("atom length can only be 0, 1 or 8 and higher")
 
         if self.name in _CONTAINERS:
             self.children = []
@@ -126,12 +133,26 @@ class Atom(object):
         cls = self.__class__.__name__
         if self.children is None:
             return "<%s name=%r length=%r offset=%r>" % (
-                cls, self.name, self.length, self.offset)
+                cls,
+                self.name,
+                self.length,
+                self.offset,
+            )
         else:
-            children = "\n".join([" " + line for child in self.children
-                                  for line in repr(child).splitlines()])
+            children = "\n".join(
+                [
+                    " " + line
+                    for child in self.children
+                    for line in repr(child).splitlines()
+                ]
+            )
             return "<%s name=%r length=%r offset=%r\n%s>" % (
-                cls, self.name, self.length, self.offset, children)
+                cls,
+                self.name,
+                self.length,
+                self.offset,
+                children,
+            )
 
 
 class Atoms(object):
@@ -162,7 +183,11 @@ class Atoms(object):
 
         path = [self]
         for name in names:
-            path.append(path[-1][name, ])
+            path.append(
+                path[-1][
+                    name,
+                ]
+            )
         return path[1:]
 
     def __contains__(self, names):

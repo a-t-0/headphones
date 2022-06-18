@@ -111,8 +111,26 @@ class AudioSampleEntry(object):
 
         try:
             self.bitrate = [
-                32, 40, 48, 56, 64, 80, 96, 112, 128, 160, 192,
-                224, 256, 320, 384, 448, 512, 576, 640][bit_rate_code] * 1000
+                32,
+                40,
+                48,
+                56,
+                64,
+                80,
+                96,
+                112,
+                128,
+                160,
+                192,
+                224,
+                256,
+                320,
+                384,
+                448,
+                512,
+                576,
+                640,
+            ][bit_rate_code] * 1000
         except IndexError:
             pass
 
@@ -216,7 +234,7 @@ class BaseDescriptor(object):
                 b = cdata.uint8(fileobj.read(1))
             except cdata.error as e:
                 raise ValueError(e)
-            value = (value << 7) | (b & 0x7f)
+            value = (value << 7) | (b & 0x7F)
             if not b >> 7:
                 break
         else:
@@ -322,10 +340,10 @@ class DecoderConfigDescriptor(BaseDescriptor):
     def codec_param(self):
         """string"""
 
-        param = u".%X" % self.objectTypeIndication
+        param = ".%X" % self.objectTypeIndication
         info = self.decSpecificInfo
         if info is not None:
-            param += u".%d" % info.audioObjectType
+            param += ".%d" % info.audioObjectType
         return param
 
     @property
@@ -344,20 +362,68 @@ class DecoderSpecificInfo(BaseDescriptor):
     TAG = 0x5
 
     _TYPE_NAMES = [
-        None, "AAC MAIN", "AAC LC", "AAC SSR", "AAC LTP", "SBR",
-        "AAC scalable", "TwinVQ", "CELP", "HVXC", None, None, "TTSI",
-        "Main synthetic", "Wavetable synthesis", "General MIDI",
-        "Algorithmic Synthesis and Audio FX", "ER AAC LC", None, "ER AAC LTP",
-        "ER AAC scalable", "ER Twin VQ", "ER BSAC", "ER AAC LD", "ER CELP",
-        "ER HVXC", "ER HILN", "ER Parametric", "SSC", "PS", "MPEG Surround",
-        None, "Layer-1", "Layer-2", "Layer-3", "DST", "ALS", "SLS",
-        "SLS non-core", "ER AAC ELD", "SMR Simple", "SMR Main", "USAC",
-        "SAOC", "LD MPEG Surround", "USAC"
+        None,
+        "AAC MAIN",
+        "AAC LC",
+        "AAC SSR",
+        "AAC LTP",
+        "SBR",
+        "AAC scalable",
+        "TwinVQ",
+        "CELP",
+        "HVXC",
+        None,
+        None,
+        "TTSI",
+        "Main synthetic",
+        "Wavetable synthesis",
+        "General MIDI",
+        "Algorithmic Synthesis and Audio FX",
+        "ER AAC LC",
+        None,
+        "ER AAC LTP",
+        "ER AAC scalable",
+        "ER Twin VQ",
+        "ER BSAC",
+        "ER AAC LD",
+        "ER CELP",
+        "ER HVXC",
+        "ER HILN",
+        "ER Parametric",
+        "SSC",
+        "PS",
+        "MPEG Surround",
+        None,
+        "Layer-1",
+        "Layer-2",
+        "Layer-3",
+        "DST",
+        "ALS",
+        "SLS",
+        "SLS non-core",
+        "ER AAC ELD",
+        "SMR Simple",
+        "SMR Main",
+        "USAC",
+        "SAOC",
+        "LD MPEG Surround",
+        "USAC",
     ]
 
     _FREQS = [
-        96000, 88200, 64000, 48000, 44100, 32000, 24000, 22050, 16000,
-        12000, 11025, 8000, 7350,
+        96000,
+        88200,
+        64000,
+        48000,
+        44100,
+        32000,
+        24000,
+        22050,
+        16000,
+        12000,
+        11025,
+        8000,
+        7350,
     ]
 
     @property
@@ -405,7 +471,8 @@ class DecoderSpecificInfo(BaseDescriptor):
             return self.pce_channels
 
         conf = getattr(
-            self, "extensionChannelConfiguration", self.channelConfiguration)
+            self, "extensionChannelConfiguration", self.channelConfiguration
+        )
 
         if conf == 1:
             if self.psPresentFlag == -1:
@@ -434,7 +501,7 @@ class DecoderSpecificInfo(BaseDescriptor):
         """Raises BitReaderError"""
 
         samplingFrequencyIndex = r.bits(4)
-        if samplingFrequencyIndex == 0xf:
+        if samplingFrequencyIndex == 0xF:
             samplingFrequency = r.bits(24)
         else:
             try:
@@ -487,7 +554,18 @@ class DecoderSpecificInfo(BaseDescriptor):
             return
 
         if self.audioObjectType in (
-                17, 19, 20, 21, 22, 23, 24, 25, 26, 27, 39):
+            17,
+            19,
+            20,
+            21,
+            22,
+            23,
+            24,
+            25,
+            26,
+            27,
+            39,
+        ):
             epConfig = r.bits(2)
             if epConfig in (2, 3):
                 # unsupported
@@ -495,14 +573,15 @@ class DecoderSpecificInfo(BaseDescriptor):
 
         if self.extensionAudioObjectType != 5 and bits_left() >= 16:
             syncExtensionType = r.bits(11)
-            if syncExtensionType == 0x2b7:
+            if syncExtensionType == 0x2B7:
                 self.extensionAudioObjectType = self._get_audio_object_type(r)
 
                 if self.extensionAudioObjectType == 5:
                     self.sbrPresentFlag = r.bits(1)
                     if self.sbrPresentFlag == 1:
-                        self.extensionSamplingFrequency = \
+                        self.extensionSamplingFrequency = (
                             self._get_sampling_freq(r)
+                        )
                         if bits_left() >= 12:
                             syncExtensionType = r.bits(11)
                             if syncExtensionType == 0x548:
@@ -511,8 +590,9 @@ class DecoderSpecificInfo(BaseDescriptor):
                 if self.extensionAudioObjectType == 22:
                     self.sbrPresentFlag = r.bits(1)
                     if self.sbrPresentFlag == 1:
-                        self.extensionSamplingFrequency = \
+                        self.extensionSamplingFrequency = (
                             self._get_sampling_freq(r)
+                        )
                     self.extensionChannelConfiguration = r.bits(4)
 
 

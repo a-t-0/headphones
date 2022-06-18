@@ -16,7 +16,6 @@ def is_valid_frame_id(frame_id):
 
 
 class ID3SaveConfig(object):
-
     def __init__(self, v2_version=4, v23_separator=None):
         assert v2_version in (3, 4)
         self.v2_version = v2_version
@@ -46,30 +45,29 @@ class ID3JunkFrameError(error):
 class unsynch(object):
     @staticmethod
     def decode(value):
-        fragments = bytearray(value).split(b'\xff')
+        fragments = bytearray(value).split(b"\xff")
         if len(fragments) > 1 and not fragments[-1]:
-            raise ValueError('string ended unsafe')
+            raise ValueError("string ended unsafe")
 
         for f in fragments[1:]:
             if (not f) or (f[0] >= 0xE0):
-                raise ValueError('invalid sync-safe string')
+                raise ValueError("invalid sync-safe string")
 
             if f[0] == 0x00:
                 del f[0]
 
-        return bytes(bytearray(b'\xff').join(fragments))
+        return bytes(bytearray(b"\xff").join(fragments))
 
     @staticmethod
     def encode(value):
-        fragments = bytearray(value).split(b'\xff')
+        fragments = bytearray(value).split(b"\xff")
         for f in fragments[1:]:
             if (not f) or (f[0] >= 0xE0) or (f[0] == 0x00):
                 f.insert(0, 0x00)
-        return bytes(bytearray(b'\xff').join(fragments))
+        return bytes(bytearray(b"\xff").join(fragments))
 
 
 class _BitPaddedMixin(object):
-
     def as_str(self, width=4, minwidth=4):
         return self.to_str(self, self.bits, self.bigendian, width, minwidth)
 
@@ -86,7 +84,7 @@ class _BitPaddedMixin(object):
                     value >>= bits
                     index += 1
             except IndexError:
-                raise ValueError('Value too wide (>%d bytes)' % width)
+                raise ValueError("Value too wide (>%d bytes)" % width)
         else:
             # PCNT and POPM use growing integers
             # of at least 4 bytes (=minwidth) as counters.
@@ -107,7 +105,7 @@ class _BitPaddedMixin(object):
 
         assert bits <= 8
 
-        mask = (((1 << (8 - bits)) - 1) << bits)
+        mask = ((1 << (8 - bits)) - 1) << bits
 
         if isinstance(value, int):
             while value:
@@ -125,7 +123,6 @@ class _BitPaddedMixin(object):
 
 
 class BitPaddedInt(int, _BitPaddedMixin):
-
     def __new__(cls, value, bits=7, bigendian=True):
 
         mask = (1 << (bits)) - 1

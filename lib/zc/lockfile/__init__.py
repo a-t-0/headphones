@@ -15,13 +15,15 @@
 import os
 import errno
 import logging
+
 logger = logging.getLogger("zc.lockfile")
 
 __metaclass__ = type
 
+
 class LockError(Exception):
-    """Couldn't get a lock
-    """
+    """Couldn't get a lock"""
+
 
 try:
     import fcntl
@@ -29,10 +31,12 @@ except ImportError:
     try:
         import msvcrt
     except ImportError:
+
         def _lock_file(file):
-            raise TypeError('No file-locking support on this platform')
+            raise TypeError("No file-locking support on this platform")
+
         def _unlock_file(file):
-            raise TypeError('No file-locking support on this platform')
+            raise TypeError("No file-locking support on this platform")
 
     else:
         # Windows
@@ -63,10 +67,13 @@ else:
     def _unlock_file(file):
         fcntl.flock(file.fileno(), fcntl.LOCK_UN)
 
+
 class LazyHostName:
     """Avoid importing socket and calling gethostname() unnecessarily"""
+
     def __str__(self):
         import socket
+
         return socket.gethostname()
 
 
@@ -78,13 +85,13 @@ class SimpleLockFile:
         self._path = path
         try:
             # Try to open for writing without truncation:
-            fp = open(path, 'r+')
+            fp = open(path, "r+")
         except IOError:
             # If the file doesn't exist, we'll get an IO error, try a+
             # Note that there may be a race here. Multiple processes
             # could fail on the r+ open and open the file a+, but only
             # one will get the the lock and write a pid.
-            fp = open(path, 'a+')
+            fp = open(path, "a+")
 
         try:
             _lock_file(fp)
@@ -111,8 +118,7 @@ class SimpleLockFile:
 
 
 class LockFile(SimpleLockFile):
-
-    def __init__(self, path, content_template='{pid}'):
+    def __init__(self, path, content_template="{pid}"):
         self._content_template = content_template
         super(LockFile, self).__init__(path)
 

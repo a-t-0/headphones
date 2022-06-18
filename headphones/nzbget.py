@@ -32,32 +32,43 @@ def sendNZB(nzb):
     nzbgetXMLrpc = "%(protocol)s://%(username)s:%(password)s@%(host)s/xmlrpc"
 
     if not headphones.CONFIG.NZBGET_HOST:
-        logger.error("No NZBget host found in configuration. Please configure it.")
+        logger.error(
+            "No NZBget host found in configuration. Please configure it."
+        )
         return False
 
-    if headphones.CONFIG.NZBGET_HOST.startswith('https://'):
-        protocol = 'https'
-        host = headphones.CONFIG.NZBGET_HOST.replace('https://', '', 1)
+    if headphones.CONFIG.NZBGET_HOST.startswith("https://"):
+        protocol = "https"
+        host = headphones.CONFIG.NZBGET_HOST.replace("https://", "", 1)
     else:
-        protocol = 'http'
-        host = headphones.CONFIG.NZBGET_HOST.replace('http://', '', 1)
+        protocol = "http"
+        host = headphones.CONFIG.NZBGET_HOST.replace("http://", "", 1)
 
-    url = nzbgetXMLrpc % {"protocol": protocol, "host": host,
-                          "username": headphones.CONFIG.NZBGET_USERNAME,
-                          "password": headphones.CONFIG.NZBGET_PASSWORD}
+    url = nzbgetXMLrpc % {
+        "protocol": protocol,
+        "host": host,
+        "username": headphones.CONFIG.NZBGET_USERNAME,
+        "password": headphones.CONFIG.NZBGET_PASSWORD,
+    }
 
     nzbGetRPC = xmlrpc.client.ServerProxy(url)
     try:
-        if nzbGetRPC.writelog("INFO", "headphones connected to drop of %s any moment now." % (
-                nzb.name + ".nzb")):
+        if nzbGetRPC.writelog(
+            "INFO",
+            "headphones connected to drop of %s any moment now."
+            % (nzb.name + ".nzb"),
+        ):
             logger.debug("Successfully connected to NZBget")
         else:
-            logger.info("Successfully connected to NZBget, but unable to send a message" % (
-                nzb.name + ".nzb"))
+            logger.info(
+                "Successfully connected to NZBget, but unable to send a message"
+                % (nzb.name + ".nzb")
+            )
 
     except http.client.socket.error:
         logger.error(
-            "Please check your NZBget host and port (if it is running). NZBget is not responding to this combination")
+            "Please check your NZBget host and port (if it is running). NZBget is not responding to this combination"
+        )
         return False
 
     except xmlrpc.client.ProtocolError as e:
@@ -82,12 +93,17 @@ def sendNZB(nzb):
     try:
         # Find out if nzbget supports priority (Version 9.0+), old versions beginning with a 0.x will use the old command
         nzbget_version_str = nzbGetRPC.version()
-        nzbget_version = int(nzbget_version_str[:nzbget_version_str.find(".")])
+        nzbget_version = int(
+            nzbget_version_str[: nzbget_version_str.find(".")]
+        )
         if nzbget_version == 0:
             if nzbcontent64 is not None:
-                nzbget_result = nzbGetRPC.append(nzb.name + ".nzb",
-                                                 headphones.CONFIG.NZBGET_CATEGORY, addToTop,
-                                                 nzbcontent64)
+                nzbget_result = nzbGetRPC.append(
+                    nzb.name + ".nzb",
+                    headphones.CONFIG.NZBGET_CATEGORY,
+                    addToTop,
+                    nzbcontent64,
+                )
             else:
                 # from headphones.common.providers.generic import GenericProvider
                 # if nzb.resultType == "nzb":
@@ -100,44 +116,78 @@ def sendNZB(nzb):
                 return False
         elif nzbget_version == 12:
             if nzbcontent64 is not None:
-                nzbget_result = nzbGetRPC.append(nzb.name + ".nzb",
-                                                 headphones.CONFIG.NZBGET_CATEGORY,
-                                                 headphones.CONFIG.NZBGET_PRIORITY, False,
-                                                 nzbcontent64, False, dupekey, dupescore, "score")
+                nzbget_result = nzbGetRPC.append(
+                    nzb.name + ".nzb",
+                    headphones.CONFIG.NZBGET_CATEGORY,
+                    headphones.CONFIG.NZBGET_PRIORITY,
+                    False,
+                    nzbcontent64,
+                    False,
+                    dupekey,
+                    dupescore,
+                    "score",
+                )
             else:
-                nzbget_result = nzbGetRPC.appendurl(nzb.name + ".nzb",
-                                                    headphones.CONFIG.NZBGET_CATEGORY,
-                                                    headphones.CONFIG.NZBGET_PRIORITY, False,
-                                                    nzb.url, False, dupekey, dupescore, "score")
+                nzbget_result = nzbGetRPC.appendurl(
+                    nzb.name + ".nzb",
+                    headphones.CONFIG.NZBGET_CATEGORY,
+                    headphones.CONFIG.NZBGET_PRIORITY,
+                    False,
+                    nzb.url,
+                    False,
+                    dupekey,
+                    dupescore,
+                    "score",
+                )
         # v13+ has a new combined append method that accepts both (url and content)
         # also the return value has changed from boolean to integer
         # (Positive number representing NZBID of the queue item. 0 and negative numbers represent error codes.)
         elif nzbget_version >= 13:
-            nzbget_result = True if nzbGetRPC.append(nzb.name + ".nzb",
-                                                     nzbcontent64 if nzbcontent64 is not None else nzb.url,
-                                                     headphones.CONFIG.NZBGET_CATEGORY,
-                                                     headphones.CONFIG.NZBGET_PRIORITY, False,
-                                                     False, dupekey, dupescore,
-                                                     "score") > 0 else False
+            nzbget_result = (
+                True
+                if nzbGetRPC.append(
+                    nzb.name + ".nzb",
+                    nzbcontent64 if nzbcontent64 is not None else nzb.url,
+                    headphones.CONFIG.NZBGET_CATEGORY,
+                    headphones.CONFIG.NZBGET_PRIORITY,
+                    False,
+                    False,
+                    dupekey,
+                    dupescore,
+                    "score",
+                )
+                > 0
+                else False
+            )
         else:
             if nzbcontent64 is not None:
-                nzbget_result = nzbGetRPC.append(nzb.name + ".nzb",
-                                                 headphones.CONFIG.NZBGET_CATEGORY,
-                                                 headphones.CONFIG.NZBGET_PRIORITY, False,
-                                                 nzbcontent64)
+                nzbget_result = nzbGetRPC.append(
+                    nzb.name + ".nzb",
+                    headphones.CONFIG.NZBGET_CATEGORY,
+                    headphones.CONFIG.NZBGET_PRIORITY,
+                    False,
+                    nzbcontent64,
+                )
             else:
-                nzbget_result = nzbGetRPC.appendurl(nzb.name + ".nzb",
-                                                    headphones.CONFIG.NZBGET_CATEGORY,
-                                                    headphones.CONFIG.NZBGET_PRIORITY, False,
-                                                    nzb.url)
+                nzbget_result = nzbGetRPC.appendurl(
+                    nzb.name + ".nzb",
+                    headphones.CONFIG.NZBGET_CATEGORY,
+                    headphones.CONFIG.NZBGET_PRIORITY,
+                    False,
+                    nzb.url,
+                )
 
         if nzbget_result:
             logger.debug("NZB sent to NZBget successfully")
             return True
         else:
-            logger.error("NZBget could not add %s to the queue" % (nzb.name + ".nzb"))
+            logger.error(
+                "NZBget could not add %s to the queue" % (nzb.name + ".nzb")
+            )
             return False
     except:
         logger.error(
-            "Connect Error to NZBget: could not add %s to the queue" % (nzb.name + ".nzb"))
+            "Connect Error to NZBget: could not add %s to the queue"
+            % (nzb.name + ".nzb")
+        )
         return False

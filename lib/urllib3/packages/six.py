@@ -261,7 +261,10 @@ _moved_attributes = [
     MovedAttribute("getoutput", "commands", "subprocess"),
     MovedAttribute("range", "__builtin__", "builtins", "xrange", "range"),
     MovedAttribute(
-        "reload_module", "__builtin__", "importlib" if PY34 else "imp", "reload"
+        "reload_module",
+        "__builtin__",
+        "importlib" if PY34 else "imp",
+        "reload",
     ),
     MovedAttribute("reduce", "__builtin__", "functools"),
     MovedAttribute("shlex_quote", "pipes", "shlex", "quote"),
@@ -296,9 +299,13 @@ _moved_attributes = [
     MovedModule("http_client", "httplib", "http.client"),
     MovedModule("email_mime_base", "email.MIMEBase", "email.mime.base"),
     MovedModule("email_mime_image", "email.MIMEImage", "email.mime.image"),
-    MovedModule("email_mime_multipart", "email.MIMEMultipart", "email.mime.multipart"),
     MovedModule(
-        "email_mime_nonmultipart", "email.MIMENonMultipart", "email.mime.nonmultipart"
+        "email_mime_multipart", "email.MIMEMultipart", "email.mime.multipart"
+    ),
+    MovedModule(
+        "email_mime_nonmultipart",
+        "email.MIMENonMultipart",
+        "email.mime.nonmultipart",
     ),
     MovedModule("email_mime_text", "email.MIMEText", "email.mime.text"),
     MovedModule("BaseHTTPServer", "BaseHTTPServer", "http.server"),
@@ -312,21 +319,37 @@ _moved_attributes = [
     MovedModule("tkinter", "Tkinter"),
     MovedModule("tkinter_dialog", "Dialog", "tkinter.dialog"),
     MovedModule("tkinter_filedialog", "FileDialog", "tkinter.filedialog"),
-    MovedModule("tkinter_scrolledtext", "ScrolledText", "tkinter.scrolledtext"),
-    MovedModule("tkinter_simpledialog", "SimpleDialog", "tkinter.simpledialog"),
+    MovedModule(
+        "tkinter_scrolledtext", "ScrolledText", "tkinter.scrolledtext"
+    ),
+    MovedModule(
+        "tkinter_simpledialog", "SimpleDialog", "tkinter.simpledialog"
+    ),
     MovedModule("tkinter_tix", "Tix", "tkinter.tix"),
     MovedModule("tkinter_ttk", "ttk", "tkinter.ttk"),
     MovedModule("tkinter_constants", "Tkconstants", "tkinter.constants"),
     MovedModule("tkinter_dnd", "Tkdnd", "tkinter.dnd"),
-    MovedModule("tkinter_colorchooser", "tkColorChooser", "tkinter.colorchooser"),
-    MovedModule("tkinter_commondialog", "tkCommonDialog", "tkinter.commondialog"),
+    MovedModule(
+        "tkinter_colorchooser", "tkColorChooser", "tkinter.colorchooser"
+    ),
+    MovedModule(
+        "tkinter_commondialog", "tkCommonDialog", "tkinter.commondialog"
+    ),
     MovedModule("tkinter_tkfiledialog", "tkFileDialog", "tkinter.filedialog"),
     MovedModule("tkinter_font", "tkFont", "tkinter.font"),
     MovedModule("tkinter_messagebox", "tkMessageBox", "tkinter.messagebox"),
-    MovedModule("tkinter_tksimpledialog", "tkSimpleDialog", "tkinter.simpledialog"),
-    MovedModule("urllib_parse", __name__ + ".moves.urllib_parse", "urllib.parse"),
-    MovedModule("urllib_error", __name__ + ".moves.urllib_error", "urllib.error"),
-    MovedModule("urllib", __name__ + ".moves.urllib", __name__ + ".moves.urllib"),
+    MovedModule(
+        "tkinter_tksimpledialog", "tkSimpleDialog", "tkinter.simpledialog"
+    ),
+    MovedModule(
+        "urllib_parse", __name__ + ".moves.urllib_parse", "urllib.parse"
+    ),
+    MovedModule(
+        "urllib_error", __name__ + ".moves.urllib_error", "urllib.error"
+    ),
+    MovedModule(
+        "urllib", __name__ + ".moves.urllib", __name__ + ".moves.urllib"
+    ),
     MovedModule("urllib_robotparser", "robotparser", "urllib.robotparser"),
     MovedModule("xmlrpc_client", "xmlrpclib", "xmlrpc.client"),
     MovedModule("xmlrpc_server", "SimpleXMLRPCServer", "xmlrpc.server"),
@@ -370,7 +393,11 @@ _urllib_parse_moved_attributes = [
     MovedAttribute("unquote", "urllib", "urllib.parse"),
     MovedAttribute("unquote_plus", "urllib", "urllib.parse"),
     MovedAttribute(
-        "unquote_to_bytes", "urllib", "urllib.parse", "unquote", "unquote_to_bytes"
+        "unquote_to_bytes",
+        "urllib",
+        "urllib.parse",
+        "unquote",
+        "unquote_to_bytes",
     ),
     MovedAttribute("urlencode", "urllib", "urllib.parse"),
     MovedAttribute("splitquery", "urllib", "urllib.parse"),
@@ -387,7 +414,9 @@ for attr in _urllib_parse_moved_attributes:
     setattr(Module_six_moves_urllib_parse, attr.name, attr)
 del attr
 
-Module_six_moves_urllib_parse._moved_attributes = _urllib_parse_moved_attributes
+Module_six_moves_urllib_parse._moved_attributes = (
+    _urllib_parse_moved_attributes
+)
 
 _importer._add_module(
     Module_six_moves_urllib_parse(__name__ + ".moves.urllib_parse"),
@@ -410,7 +439,9 @@ for attr in _urllib_error_moved_attributes:
     setattr(Module_six_moves_urllib_error, attr.name, attr)
 del attr
 
-Module_six_moves_urllib_error._moved_attributes = _urllib_error_moved_attributes
+Module_six_moves_urllib_error._moved_attributes = (
+    _urllib_error_moved_attributes
+)
 
 _importer._add_module(
     Module_six_moves_urllib_error(__name__ + ".moves.urllib.error"),
@@ -439,7 +470,9 @@ _urllib_request_moved_attributes = [
     MovedAttribute("ProxyHandler", "urllib2", "urllib.request"),
     MovedAttribute("BaseHandler", "urllib2", "urllib.request"),
     MovedAttribute("HTTPPasswordMgr", "urllib2", "urllib.request"),
-    MovedAttribute("HTTPPasswordMgrWithDefaultRealm", "urllib2", "urllib.request"),
+    MovedAttribute(
+        "HTTPPasswordMgrWithDefaultRealm", "urllib2", "urllib.request"
+    ),
     MovedAttribute("AbstractBasicAuthHandler", "urllib2", "urllib.request"),
     MovedAttribute("HTTPBasicAuthHandler", "urllib2", "urllib.request"),
     MovedAttribute("ProxyBasicAuthHandler", "urllib2", "urllib.request"),
@@ -465,7 +498,9 @@ for attr in _urllib_request_moved_attributes:
     setattr(Module_six_moves_urllib_request, attr.name, attr)
 del attr
 
-Module_six_moves_urllib_request._moved_attributes = _urllib_request_moved_attributes
+Module_six_moves_urllib_request._moved_attributes = (
+    _urllib_request_moved_attributes
+)
 
 _importer._add_module(
     Module_six_moves_urllib_request(__name__ + ".moves.urllib.request"),
@@ -489,7 +524,9 @@ for attr in _urllib_response_moved_attributes:
     setattr(Module_six_moves_urllib_response, attr.name, attr)
 del attr
 
-Module_six_moves_urllib_response._moved_attributes = _urllib_response_moved_attributes
+Module_six_moves_urllib_response._moved_attributes = (
+    _urllib_response_moved_attributes
+)
 
 _importer._add_module(
     Module_six_moves_urllib_response(__name__ + ".moves.urllib.response"),
@@ -515,7 +552,9 @@ Module_six_moves_urllib_robotparser._moved_attributes = (
 )
 
 _importer._add_module(
-    Module_six_moves_urllib_robotparser(__name__ + ".moves.urllib.robotparser"),
+    Module_six_moves_urllib_robotparser(
+        __name__ + ".moves.urllib.robotparser"
+    ),
     "moves.urllib_robotparser",
     "moves.urllib.robotparser",
 )
@@ -622,7 +661,8 @@ else:
 
     callable = callable
 _add_doc(
-    get_unbound_function, """Get the function out of a possibly unbound function"""
+    get_unbound_function,
+    """Get the function out of a possibly unbound function""",
 )
 
 
@@ -675,9 +715,13 @@ else:
 
 _add_doc(iterkeys, "Return an iterator over the keys of a dictionary.")
 _add_doc(itervalues, "Return an iterator over the values of a dictionary.")
-_add_doc(iteritems, "Return an iterator over the (key, value) pairs of a dictionary.")
 _add_doc(
-    iterlists, "Return an iterator over the (key, [values]) pairs of a dictionary."
+    iteritems,
+    "Return an iterator over the (key, value) pairs of a dictionary.",
+)
+_add_doc(
+    iterlists,
+    "Return an iterator over the (key, [values]) pairs of a dictionary.",
 )
 
 
@@ -772,7 +816,6 @@ if PY3:
             value = None
             tb = None
 
-
 else:
 
     def exec_(_code_, _globs_=None, _locs_=None):
@@ -785,7 +828,7 @@ else:
             del frame
         elif _locs_ is None:
             _locs_ = _globs_
-        exec ("""exec _code_ in _globs_, _locs_""")
+        exec("""exec _code_ in _globs_, _locs_""")
 
     exec_(
         """def reraise(tp, value, tb=None):
@@ -918,7 +961,10 @@ if sys.version_info[0:2] < (3, 4):
         updated=functools.WRAPPER_UPDATES,
     ):
         return functools.partial(
-            _update_wrapper, wrapped=wrapped, assigned=assigned, updated=updated
+            _update_wrapper,
+            wrapped=wrapped,
+            assigned=assigned,
+            updated=updated,
         )
 
     wraps.__doc__ = functools.wraps.__doc__

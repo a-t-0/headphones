@@ -18,8 +18,8 @@ from mutagen import FileType, Tags, StreamInfo
 from ._util import DictProxy, MutagenError, loadfile
 
 warnings.warn(
-    "mutagen.m4a is deprecated; use mutagen.mp4 instead.",
-    DeprecationWarning)
+    "mutagen.m4a is deprecated; use mutagen.mp4 instead.", DeprecationWarning
+)
 
 
 class error(MutagenError):
@@ -38,7 +38,7 @@ class M4AMetadataValueError(error):
     pass
 
 
-__all__ = ['M4A', 'Open', 'delete', 'M4ACover']
+__all__ = ["M4A", "Open", "delete", "M4ACover"]
 
 
 class M4ACover(bytes):
@@ -55,7 +55,6 @@ class M4ACover(bytes):
 
 
 class M4ATags(DictProxy, Tags):
-
     def load(self, atoms, fileobj):
         raise error("deprecated")
 
@@ -66,7 +65,7 @@ class M4ATags(DictProxy, Tags):
         raise error("deprecated")
 
     def pprint(self):
-        return u""
+        return ""
 
 
 class M4AInfo(StreamInfo):
@@ -77,7 +76,7 @@ class M4AInfo(StreamInfo):
         raise error("deprecated")
 
     def pprint(self):
-        return u""
+        return ""
 
 
 class M4A(FileType):

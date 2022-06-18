@@ -17,7 +17,10 @@ def facebook_compliance_fix(session):
         # Facebook returns a content-type of text/plain when sending their
         # x-www-form-urlencoded responses, along with a 200. If not, let's
         # assume we're getting JSON and bail on the fix.
-        if "text/plain" in r.headers.get("content-type", {}) and r.status_code == 200:
+        if (
+            "text/plain" in r.headers.get("content-type", {})
+            and r.status_code == 200
+        ):
             token = dict(parse_qsl(r.text, keep_blank_values=True))
         else:
             return r

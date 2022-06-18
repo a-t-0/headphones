@@ -66,14 +66,20 @@ class OptimFROGInfo(StreamInfo):
         data_size = struct.unpack("<I", header[4:8])[0]
         if data_size != 12 and data_size < 15:
             raise OptimFROGHeaderError("not an OptimFROG file")
-        (total_samples, total_samples_high, sample_type, self.channels,
-         self.sample_rate) = struct.unpack("<IHBBI", header[8:20])
+        (
+            total_samples,
+            total_samples_high,
+            sample_type,
+            self.channels,
+            self.sample_rate,
+        ) = struct.unpack("<IHBBI", header[8:20])
         total_samples += total_samples_high << 32
         self.channels += 1
         self.bits_per_sample = SAMPLE_TYPE_BITS.get(sample_type)
         if self.sample_rate:
-            self.length = float(total_samples) / (self.channels *
-                                                  self.sample_rate)
+            self.length = float(total_samples) / (
+                self.channels * self.sample_rate
+            )
         else:
             self.length = 0.0
         if data_size >= 15:
@@ -84,8 +90,10 @@ class OptimFROGInfo(StreamInfo):
             self.encoder_info = ""
 
     def pprint(self):
-        return u"OptimFROG, %.2f seconds, %d Hz" % (self.length,
-                                                    self.sample_rate)
+        return "OptimFROG, %.2f seconds, %d Hz" % (
+            self.length,
+            self.sample_rate,
+        )
 
 
 class OptimFROG(APEv2File):
@@ -102,7 +110,11 @@ class OptimFROG(APEv2File):
     def score(filename, fileobj, header):
         filename = filename.lower()
 
-        return (header.startswith(b"OFR") + endswith(filename, b".ofr") +
-                endswith(filename, b".ofs"))
+        return (
+            header.startswith(b"OFR")
+            + endswith(filename, b".ofr")
+            + endswith(filename, b".ofs")
+        )
+
 
 Open = OptimFROG

@@ -3,6 +3,7 @@
 # vim: set fileencoding=utf-8 :
 
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 import os
@@ -33,21 +34,21 @@ IS_SLOW_ENV = IS_MACOS or IS_WINDOWS
 
 
 unix_only_sock_test = pytest.mark.skipif(
-    not hasattr(socket, 'AF_UNIX'),
-    reason='UNIX domain sockets are only available under UNIX-based OS',
+    not hasattr(socket, "AF_UNIX"),
+    reason="UNIX domain sockets are only available under UNIX-based OS",
 )
 
 
 non_macos_sock_test = pytest.mark.skipif(
     IS_MACOS,
-    reason='Peercreds lookup does not work under macOS/BSD currently.',
+    reason="Peercreds lookup does not work under macOS/BSD currently.",
 )
 
 
-@pytest.fixture(params=('abstract', 'file'))
+@pytest.fixture(params=("abstract", "file"))
 def unix_sock_file(request):
     """Check that bound UNIX socket address is stored in server."""
-    name = 'unix_{request.param}_sock'.format(**locals())
+    name = "unix_{request.param}_sock".format(**locals())
     return request.getfixturevalue(name)
 
 
@@ -56,13 +57,15 @@ def unix_abstract_sock():
     """Return an abstract UNIX socket address."""
     if not IS_LINUX:
         pytest.skip(
-            '{os} does not support an abstract '
-            'socket namespace'.format(os=SYS_PLATFORM),
+            "{os} does not support an abstract "
+            "socket namespace".format(os=SYS_PLATFORM),
         )
-    return b''.join((
-        b'\x00cheroot-test-socket',
-        ntob(str(uuid.uuid4())),
-    )).decode()
+    return b"".join(
+        (
+            b"\x00cheroot-test-socket",
+            ntob(str(uuid.uuid4())),
+        )
+    ).decode()
 
 
 @pytest.fixture
@@ -120,7 +123,7 @@ def test_stop_interrupts_serve():
 
 
 @pytest.mark.parametrize(
-    'exc_cls',
+    "exc_cls",
     (
         IOError,
         KeyboardInterrupt,
@@ -130,7 +133,7 @@ def test_stop_interrupts_serve():
 )
 def test_server_interrupt(exc_cls):
     """Check that assigning interrupt stops the server."""
-    interrupt_msg = 'should catch {uuid!s}'.format(uuid=uuid.uuid4())
+    interrupt_msg = "should catch {uuid!s}".format(uuid=uuid.uuid4())
     raise_marker_sentinel = object()
 
     httpserver = HTTPServer(
@@ -193,7 +196,7 @@ def test_serving_is_false_and_stop_returns_after_ctrlc():
 
 
 @pytest.mark.parametrize(
-    'ip_addr',
+    "ip_addr",
     (
         ANY_INTERFACE_IPV4,
         ANY_INTERFACE_IPV6,
@@ -223,8 +226,8 @@ def test_bind_addr_unix_abstract(http_server, unix_abstract_sock):
     assert httpserver.bind_addr == unix_abstract_sock
 
 
-PEERCRED_IDS_URI = '/peer_creds/ids'
-PEERCRED_TEXTS_URI = '/peer_creds/texts'
+PEERCRED_IDS_URI = "/peer_creds/ids"
+PEERCRED_TEXTS_URI = "/peer_creds/texts"
 
 
 class _TestGateway(Gateway):
@@ -234,16 +237,16 @@ class _TestGateway(Gateway):
         req_uri = bton(req.uri)
         if req_uri == PEERCRED_IDS_URI:
             peer_creds = conn.peer_pid, conn.peer_uid, conn.peer_gid
-            self.send_payload('|'.join(map(str, peer_creds)))
+            self.send_payload("|".join(map(str, peer_creds)))
             return
         elif req_uri == PEERCRED_TEXTS_URI:
-            self.send_payload('!'.join((conn.peer_user, conn.peer_group)))
+            self.send_payload("!".join((conn.peer_user, conn.peer_group)))
             return
         return super(_TestGateway, self).respond()
 
     def send_payload(self, payload):
         req = self.req
-        req.status = b'200 OK'
+        req.status = b"200 OK"
         req.ensure_headers_sent()
         req.write(ntob(payload))
 
@@ -268,11 +271,11 @@ def test_peercreds_unix_sock(peercreds_enabled_server):
         bind_addr = bind_addr.decode()
 
     # pylint: disable=possibly-unused-variable
-    quoted = urllib.parse.quote(bind_addr, safe='')
-    unix_base_uri = 'http+unix://{quoted}'.format(**locals())
+    quoted = urllib.parse.quote(bind_addr, safe="")
+    unix_base_uri = "http+unix://{quoted}".format(**locals())
 
     expected_peercreds = os.getpid(), os.getuid(), os.getgid()
-    expected_peercreds = '|'.join(map(str, expected_peercreds))
+    expected_peercreds = "|".join(map(str, expected_peercreds))
 
     with requests_unixsocket.monkeypatch():
         peercreds_resp = requests.get(unix_base_uri + PEERCRED_IDS_URI)
@@ -285,8 +288,8 @@ def test_peercreds_unix_sock(peercreds_enabled_server):
 
 @pytest.mark.skipif(
     not IS_UID_GID_RESOLVABLE,
-    reason='Modules `grp` and `pwd` are not available '
-           'under the current platform',
+    reason="Modules `grp` and `pwd` are not available "
+    "under the current platform",
 )
 @unix_only_sock_test
 @non_macos_sock_test
@@ -301,16 +304,17 @@ def test_peercreds_unix_sock_with_lookup(peercreds_enabled_server):
         bind_addr = bind_addr.decode()
 
     # pylint: disable=possibly-unused-variable
-    quoted = urllib.parse.quote(bind_addr, safe='')
-    unix_base_uri = 'http+unix://{quoted}'.format(**locals())
+    quoted = urllib.parse.quote(bind_addr, safe="")
+    unix_base_uri = "http+unix://{quoted}".format(**locals())
 
     import grp
     import pwd
+
     expected_textcreds = (
         pwd.getpwuid(os.getuid()).pw_name,
         grp.getgrgid(os.getgid()).gr_name,
     )
-    expected_textcreds = '!'.join(map(str, expected_textcreds))
+    expected_textcreds = "!".join(map(str, expected_textcreds))
     with requests_unixsocket.monkeypatch():
         peercreds_text_resp = requests.get(unix_base_uri + PEERCRED_TEXTS_URI)
         peercreds_text_resp.raise_for_status()
@@ -319,18 +323,18 @@ def test_peercreds_unix_sock_with_lookup(peercreds_enabled_server):
 
 @pytest.mark.skipif(
     IS_WINDOWS,
-    reason='This regression test is for a Linux bug, '
-    'and the resource module is not available on Windows',
+    reason="This regression test is for a Linux bug, "
+    "and the resource module is not available on Windows",
 )
 @pytest.mark.parametrize(
-    'resource_limit',
+    "resource_limit",
     (
         1024,
         2048,
     ),
-    indirect=('resource_limit',),
+    indirect=("resource_limit",),
 )
-@pytest.mark.usefixtures('many_open_sockets')
+@pytest.mark.usefixtures("many_open_sockets")
 def test_high_number_of_file_descriptors(native_server_client, resource_limit):
     """Test the server does not crash with a high file-descriptor value.
 
@@ -349,11 +353,12 @@ def test_high_number_of_file_descriptors(native_server_client, resource_limit):
     def native_process_conn(conn):
         native_process_conn.filenos.add(conn.socket.fileno())
         return _old_process_conn(conn)
+
     native_process_conn.filenos = set()
     native_server_client.server_instance.process_conn = native_process_conn
 
     # Trigger a crash if select() is used in the implementation
-    native_server_client.connect('/')
+    native_server_client.connect("/")
 
     # Ensure that at least one connection got accepted, otherwise the
     # follow-up check wouldn't make sense
@@ -380,7 +385,7 @@ def _garbage_bin():
 def resource_limit(request):
     """Set the resource limit two times bigger then requested."""
     resource = pytest.importorskip(
-        'resource',
+        "resource",
         reason='The "resource" module is Unix-specific',
     )
 
@@ -408,7 +413,7 @@ def many_open_sockets(request, resource_limit):
     # NOTE: `@pytest.mark.usefixtures` doesn't work on fixtures which
     # NOTE: forces us to invoke this one dynamically to avoid having an
     # NOTE: unused argument.
-    request.getfixturevalue('_garbage_bin')
+    request.getfixturevalue("_garbage_bin")
 
     # Hoard a lot of file descriptors by opening and storing a lot of sockets
     test_sockets = []

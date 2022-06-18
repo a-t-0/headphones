@@ -13,8 +13,8 @@ from typing import (
 from typing_extensions import overload, Type
 
 # Type and type variable definitions
-_T = TypeVar('_T')
-_U = TypeVar('_U')
+_T = TypeVar("_T")
+_U = TypeVar("_U")
 
 def take(n: int, iterable: Iterable[_T]) -> List[_T]: ...
 def tabulate(

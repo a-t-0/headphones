@@ -27,14 +27,39 @@ from mutagen._util import cdata, convert_error
 class WavPackHeaderError(error):
     pass
 
-RATES = [6000, 8000, 9600, 11025, 12000, 16000, 22050, 24000, 32000, 44100,
-         48000, 64000, 88200, 96000, 192000]
+
+RATES = [
+    6000,
+    8000,
+    9600,
+    11025,
+    12000,
+    16000,
+    22050,
+    24000,
+    32000,
+    44100,
+    48000,
+    64000,
+    88200,
+    96000,
+    192000,
+]
 
 
 class _WavPackHeader(object):
-
-    def __init__(self, block_size, version, track_no, index_no, total_samples,
-                 block_index, block_samples, flags, crc):
+    def __init__(
+        self,
+        block_size,
+        version,
+        track_no,
+        index_no,
+        total_samples,
+        block_index,
+        block_samples,
+        flags,
+        crc,
+    ):
 
         self.block_size = block_size
         self.version = version
@@ -60,15 +85,24 @@ class _WavPackHeader(object):
         track_no = ord(header[10:11])
         index_no = ord(header[11:12])
         samples = cdata.uint_le(header[12:16])
-        if samples == 2 ** 32 - 1:
+        if samples == 2**32 - 1:
             samples = -1
         block_index = cdata.uint_le(header[16:20])
         block_samples = cdata.uint_le(header[20:24])
         flags = cdata.uint_le(header[24:28])
         crc = cdata.uint_le(header[28:32])
 
-        return _WavPackHeader(block_size, version, track_no, index_no,
-                              samples, block_index, block_samples, flags, crc)
+        return _WavPackHeader(
+            block_size,
+            version,
+            track_no,
+            index_no,
+            samples,
+            block_index,
+            block_samples,
+            flags,
+            crc,
+        )
 
 
 class WavPackInfo(StreamInfo):
@@ -116,8 +150,7 @@ class WavPackInfo(StreamInfo):
         self.length = float(samples) / self.sample_rate
 
     def pprint(self):
-        return u"WavPack, %.2f seconds, %d Hz" % (self.length,
-                                                  self.sample_rate)
+        return "WavPack, %.2f seconds, %d Hz" % (self.length, self.sample_rate)
 
 
 class WavPack(APEv2File):

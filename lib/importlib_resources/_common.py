@@ -33,7 +33,7 @@ def get_resource_reader(package):
     # zipimport.zipimporter does not support weak references, resulting in a
     # TypeError.  That seems terrible.
     spec = package.__spec__
-    reader = getattr(spec.loader, 'get_resource_reader', None)  # type: ignore
+    reader = getattr(spec.loader, "get_resource_reader", None)  # type: ignore
     if reader is None:
         return None
     return reader(spec.name)  # type: ignore
@@ -41,7 +41,11 @@ def get_resource_reader(package):
 
 def resolve(cand):
     # type: (Package) -> types.ModuleType
-    return cand if isinstance(cand, types.ModuleType) else importlib.import_module(cand)
+    return (
+        cand
+        if isinstance(cand, types.ModuleType)
+        else importlib.import_module(cand)
+    )
 
 
 def get_package(package):
@@ -52,7 +56,7 @@ def get_package(package):
     """
     resolved = resolve(package)
     if wrap_spec(resolved).submodule_search_locations is None:
-        raise TypeError(f'{package!r} is not a package')
+        raise TypeError(f"{package!r} is not a package")
     return resolved
 
 
@@ -67,7 +71,7 @@ def from_package(package):
 
 
 @contextlib.contextmanager
-def _tempfile(reader, suffix=''):
+def _tempfile(reader, suffix=""):
     # Not using tempfile.NamedTemporaryFile as it leads to deeper 'try'
     # blocks due to the need to close the temporary file to work on Windows
     # properly.

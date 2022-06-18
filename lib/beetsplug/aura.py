@@ -608,7 +608,7 @@ def safe_filename(fn):
         return False
 
     # In single names, rule out Unix directory traversal names.
-    if fn in ('.', '..'):
+    if fn in (".", ".."):
         return False
 
     return True

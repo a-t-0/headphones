@@ -1,4 +1,3 @@
-
 from threading import Thread, Event
 
 from apscheduler.schedulers.base import BaseScheduler
@@ -23,13 +22,13 @@ class BackgroundScheduler(BlockingScheduler):
     _thread = None
 
     def _configure(self, config):
-        self._daemon = asbool(config.pop('daemon', True))
+        self._daemon = asbool(config.pop("daemon", True))
         super(BackgroundScheduler, self)._configure(config)
 
     def start(self):
         BaseScheduler.start(self)
         self._event = Event()
-        self._thread = Thread(target=self._main_loop, name='APScheduler')
+        self._thread = Thread(target=self._main_loop, name="APScheduler")
         self._thread.daemon = self._daemon
         self._thread.start()
 

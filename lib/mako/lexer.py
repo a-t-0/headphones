@@ -188,15 +188,15 @@ class Lexer(object):
                 raise exceptions.SyntaxException(
                     "Keyword '%s' not a legal ternary for keyword '%s'"
                     % (node.keyword, self.control_line[-1].keyword),
-                    **self.exception_kwargs
+                    **self.exception_kwargs,
                 )
 
     _coding_re = re.compile(r"#.*coding[:=]\s*([-\w.]+).*\r?\n")
 
     def decode_raw_stream(self, text, decode_raw, known_encoding, filename):
         """given string/unicode or bytes/string, determine encoding
-           from magic encoding comment, return body as unicode
-           or raw if decode_raw=False
+        from magic encoding comment, return body as unicode
+        or raw if decode_raw=False
 
         """
         if isinstance(text, compat.text_type):
@@ -281,7 +281,7 @@ class Lexer(object):
         if len(self.tag):
             raise exceptions.SyntaxException(
                 "Unclosed tag: <%%%s>" % self.tag[-1].keyword,
-                **self.exception_kwargs
+                **self.exception_kwargs,
             )
         if len(self.control_line):
             raise exceptions.SyntaxException(
@@ -333,7 +333,7 @@ class Lexer(object):
                     if not match:
                         raise exceptions.SyntaxException(
                             "Unclosed tag: <%%%s>" % self.tag[-1].keyword,
-                            **self.exception_kwargs
+                            **self.exception_kwargs,
                         )
                     self.append_node(parsetree.Text, match.group(1))
                     return self.match_tag_end()
@@ -348,13 +348,13 @@ class Lexer(object):
                 raise exceptions.SyntaxException(
                     "Closing tag without opening tag: </%%%s>"
                     % match.group(1),
-                    **self.exception_kwargs
+                    **self.exception_kwargs,
                 )
             elif self.tag[-1].keyword != match.group(1):
                 raise exceptions.SyntaxException(
                     "Closing tag </%%%s> does not match tag: <%%%s>"
                     % (match.group(1), self.tag[-1].keyword),
-                    **self.exception_kwargs
+                    **self.exception_kwargs,
                 )
             self.tag.pop()
             return True
@@ -455,7 +455,7 @@ class Lexer(object):
                 if not m2:
                     raise exceptions.SyntaxException(
                         "Invalid control line: '%s'" % text,
-                        **self.exception_kwargs
+                        **self.exception_kwargs,
                     )
                 isend, keyword = m2.group(1, 2)
                 isend = isend is not None
@@ -465,13 +465,13 @@ class Lexer(object):
                         raise exceptions.SyntaxException(
                             "No starting keyword '%s' for '%s'"
                             % (keyword, text),
-                            **self.exception_kwargs
+                            **self.exception_kwargs,
                         )
                     elif self.control_line[-1].keyword != keyword:
                         raise exceptions.SyntaxException(
                             "Keyword '%s' doesn't match keyword '%s'"
                             % (text, self.control_line[-1].keyword),
-                            **self.exception_kwargs
+                            **self.exception_kwargs,
                         )
                 self.append_node(parsetree.ControlLine, keyword, isend, text)
             else:

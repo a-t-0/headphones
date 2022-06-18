@@ -44,7 +44,10 @@ class CharsetMatch:
                     str(other.__class__), str(self.__class__)
                 )
             )
-        return self.encoding == other.encoding and self.fingerprint == other.fingerprint
+        return (
+            self.encoding == other.encoding
+            and self.fingerprint == other.fingerprint
+        )
 
     def __lt__(self, other: object) -> bool:
         """
@@ -54,7 +57,9 @@ class CharsetMatch:
             raise ValueError
 
         chaos_difference = abs(self.chaos - other.chaos)  # type: float
-        coherence_difference = abs(self.coherence - other.coherence)  # type: float
+        coherence_difference = abs(
+            self.coherence - other.coherence
+        )  # type: float
 
         # Bellow 1% difference --> Use Coherence
         if chaos_difference < 0.01 and coherence_difference > 0.02:
@@ -101,10 +106,13 @@ class CharsetMatch:
         Notice: Will be removed in 3.0
         """
         warnings.warn(
-            "w_counter is deprecated and will be removed in 3.0", DeprecationWarning
+            "w_counter is deprecated and will be removed in 3.0",
+            DeprecationWarning,
         )
 
-        string_printable_only = sub(NOT_PRINTABLE_PATTERN, " ", str(self).lower())
+        string_printable_only = sub(
+            NOT_PRINTABLE_PATTERN, " ", str(self).lower()
+        )
 
         return Counter(string_printable_only.split())
 
@@ -115,7 +123,9 @@ class CharsetMatch:
         return self._string
 
     def __repr__(self) -> str:
-        return "<CharsetMatch '{}' bytes({})>".format(self.encoding, self.fingerprint)
+        return "<CharsetMatch '{}' bytes({})>".format(
+            self.encoding, self.fingerprint
+        )
 
     def add_submatch(self, other: "CharsetMatch") -> None:
         if not isinstance(other, CharsetMatch) or other == self:
@@ -174,7 +184,10 @@ class CharsetMatch:
                 return "English"
 
             # doing it there to avoid circular import
-            from charset_normalizer.cd import encoding_languages, mb_encoding_languages
+            from charset_normalizer.cd import (
+                encoding_languages,
+                mb_encoding_languages,
+            )
 
             languages = (
                 mb_encoding_languages(self.encoding)
@@ -281,7 +294,9 @@ class CharsetMatches:
     """
 
     def __init__(self, results: List[CharsetMatch] = None):
-        self._results = sorted(results) if results else []  # type: List[CharsetMatch]
+        self._results = (
+            sorted(results) if results else []
+        )  # type: List[CharsetMatch]
 
     def __iter__(self) -> Iterator[CharsetMatch]:
         yield from self._results
@@ -320,7 +335,10 @@ class CharsetMatches:
         # We should disable the submatch factoring when the input file is too heavy (conserve RAM usage)
         if len(item.raw) <= TOO_BIG_SEQUENCE:
             for match in self._results:
-                if match.fingerprint == item.fingerprint and match.chaos == item.chaos:
+                if (
+                    match.fingerprint == item.fingerprint
+                    and match.chaos == item.chaos
+                ):
                     match.add_submatch(item)
                     return
         self._results.append(item)

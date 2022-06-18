@@ -62,7 +62,7 @@ def _calc_sv8_gain(gain):
 
 
 def _calc_sv8_peak(peak):
-    return (10 ** (peak / (256.0 * 20.0)) / 65535.0)
+    return 10 ** (peak / (256.0 * 20.0)) / 65535.0
 
 
 class MusepackInfo(StreamInfo):
@@ -126,8 +126,9 @@ class MusepackInfo(StreamInfo):
         mandatory_packets = [b"SH", b"RG"]
 
         def check_frame_key(key):
-            if ((len(frame_type) != key_size) or
-                    (not b'AA' <= frame_type <= b'ZZ')):
+            if (len(frame_type) != key_size) or (
+                not b"AA" <= frame_type <= b"ZZ"
+            ):
                 raise MusepackHeaderError("Invalid frame key.")
 
         frame_type = fileobj.read(key_size)
@@ -158,8 +159,10 @@ class MusepackInfo(StreamInfo):
             check_frame_key(frame_type)
 
         if mandatory_packets:
-            raise MusepackHeaderError("Missing mandatory packets: %s." %
-                                      ", ".join(map(repr, mandatory_packets)))
+            raise MusepackHeaderError(
+                "Missing mandatory packets: %s."
+                % ", ".join(map(repr, mandatory_packets))
+            )
 
         self.length = float(self.samples) / self.sample_rate
         self.bitrate = 0
@@ -180,8 +183,7 @@ class MusepackInfo(StreamInfo):
             samples, l1 = _parse_sv8_int(fileobj)
             samples_skip, l2 = _parse_sv8_int(fileobj)
         except (EOFError, ValueError):
-            raise MusepackHeaderError(
-                "SH packet: Invalid sample counts.")
+            raise MusepackHeaderError("SH packet: Invalid sample counts.")
 
         self.samples = samples - samples_skip
         remaining_size -= l1 + l2
@@ -189,7 +191,7 @@ class MusepackInfo(StreamInfo):
         data = fileobj.read(remaining_size)
         if len(data) != remaining_size or len(data) < 2:
             raise MusepackHeaderError("SH packet ended unexpectedly.")
-        rate_index = (bytearray(data)[0] >> 5)
+        rate_index = bytearray(data)[0] >> 5
         try:
             self.sample_rate = RATES[rate_index]
         except IndexError:
@@ -230,9 +232,11 @@ class MusepackInfo(StreamInfo):
             flags = cdata.uint_le(header[8:12])
 
             self.title_peak, self.title_gain = struct.unpack(
-                "<Hh", header[12:16])
+                "<Hh", header[12:16]
+            )
             self.album_peak, self.album_gain = struct.unpack(
-                "<Hh", header[16:20])
+                "<Hh", header[16:20]
+            )
             self.title_gain /= 100.0
             self.album_gain /= 100.0
             self.title_peak /= 65535.0
@@ -260,13 +264,18 @@ class MusepackInfo(StreamInfo):
     def pprint(self):
         rg_data = []
         if hasattr(self, "title_gain"):
-            rg_data.append(u"%+0.2f (title)" % self.title_gain)
+            rg_data.append("%+0.2f (title)" % self.title_gain)
         if hasattr(self, "album_gain"):
-            rg_data.append(u"%+0.2f (album)" % self.album_gain)
+            rg_data.append("%+0.2f (album)" % self.album_gain)
         rg_data = (rg_data and ", Gain: " + ", ".join(rg_data)) or ""
 
-        return u"Musepack SV%d, %.2f seconds, %d Hz, %d bps%s" % (
-            self.version, self.length, self.sample_rate, self.bitrate, rg_data)
+        return "Musepack SV%d, %.2f seconds, %d Hz, %d bps%s" % (
+            self.version,
+            self.length,
+            self.sample_rate,
+            self.bitrate,
+            rg_data,
+        )
 
 
 class Musepack(APEv2File):
@@ -286,8 +295,11 @@ class Musepack(APEv2File):
     def score(filename, fileobj, header):
         filename = filename.lower()
 
-        return (header.startswith(b"MP+") + header.startswith(b"MPCK") +
-                endswith(filename, b".mpc"))
+        return (
+            header.startswith(b"MP+")
+            + header.startswith(b"MPCK")
+            + endswith(filename, b".mpc")
+        )
 
 
 Open = Musepack

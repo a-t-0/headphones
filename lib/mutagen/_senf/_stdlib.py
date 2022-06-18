@@ -104,7 +104,8 @@ def expanduser(path):
     if path == "~":
         return _get_userdir()
     elif path.startswith("~" + sep) or (
-            altsep is not None and path.startswith("~" + altsep)):
+        altsep is not None and path.startswith("~" + altsep)
+    ):
         userdir = _get_userdir()
         if userdir is None:
             return path

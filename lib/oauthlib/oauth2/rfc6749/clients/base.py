@@ -12,21 +12,21 @@ import warnings
 from oauthlib.common import generate_token
 from oauthlib.oauth2.rfc6749 import tokens
 from oauthlib.oauth2.rfc6749.errors import (
-    InsecureTransportError, TokenExpiredError,
+    InsecureTransportError,
+    TokenExpiredError,
 )
 from oauthlib.oauth2.rfc6749.parameters import (
-    parse_token_response, prepare_token_request,
+    parse_token_response,
+    prepare_token_request,
     prepare_token_revocation_request,
 )
 from oauthlib.oauth2.rfc6749.utils import is_secure_transport
 
-AUTH_HEADER = 'auth_header'
-URI_QUERY = 'query'
-BODY = 'body'
+AUTH_HEADER = "auth_header"
+URI_QUERY = "query"
+BODY = "body"
 
-FORM_ENC_HEADERS = {
-    'Content-Type': 'application/x-www-form-urlencoded'
-}
+FORM_ENC_HEADERS = {"Content-Type": "application/x-www-form-urlencoded"}
 
 
 class Client:
@@ -47,21 +47,25 @@ class Client:
     Python, this is usually :py:class:`oauthlib.oauth2.WebApplicationClient`.
 
     """
-    refresh_token_key = 'refresh_token'
 
-    def __init__(self, client_id,
-                 default_token_placement=AUTH_HEADER,
-                 token_type='Bearer',
-                 access_token=None,
-                 refresh_token=None,
-                 mac_key=None,
-                 mac_algorithm=None,
-                 token=None,
-                 scope=None,
-                 state=None,
-                 redirect_url=None,
-                 state_generator=generate_token,
-                 **kwargs):
+    refresh_token_key = "refresh_token"
+
+    def __init__(
+        self,
+        client_id,
+        default_token_placement=AUTH_HEADER,
+        token_type="Bearer",
+        access_token=None,
+        refresh_token=None,
+        mac_key=None,
+        mac_algorithm=None,
+        token=None,
+        scope=None,
+        state=None,
+        redirect_url=None,
+        state_generator=generate_token,
+        **kwargs,
+    ):
         """Initialize a client with commonly used attributes.
 
         :param client_id: Client identifier given by the OAuth provider upon
@@ -129,10 +133,7 @@ class Client:
         The MAC token spec is not yet stable and support for MAC tokens
         is experimental and currently matching version 00 of the spec.
         """
-        return {
-            'Bearer': self._add_bearer_token,
-            'MAC': self._add_mac_token
-        }
+        return {"Bearer": self._add_bearer_token, "MAC": self._add_mac_token}
 
     def prepare_request_uri(self, *args, **kwargs):
         """Abstract method used to create request URIs."""
@@ -146,8 +147,15 @@ class Client:
         """Abstract method used to parse redirection responses."""
         raise NotImplementedError("Must be implemented by inheriting classes.")
 
-    def add_token(self, uri, http_method='GET', body=None, headers=None,
-                  token_placement=None, **kwargs):
+    def add_token(
+        self,
+        uri,
+        http_method="GET",
+        body=None,
+        headers=None,
+        token_placement=None,
+        **kwargs,
+    ):
         """Add token to the request uri, body or authorization header.
 
         The access token type provides the client with the information
@@ -187,21 +195,29 @@ class Client:
         token_placement = token_placement or self.default_token_placement
 
         case_insensitive_token_types = {
-            k.lower(): v for k, v in self.token_types.items()}
+            k.lower(): v for k, v in self.token_types.items()
+        }
         if not self.token_type.lower() in case_insensitive_token_types:
             raise ValueError("Unsupported token type: %s" % self.token_type)
 
-        if not (self.access_token or self.token.get('access_token')):
+        if not (self.access_token or self.token.get("access_token")):
             raise ValueError("Missing access token.")
 
         if self._expires_at and self._expires_at < time.time():
             raise TokenExpiredError()
 
-        return case_insensitive_token_types[self.token_type.lower()](uri, http_method, body,
-                                                                     headers, token_placement, **kwargs)
+        return case_insensitive_token_types[self.token_type.lower()](
+            uri, http_method, body, headers, token_placement, **kwargs
+        )
 
-    def prepare_authorization_request(self, authorization_url, state=None,
-                                      redirect_url=None, scope=None, **kwargs):
+    def prepare_authorization_request(
+        self,
+        authorization_url,
+        state=None,
+        redirect_url=None,
+        scope=None,
+        **kwargs,
+    ):
         """Prepare the authorization request.
 
         This is the first step in many OAuth flows in which the user is
@@ -239,12 +255,23 @@ class Client:
         # do not assign scope to self automatically anymore
         scope = self.scope if scope is None else scope
         auth_url = self.prepare_request_uri(
-            authorization_url, redirect_uri=self.redirect_url,
-            scope=scope, state=self.state, **kwargs)
-        return auth_url, FORM_ENC_HEADERS, ''
+            authorization_url,
+            redirect_uri=self.redirect_url,
+            scope=scope,
+            state=self.state,
+            **kwargs,
+        )
+        return auth_url, FORM_ENC_HEADERS, ""
 
-    def prepare_token_request(self, token_url, authorization_response=None,
-                              redirect_url=None, state=None, body='', **kwargs):
+    def prepare_token_request(
+        self,
+        token_url,
+        authorization_response=None,
+        redirect_url=None,
+        state=None,
+        body="",
+        **kwargs,
+    ):
         """Prepare a token creation request.
 
         Note that these requests usually require client authentication, either
@@ -276,15 +303,18 @@ class Client:
         state = state or self.state
         if authorization_response:
             self.parse_request_uri_response(
-                authorization_response, state=state)
+                authorization_response, state=state
+            )
         self.redirect_url = redirect_url or self.redirect_url
-        body = self.prepare_request_body(body=body,
-                                         redirect_uri=self.redirect_url, **kwargs)
+        body = self.prepare_request_body(
+            body=body, redirect_uri=self.redirect_url, **kwargs
+        )
 
         return token_url, FORM_ENC_HEADERS, body
 
-    def prepare_refresh_token_request(self, token_url, refresh_token=None,
-                                      body='', scope=None, **kwargs):
+    def prepare_refresh_token_request(
+        self, token_url, refresh_token=None, body="", scope=None, **kwargs
+    ):
         """Prepare an access token refresh request.
 
         Expired access tokens can be replaced by new access tokens without
@@ -313,12 +343,20 @@ class Client:
 
         # do not assign scope to self automatically anymore
         scope = self.scope if scope is None else scope
-        body = self.prepare_refresh_body(body=body,
-                                         refresh_token=refresh_token, scope=scope, **kwargs)
+        body = self.prepare_refresh_body(
+            body=body, refresh_token=refresh_token, scope=scope, **kwargs
+        )
         return token_url, FORM_ENC_HEADERS, body
 
-    def prepare_token_revocation_request(self, revocation_url, token,
-                                         token_type_hint="access_token", body='', callback=None, **kwargs):
+    def prepare_token_revocation_request(
+        self,
+        revocation_url,
+        token,
+        token_type_hint="access_token",
+        body="",
+        callback=None,
+        **kwargs,
+    ):
         """Prepare a token revocation request.
 
         :param revocation_url: Provider token revocation endpoint URL.
@@ -374,9 +412,14 @@ class Client:
         if not is_secure_transport(revocation_url):
             raise InsecureTransportError()
 
-        return prepare_token_revocation_request(revocation_url, token,
-                                                token_type_hint=token_type_hint, body=body, callback=callback,
-                                                **kwargs)
+        return prepare_token_revocation_request(
+            revocation_url,
+            token,
+            token_type_hint=token_type_hint,
+            body=body,
+            callback=callback,
+            **kwargs,
+        )
 
     def parse_request_body_response(self, body, scope=None, **kwargs):
         """Parse the JSON response body.
@@ -430,7 +473,9 @@ class Client:
         self.populate_token_attributes(self.token)
         return self.token
 
-    def prepare_refresh_body(self, body='', refresh_token=None, scope=None, **kwargs):
+    def prepare_refresh_body(
+        self, body="", refresh_token=None, scope=None, **kwargs
+    ):
         """Prepare an access token request, using a refresh token.
 
         If the authorization server issued a refresh token to the client, the
@@ -452,11 +497,22 @@ class Client:
         """
         refresh_token = refresh_token or self.refresh_token
         scope = self.scope if scope is None else scope
-        return prepare_token_request(self.refresh_token_key, body=body, scope=scope,
-                                     refresh_token=refresh_token, **kwargs)
+        return prepare_token_request(
+            self.refresh_token_key,
+            body=body,
+            scope=scope,
+            refresh_token=refresh_token,
+            **kwargs,
+        )
 
-    def _add_bearer_token(self, uri, http_method='GET', body=None,
-                          headers=None, token_placement=None):
+    def _add_bearer_token(
+        self,
+        uri,
+        http_method="GET",
+        body=None,
+        headers=None,
+        token_placement=None,
+    ):
         """Add a bearer token to the request uri, body or authorization header."""
         if token_placement == AUTH_HEADER:
             headers = tokens.prepare_bearer_headers(self.access_token, headers)
@@ -471,8 +527,16 @@ class Client:
             raise ValueError("Invalid token placement.")
         return uri, headers, body
 
-    def _add_mac_token(self, uri, http_method='GET', body=None,
-                       headers=None, token_placement=AUTH_HEADER, ext=None, **kwargs):
+    def _add_mac_token(
+        self,
+        uri,
+        http_method="GET",
+        body=None,
+        headers=None,
+        token_placement=AUTH_HEADER,
+        ext=None,
+        **kwargs,
+    ):
         """Add a MAC token to the request authorization header.
 
         Warning: MAC token support is experimental as the spec is not yet stable.
@@ -480,43 +544,53 @@ class Client:
         if token_placement != AUTH_HEADER:
             raise ValueError("Invalid token placement.")
 
-        headers = tokens.prepare_mac_header(self.access_token, uri,
-                                            self.mac_key, http_method, headers=headers, body=body, ext=ext,
-                                            hash_algorithm=self.mac_algorithm, **kwargs)
+        headers = tokens.prepare_mac_header(
+            self.access_token,
+            uri,
+            self.mac_key,
+            http_method,
+            headers=headers,
+            body=body,
+            ext=ext,
+            hash_algorithm=self.mac_algorithm,
+            **kwargs,
+        )
         return uri, headers, body
 
     def _populate_attributes(self, response):
-        warnings.warn("Please switch to the public method "
-                      "populate_token_attributes.", DeprecationWarning)
+        warnings.warn(
+            "Please switch to the public method " "populate_token_attributes.",
+            DeprecationWarning,
+        )
         return self.populate_token_attributes(response)
 
     def populate_code_attributes(self, response):
         """Add attributes from an auth code response to self."""
 
-        if 'code' in response:
-            self.code = response.get('code')
+        if "code" in response:
+            self.code = response.get("code")
 
     def populate_token_attributes(self, response):
         """Add attributes from a token exchange response to self."""
 
-        if 'access_token' in response:
-            self.access_token = response.get('access_token')
+        if "access_token" in response:
+            self.access_token = response.get("access_token")
 
-        if 'refresh_token' in response:
-            self.refresh_token = response.get('refresh_token')
+        if "refresh_token" in response:
+            self.refresh_token = response.get("refresh_token")
 
-        if 'token_type' in response:
-            self.token_type = response.get('token_type')
+        if "token_type" in response:
+            self.token_type = response.get("token_type")
 
-        if 'expires_in' in response:
-            self.expires_in = response.get('expires_in')
+        if "expires_in" in response:
+            self.expires_in = response.get("expires_in")
             self._expires_at = time.time() + int(self.expires_in)
 
-        if 'expires_at' in response:
-            self._expires_at = int(response.get('expires_at'))
+        if "expires_at" in response:
+            self._expires_at = int(response.get("expires_at"))
 
-        if 'mac_key' in response:
-            self.mac_key = response.get('mac_key')
+        if "mac_key" in response:
+            self.mac_key = response.get("mac_key")
 
-        if 'mac_algorithm' in response:
-            self.mac_algorithm = response.get('mac_algorithm')
+        if "mac_algorithm" in response:
+            self.mac_algorithm = response.get("mac_algorithm")

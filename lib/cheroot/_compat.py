@@ -2,6 +2,7 @@
 """Compatibility code for using Cheroot with various versions of Python."""
 
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 import os
@@ -17,6 +18,7 @@ except ImportError:
 
 try:
     import ssl
+
     IS_ABOVE_OPENSSL10 = ssl.OPENSSL_VERSION_INFO >= (1, 1)
     del ssl
 except ImportError:
@@ -37,41 +39,43 @@ except ImportError:
             pass
 
 
-IS_CI = bool(os.getenv('CI'))
-IS_GITHUB_ACTIONS_WORKFLOW = bool(os.getenv('GITHUB_WORKFLOW'))
+IS_CI = bool(os.getenv("CI"))
+IS_GITHUB_ACTIONS_WORKFLOW = bool(os.getenv("GITHUB_WORKFLOW"))
 
 
-IS_PYPY = platform.python_implementation() == 'PyPy'
+IS_PYPY = platform.python_implementation() == "PyPy"
 
 
 SYS_PLATFORM = platform.system()
-IS_WINDOWS = SYS_PLATFORM == 'Windows'
-IS_LINUX = SYS_PLATFORM == 'Linux'
-IS_MACOS = SYS_PLATFORM == 'Darwin'
+IS_WINDOWS = SYS_PLATFORM == "Windows"
+IS_LINUX = SYS_PLATFORM == "Linux"
+IS_MACOS = SYS_PLATFORM == "Darwin"
 
 PLATFORM_ARCH = platform.machine()
-IS_PPC = PLATFORM_ARCH.startswith('ppc')
+IS_PPC = PLATFORM_ARCH.startswith("ppc")
 
 
 if not six.PY2:
-    def ntob(n, encoding='ISO-8859-1'):
+
+    def ntob(n, encoding="ISO-8859-1"):
         """Return the native string as bytes in the given encoding."""
         assert_native(n)
         # In Python 3, the native string type is unicode
         return n.encode(encoding)
 
-    def ntou(n, encoding='ISO-8859-1'):
+    def ntou(n, encoding="ISO-8859-1"):
         """Return the native string as Unicode with the given encoding."""
         assert_native(n)
         # In Python 3, the native string type is unicode
         return n
 
-    def bton(b, encoding='ISO-8859-1'):
+    def bton(b, encoding="ISO-8859-1"):
         """Return the byte string as native string in the given encoding."""
         return b.decode(encoding)
+
 else:
     # Python 2
-    def ntob(n, encoding='ISO-8859-1'):
+    def ntob(n, encoding="ISO-8859-1"):
         """Return the native string as bytes in the given encoding."""
         assert_native(n)
         # In Python 2, the native string type is bytes. Assume it's already
@@ -79,7 +83,7 @@ else:
         # was intended.
         return n
 
-    def ntou(n, encoding='ISO-8859-1'):
+    def ntou(n, encoding="ISO-8859-1"):
         """Return the native string as Unicode with the given encoding."""
         assert_native(n)
         # In Python 2, the native string type is bytes.
@@ -87,17 +91,17 @@ else:
         # this to signal that it wants to pass a string with embedded \uXXXX
         # escapes, but without having to prefix it with u'' for Python 2,
         # but no prefix for Python 3.
-        if encoding == 'escape':
+        if encoding == "escape":
             return re.sub(
-                r'\\u([0-9a-zA-Z]{4})',
+                r"\\u([0-9a-zA-Z]{4})",
                 lambda m: six.unichr(int(m.group(1), 16)),
-                n.decode('ISO-8859-1'),
+                n.decode("ISO-8859-1"),
             )
         # Assume it's already in the given encoding, which for ISO-8859-1
         # is almost always what was intended.
         return n.decode(encoding)
 
-    def bton(b, encoding='ISO-8859-1'):
+    def bton(b, encoding="ISO-8859-1"):
         """Return the byte string as native string in the given encoding."""
         return b
 
@@ -110,7 +114,7 @@ def assert_native(n):
 
     """
     if not isinstance(n, str):
-        raise TypeError('n must be a native str (got %s)' % type(n).__name__)
+        raise TypeError("n must be a native str (got %s)" % type(n).__name__)
 
 
 if not six.PY2:
@@ -144,5 +148,5 @@ def extract_bytes(mv):
         return mv
 
     raise ValueError(
-        'extract_bytes() only accepts bytes and memoryview/buffer',
+        "extract_bytes() only accepts bytes and memoryview/buffer",
     )

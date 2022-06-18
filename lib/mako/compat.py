@@ -70,7 +70,6 @@ if py3k:
     def octal(lit):
         return eval("0o" + lit)
 
-
 else:
     import __builtin__ as compat_builtins  # noqa
 
@@ -101,14 +100,16 @@ else:
 if py3k:
     from importlib import machinery, util
 
-    if hasattr(util, 'module_from_spec'):
+    if hasattr(util, "module_from_spec"):
         # Python 3.5+
         def load_module(module_id, path):
             spec = util.spec_from_file_location(module_id, path)
             module = util.module_from_spec(spec)
             spec.loader.exec_module(module)
             return module
+
     else:
+
         def load_module(module_id, path):
             module = machinery.SourceFileLoader(module_id, path).load_module()
             del sys.modules[module_id]
@@ -135,7 +136,6 @@ if py3k:
         if value.__traceback__ is not tb:
             raise value.with_traceback(tb)
         raise value
-
 
 else:
     exec(

@@ -6,6 +6,7 @@
 """
 
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 
@@ -20,7 +21,7 @@ from six.moves import queue
 from jaraco.functools import pass_none
 
 
-__all__ = ('WorkerThread', 'ThreadPool')
+__all__ = ("WorkerThread", "ThreadPool")
 
 
 class TrueyZero:
@@ -74,32 +75,34 @@ class WorkerThread(threading.Thread):
         self.start_time = None
         self.work_time = 0
         self.stats = {
-            'Requests': lambda s: self.requests_seen + (
+            "Requests": lambda s: self.requests_seen
+            + (
                 self.start_time is None
                 and trueyzero
                 or self.conn.requests_seen
             ),
-            'Bytes Read': lambda s: self.bytes_read + (
+            "Bytes Read": lambda s: self.bytes_read
+            + (
                 self.start_time is None
                 and trueyzero
                 or self.conn.rfile.bytes_read
             ),
-            'Bytes Written': lambda s: self.bytes_written + (
+            "Bytes Written": lambda s: self.bytes_written
+            + (
                 self.start_time is None
                 and trueyzero
                 or self.conn.wfile.bytes_written
             ),
-            'Work Time': lambda s: self.work_time + (
+            "Work Time": lambda s: self.work_time
+            + (
                 self.start_time is None
                 and trueyzero
                 or time.time() - self.start_time
             ),
-            'Read Throughput': lambda s: s['Bytes Read'](s) / (
-                s['Work Time'](s) or 1e-6
-            ),
-            'Write Throughput': lambda s: s['Bytes Written'](s) / (
-                s['Work Time'](s) or 1e-6
-            ),
+            "Read Throughput": lambda s: s["Bytes Read"](s)
+            / (s["Work Time"](s) or 1e-6),
+            "Write Throughput": lambda s: s["Bytes Written"](s)
+            / (s["Work Time"](s) or 1e-6),
         }
         threading.Thread.__init__(self)
 
@@ -108,7 +111,7 @@ class WorkerThread(threading.Thread):
 
         Retrieves incoming connections from thread pool.
         """
-        self.server.stats['Worker Threads'][self.name] = self.stats
+        self.server.stats["Worker Threads"][self.name] = self.stats
         try:
             self.ready = True
             while True:
@@ -117,7 +120,7 @@ class WorkerThread(threading.Thread):
                     return
 
                 self.conn = conn
-                is_stats_enabled = self.server.stats['Enabled']
+                is_stats_enabled = self.server.stats["Enabled"]
                 if is_stats_enabled:
                     self.start_time = time.time()
                 keep_conn_open = False
@@ -147,8 +150,12 @@ class ThreadPool:
     """
 
     def __init__(
-            self, server, min=10, max=-1, accepted_queue_size=-1,
-            accepted_queue_timeout=10,
+        self,
+        server,
+        min=10,
+        max=-1,
+        accepted_queue_size=-1,
+        accepted_queue_timeout=10,
     ):
         """Initialize HTTP requests queue instance.
 
@@ -177,13 +184,12 @@ class ThreadPool:
             self._threads.append(WorkerThread(self.server))
         for worker in self._threads:
             worker.name = (
-                'CP Server {worker_name!s}'.
-                format(worker_name=worker.name),
+                "CP Server {worker_name!s}".format(worker_name=worker.name),
             )
             worker.start()
         for worker in self._threads:
             while not worker.ready:
-                time.sleep(.1)
+                time.sleep(0.1)
 
     @property
     def idle(self):  # noqa: D401; irrelevant for properties
@@ -215,20 +221,19 @@ class ThreadPool:
             budget = max(self.max - len(self._threads), 0)
         else:
             # self.max <= 0 indicates no maximum
-            budget = float('inf')
+            budget = float("inf")
 
         n_new = min(amount, budget)
 
         workers = [self._spawn_worker() for i in range(n_new)]
         while not all(worker.ready for worker in workers):
-            time.sleep(.1)
+            time.sleep(0.1)
         self._threads.extend(workers)
 
     def _spawn_worker(self):
         worker = WorkerThread(self.server)
         worker.name = (
-            'CP Server {worker_name!s}'.
-            format(worker_name=worker.name),
+            "CP Server {worker_name!s}".format(worker_name=worker.name),
         )
         worker.start()
         return worker
@@ -266,8 +271,8 @@ class ThreadPool:
         if timeout is not None and timeout < 0:
             timeout = None
             warnings.warning(
-                'In the future, negative timeouts to Server.stop() '
-                'will be equivalent to a timeout of zero.',
+                "In the future, negative timeouts to Server.stop() "
+                "will be equivalent to a timeout of zero.",
                 stacklevel=2,
             )
 

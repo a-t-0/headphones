@@ -40,7 +40,9 @@ def query_yes_no(question: str, default: str = "yes") -> bool:
         elif choice in valid:
             return valid[choice]
         else:
-            sys.stdout.write("Please respond with 'yes' or 'no' " "(or 'y' or 'n').\n")
+            sys.stdout.write(
+                "Please respond with 'yes' or 'no' " "(or 'y' or 'n').\n"
+            )
 
 
 def cli_detect(argv: List[str] = None) -> int:
@@ -56,7 +58,10 @@ def cli_detect(argv: List[str] = None) -> int:
     )
 
     parser.add_argument(
-        "files", type=argparse.FileType("rb"), nargs="+", help="File(s) to be analysed"
+        "files",
+        type=argparse.FileType("rb"),
+        nargs="+",
+        help="File(s) to be analysed",
     )
     parser.add_argument(
         "-v",
@@ -128,7 +133,9 @@ def cli_detect(argv: List[str] = None) -> int:
     args = parser.parse_args(argv)
 
     if args.replace is True and args.normalize is False:
-        print("Use --replace in addition of --normalize only.", file=sys.stderr)
+        print(
+            "Use --replace in addition of --normalize only.", file=sys.stderr
+        )
         return 1
 
     if args.force is True and args.replace is False:
@@ -143,7 +150,9 @@ def cli_detect(argv: List[str] = None) -> int:
 
     for my_file in args.files:
 
-        matches = from_fp(my_file, threshold=args.threshold, explain=args.verbose)
+        matches = from_fp(
+            my_file, threshold=args.threshold, explain=args.verbose
+        )
 
         best_guess = matches.best()
 

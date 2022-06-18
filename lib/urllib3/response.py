@@ -361,7 +361,11 @@ class HTTPResponse(io.IOBase):
             status = 0
 
         # Check for responses that shouldn't include a body
-        if status in (204, 304) or 100 <= status < 200 or request_method == "HEAD":
+        if (
+            status in (204, 304)
+            or 100 <= status < 200
+            or request_method == "HEAD"
+        ):
             length = 0
 
         return length
@@ -529,16 +533,22 @@ class HTTPResponse(io.IOBase):
                     # no harm in redundantly calling close.
                     self._fp.close()
                     flush_decoder = True
-                    if self.enforce_content_length and self.length_remaining not in (
-                        0,
-                        None,
+                    if (
+                        self.enforce_content_length
+                        and self.length_remaining
+                        not in (
+                            0,
+                            None,
+                        )
                     ):
                         # This is an edge case that httplib failed to cover due
                         # to concerns of backward compatibility. We're
                         # addressing it here to make sure IncompleteRead is
                         # raised during streaming, so all calls with incorrect
                         # Content-Length are caught.
-                        raise IncompleteRead(self._fp_bytes_read, self.length_remaining)
+                        raise IncompleteRead(
+                            self._fp_bytes_read, self.length_remaining
+                        )
 
         if data:
             self._fp_bytes_read += len(data)
@@ -552,7 +562,7 @@ class HTTPResponse(io.IOBase):
 
         return data
 
-    def stream(self, amt=2 ** 16, decode_content=None):
+    def stream(self, amt=2**16, decode_content=None):
         """
         A generator wrapper for the read() method. A call will block until
         ``amt`` bytes have been read from the connection or until the
@@ -606,7 +616,7 @@ class HTTPResponse(io.IOBase):
             reason=r.reason,
             strict=strict,
             original_response=r,
-            **response_kw
+            **response_kw,
         )
         return resp
 
@@ -751,7 +761,9 @@ class HTTPResponse(io.IOBase):
 
         with self._error_catcher():
             # Don't bother reading the body of a HEAD request.
-            if self._original_response and is_response_to_head(self._original_response):
+            if self._original_response and is_response_to_head(
+                self._original_response
+            ):
                 self._original_response.close()
                 return
 

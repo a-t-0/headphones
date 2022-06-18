@@ -62,12 +62,19 @@ class OggVorbisInfo(StreamInfo):
             page = OggPage(fileobj)
         if not page.first:
             raise OggVorbisHeaderError(
-                "page has ID header, but doesn't start a stream")
+                "page has ID header, but doesn't start a stream"
+            )
         if len(page.packets[0]) < 28:
             raise OggVorbisHeaderError(
-                "page contains a packet too short to be valid")
-        (self.channels, self.sample_rate, max_bitrate, nominal_bitrate,
-         min_bitrate) = struct.unpack("<BI3i", page.packets[0][11:28])
+                "page contains a packet too short to be valid"
+            )
+        (
+            self.channels,
+            self.sample_rate,
+            max_bitrate,
+            nominal_bitrate,
+            min_bitrate,
+        ) = struct.unpack("<BI3i", page.packets[0][11:28])
         if self.sample_rate == 0:
             raise OggVorbisHeaderError("sample rate can't be zero")
         self.serial = page.serial
@@ -96,8 +103,7 @@ class OggVorbisInfo(StreamInfo):
         self.length = page.position / float(self.sample_rate)
 
     def pprint(self):
-        return u"Ogg Vorbis, %.2f seconds, %d bps" % (
-            self.length, self.bitrate)
+        return "Ogg Vorbis, %.2f seconds, %d bps" % (self.length, self.bitrate)
 
 
 class OggVCommentDict(VCommentDict):
@@ -170,7 +176,7 @@ class OggVorbis(OggFileType):
 
     @staticmethod
     def score(filename, fileobj, header):
-        return (header.startswith(b"OggS") * (b"\x01vorbis" in header))
+        return header.startswith(b"OggS") * (b"\x01vorbis" in header)
 
 
 Open = OggVorbis
@@ -179,7 +185,7 @@ Open = OggVorbis
 @convert_error(IOError, error)
 @loadfile(method=False, writable=True)
 def delete(filething):
-    """ delete(filething)
+    """delete(filething)
 
     Arguments:
         filething (filething)

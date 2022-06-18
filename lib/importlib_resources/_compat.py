@@ -58,7 +58,7 @@ class TraversableResourcesLoader:
 
         def _native_reader(spec):
             reader = _available_reader(spec)
-            return reader if hasattr(reader, 'files') else None
+            return reader if hasattr(reader, "files") else None
 
         def _file_reader(spec):
             try:
@@ -95,4 +95,6 @@ def wrap_spec(package):
     """
     from . import _adapters
 
-    return _adapters.SpecLoaderAdapter(package.__spec__, TraversableResourcesLoader)
+    return _adapters.SpecLoaderAdapter(
+        package.__spec__, TraversableResourcesLoader
+    )

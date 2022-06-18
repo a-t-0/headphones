@@ -6,29 +6,38 @@ import stat
 import platform
 import subprocess
 
+
 def registerapp(app):
 
     # don't do any of this unless >= 10.8
-    if not [int(n) for n in platform.mac_ver()[0].split('.')] >= [10, 8]:
-        return None, 'Registering requires OS X version >= 10.8'
+    if not [int(n) for n in platform.mac_ver()[0].split(".")] >= [10, 8]:
+        return None, "Registering requires OS X version >= 10.8"
 
     app_path = None
 
     # check app bundle doesn't already exist
-    app_path = subprocess.check_output(['/usr/bin/mdfind', 'kMDItemCFBundleIdentifier == "ade.headphones.osxnotify"']).strip()
+    app_path = subprocess.check_output(
+        [
+            "/usr/bin/mdfind",
+            'kMDItemCFBundleIdentifier == "ade.headphones.osxnotify"',
+        ]
+    ).strip()
     if app_path:
-        return app_path, 'App previously registered'
+        return app_path, "App previously registered"
 
     # check app doesn't already exist
     app = app.strip()
     if not app:
-        return None, 'Path/Application not entered'
+        return None, "Path/Application not entered"
     if os.path.splitext(app)[1] == ".app":
         app_path = app
     else:
-        app_path = app + '.app'
+        app_path = app + ".app"
     if os.path.exists(app_path):
-        return None, 'App %s already exists, choose a different name' % app_path
+        return (
+            None,
+            "App %s already exists, choose a different name" % app_path,
+        )
 
     # generate app
     try:
@@ -36,14 +45,18 @@ def registerapp(app):
         os.mkdir(app_path + "/Contents")
         os.mkdir(app_path + "/Contents/MacOS")
         os.mkdir(app_path + "/Contents/Resources")
-        shutil.copy(os.path.join(os.path.dirname(__file__), "appIcon.icns"), app_path + "/Contents/Resources/")
+        shutil.copy(
+            os.path.join(os.path.dirname(__file__), "appIcon.icns"),
+            app_path + "/Contents/Resources/",
+        )
 
         version = "1.0.0"
         bundleName = "OSXNotify"
         bundleIdentifier = "ade.headphones.osxnotify"
 
         f = open(app_path + "/Contents/Info.plist", "w")
-        f.write("""<?xml version="1.0" encoding="UTF-8"?>
+        f.write(
+            """<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
@@ -77,7 +90,15 @@ def registerapp(app):
     <string>NSApplication</string>
 </dict>
 </plist>
-"""     % (bundleName + " " + version, bundleIdentifier, bundleName, bundleName + " " + version, version))
+"""
+            % (
+                bundleName + " " + version,
+                bundleIdentifier,
+                bundleName,
+                bundleName + " " + version,
+                version,
+            )
+        )
         f.close()
 
         f = open(app_path + "/Contents/PkgInfo", "w")
@@ -85,7 +106,8 @@ def registerapp(app):
         f.close()
 
         f = open(app_path + "/Contents/MacOS/main.py", "w")
-        f.write("""#!/usr/bin/python
+        f.write(
+            """#!/usr/bin/python
 
 objc = None
 
@@ -121,13 +143,17 @@ def swizzled_bundleIdentifier(self, original):
 
 if __name__ == '__main__':
     notify('Half Man Half Biscuit', 'Back in the DHSS', '99% Of Gargoyles Look Like Bob Todd')
-""")
+"""
+        )
         f.close()
 
         oldmode = os.stat(app_path + "/Contents/MacOS/main.py").st_mode
-        os.chmod(app_path + "/Contents/MacOS/main.py", oldmode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
+        os.chmod(
+            app_path + "/Contents/MacOS/main.py",
+            oldmode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH,
+        )
 
-        return app_path, 'App registered'
+        return app_path, "App registered"
 
     except Exception as e:
-        return None, 'Error creating App %s. %s' % (app_path, e)
+        return None, "Error creating App %s. %s" % (app_path, e)

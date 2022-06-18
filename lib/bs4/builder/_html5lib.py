@@ -2,8 +2,8 @@
 __license__ = "MIT"
 
 __all__ = [
-    'HTML5TreeBuilder',
-    ]
+    "HTML5TreeBuilder",
+]
 
 import warnings
 import re
@@ -12,7 +12,7 @@ from bs4.builder import (
     HTML,
     HTML_5,
     HTMLTreeBuilder,
-    )
+)
 from bs4.element import (
     NamespacedAttribute,
     nonwhitespace_re,
@@ -21,22 +21,25 @@ import html5lib
 from html5lib.constants import (
     namespaces,
     prefixes,
-    )
+)
 from bs4.element import (
     Comment,
     Doctype,
     NavigableString,
     Tag,
-    )
+)
 
 try:
     # Pre-0.99999999
     from html5lib.treebuilders import _base as treebuilder_base
+
     new_html5lib = False
 except ImportError as e:
     # 0.99999999 and up
     from html5lib.treebuilders import base as treebuilder_base
+
     new_html5lib = True
+
 
 class HTML5TreeBuilder(HTMLTreeBuilder):
     """Use html5lib to build a tree.
@@ -59,9 +62,14 @@ class HTML5TreeBuilder(HTMLTreeBuilder):
     # html5lib can tell us which line number and position in the
     # original file is the source of an element.
     TRACKS_LINE_NUMBERS = True
-    
-    def prepare_markup(self, markup, user_specified_encoding,
-                       document_declared_encoding=None, exclude_encodings=None):
+
+    def prepare_markup(
+        self,
+        markup,
+        user_specified_encoding,
+        document_declared_encoding=None,
+        exclude_encodings=None,
+    ):
         # Store the user-specified encoding for use later on.
         self.user_specified_encoding = user_specified_encoding
 
@@ -69,23 +77,29 @@ class HTML5TreeBuilder(HTMLTreeBuilder):
         # ATM because the html5lib TreeBuilder doesn't use
         # UnicodeDammit.
         if exclude_encodings:
-            warnings.warn("You provided a value for exclude_encoding, but the html5lib tree builder doesn't support exclude_encoding.")
+            warnings.warn(
+                "You provided a value for exclude_encoding, but the html5lib tree builder doesn't support exclude_encoding."
+            )
         yield (markup, None, None, False)
 
     # These methods are defined by Beautiful Soup.
     def feed(self, markup):
         if self.soup.parse_only is not None:
-            warnings.warn("You provided a value for parse_only, but the html5lib tree builder doesn't support parse_only. The entire document will be parsed.")
+            warnings.warn(
+                "You provided a value for parse_only, but the html5lib tree builder doesn't support parse_only. The entire document will be parsed."
+            )
         parser = html5lib.HTMLParser(tree=self.create_treebuilder)
         self.underlying_builder.parser = parser
         extra_kwargs = dict()
         if not isinstance(markup, str):
             if new_html5lib:
-                extra_kwargs['override_encoding'] = self.user_specified_encoding
+                extra_kwargs[
+                    "override_encoding"
+                ] = self.user_specified_encoding
             else:
-                extra_kwargs['encoding'] = self.user_specified_encoding
+                extra_kwargs["encoding"] = self.user_specified_encoding
         doc = parser.parse(markup, **extra_kwargs)
-        
+
         # Set the character encoding detected by the tokenizer.
         if isinstance(markup, str):
             # We need to special-case this because html5lib sets
@@ -100,32 +114,40 @@ class HTML5TreeBuilder(HTMLTreeBuilder):
                 original_encoding = original_encoding.name
             doc.original_encoding = original_encoding
         self.underlying_builder.parser = None
-            
+
     def create_treebuilder(self, namespaceHTMLElements):
         self.underlying_builder = TreeBuilderForHtml5lib(
-            namespaceHTMLElements, self.soup,
-            store_line_numbers=self.store_line_numbers
+            namespaceHTMLElements,
+            self.soup,
+            store_line_numbers=self.store_line_numbers,
         )
         return self.underlying_builder
 
     def test_fragment_to_document(self, fragment):
         """See `TreeBuilder`."""
-        return '<html><head></head><body>%s</body></html>' % fragment
+        return "<html><head></head><body>%s</body></html>" % fragment
 
 
 class TreeBuilderForHtml5lib(treebuilder_base.TreeBuilder):
-    
-    def __init__(self, namespaceHTMLElements, soup=None,
-                 store_line_numbers=True, **kwargs):
+    def __init__(
+        self,
+        namespaceHTMLElements,
+        soup=None,
+        store_line_numbers=True,
+        **kwargs,
+    ):
         if soup:
             self.soup = soup
         else:
             from bs4 import BeautifulSoup
+
             # TODO: Why is the parser 'html.parser' here? To avoid an
             # infinite loop?
             self.soup = BeautifulSoup(
-                "", "html.parser", store_line_numbers=store_line_numbers,
-                **kwargs
+                "",
+                "html.parser",
+                store_line_numbers=store_line_numbers,
+                **kwargs,
             )
         # TODO: What are **kwargs exactly? Should they be passed in
         # here in addition to/instead of being passed to the BeautifulSoup
@@ -136,7 +158,7 @@ class TreeBuilderForHtml5lib(treebuilder_base.TreeBuilder):
         # object, which we can use to track the current line number.
         self.parser = None
         self.store_line_numbers = store_line_numbers
-        
+
     def documentClass(self):
         self.soup.reset()
         return Element(self.soup, self.soup, None)
@@ -156,8 +178,8 @@ class TreeBuilderForHtml5lib(treebuilder_base.TreeBuilder):
             # tag. We don't know when the tag started, but we do know
             # where it ended -- the character just before this one.
             sourceline, sourcepos = self.parser.tokenizer.stream.position()
-            kwargs['sourceline'] = sourceline
-            kwargs['sourcepos'] = sourcepos-1
+            kwargs["sourceline"] = sourceline
+            kwargs["sourcepos"] = sourcepos - 1
         tag = self.soup.new_tag(name, namespace, **kwargs)
 
         return Element(tag, self.soup, namespace)
@@ -167,6 +189,7 @@ class TreeBuilderForHtml5lib(treebuilder_base.TreeBuilder):
 
     def fragmentClass(self):
         from bs4 import BeautifulSoup
+
         # TODO: Why is the parser 'html.parser' here? To avoid an
         # infinite loop?
         self.soup = BeautifulSoup("", "html.parser")
@@ -185,8 +208,11 @@ class TreeBuilderForHtml5lib(treebuilder_base.TreeBuilder):
 
     def testSerializer(self, element):
         from bs4 import BeautifulSoup
+
         rv = []
-        doctype_re = re.compile(r'^(.*?)(?: PUBLIC "(.*?)"(?: "(.*?)")?| SYSTEM "(.*?)")?$')
+        doctype_re = re.compile(
+            r'^(.*?)(?: PUBLIC "(.*?)"(?: "(.*?)")?| SYSTEM "(.*?)")?$'
+        )
 
         def serializeElement(element, indent=0):
             if isinstance(element, BeautifulSoup):
@@ -198,67 +224,86 @@ class TreeBuilderForHtml5lib(treebuilder_base.TreeBuilder):
                     if m.lastindex > 1:
                         publicId = m.group(2) or ""
                         systemId = m.group(3) or m.group(4) or ""
-                        rv.append("""|%s<!DOCTYPE %s "%s" "%s">""" %
-                                  (' ' * indent, name, publicId, systemId))
+                        rv.append(
+                            """|%s<!DOCTYPE %s "%s" "%s">"""
+                            % (" " * indent, name, publicId, systemId)
+                        )
                     else:
-                        rv.append("|%s<!DOCTYPE %s>" % (' ' * indent, name))
+                        rv.append("|%s<!DOCTYPE %s>" % (" " * indent, name))
                 else:
-                    rv.append("|%s<!DOCTYPE >" % (' ' * indent,))
+                    rv.append("|%s<!DOCTYPE >" % (" " * indent,))
             elif isinstance(element, Comment):
-                rv.append("|%s<!-- %s -->" % (' ' * indent, element))
+                rv.append("|%s<!-- %s -->" % (" " * indent, element))
             elif isinstance(element, NavigableString):
-                rv.append("|%s\"%s\"" % (' ' * indent, element))
+                rv.append('|%s"%s"' % (" " * indent, element))
             else:
                 if element.namespace:
-                    name = "%s %s" % (prefixes[element.namespace],
-                                      element.name)
+                    name = "%s %s" % (
+                        prefixes[element.namespace],
+                        element.name,
+                    )
                 else:
                     name = element.name
-                rv.append("|%s<%s>" % (' ' * indent, name))
+                rv.append("|%s<%s>" % (" " * indent, name))
                 if element.attrs:
                     attributes = []
                     for name, value in list(element.attrs.items()):
                         if isinstance(name, NamespacedAttribute):
-                            name = "%s %s" % (prefixes[name.namespace], name.name)
+                            name = "%s %s" % (
+                                prefixes[name.namespace],
+                                name.name,
+                            )
                         if isinstance(value, list):
                             value = " ".join(value)
                         attributes.append((name, value))
 
                     for name, value in sorted(attributes):
-                        rv.append('|%s%s="%s"' % (' ' * (indent + 2), name, value))
+                        rv.append(
+                            '|%s%s="%s"' % (" " * (indent + 2), name, value)
+                        )
                 indent += 2
                 for child in element.children:
                     serializeElement(child, indent)
+
         serializeElement(element, 0)
 
         return "\n".join(rv)
+
 
 class AttrList(object):
     def __init__(self, element):
         self.element = element
         self.attrs = dict(self.element.attrs)
+
     def __iter__(self):
         return list(self.attrs.items()).__iter__()
+
     def __setitem__(self, name, value):
         # If this attribute is a multi-valued attribute for this element,
         # turn its value into a list.
         list_attr = self.element.cdata_list_attributes
-        if (name in list_attr['*']
-            or (self.element.name in list_attr
-                and name in list_attr[self.element.name])):
+        if name in list_attr["*"] or (
+            self.element.name in list_attr
+            and name in list_attr[self.element.name]
+        ):
             # A node that is being cloned may have already undergone
             # this procedure.
             if not isinstance(value, list):
                 value = nonwhitespace_re.findall(value)
         self.element[name] = value
+
     def items(self):
         return list(self.attrs.items())
+
     def keys(self):
         return list(self.attrs.keys())
+
     def __len__(self):
         return len(self.attrs)
+
     def __getitem__(self, name):
         return self.attrs[name]
+
     def __contains__(self, name):
         return name in list(self.attrs.keys())
 
@@ -292,8 +337,11 @@ class Element(treebuilder_base.Node):
         if not isinstance(child, str) and child.parent is not None:
             node.element.extract()
 
-        if (string_child is not None and self.element.contents
-            and self.element.contents[-1].__class__ == NavigableString):
+        if (
+            string_child is not None
+            and self.element.contents
+            and self.element.contents[-1].__class__ == NavigableString
+        ):
             # We are appending a string onto another string.
             # TODO This has O(n^2) performance, for input like
             # "a</a>a</a>a</a>..."
@@ -321,8 +369,10 @@ class Element(treebuilder_base.Node):
                 most_recent_element = self.element
 
             self.soup.object_was_parsed(
-                child, parent=self.element,
-                most_recent_element=most_recent_element)
+                child,
+                parent=self.element,
+                most_recent_element=most_recent_element,
+            )
 
     def getAttributes(self):
         if isinstance(self.element, Comment):
@@ -339,7 +389,8 @@ class Element(treebuilder_base.Node):
                     attributes[new_name] = value
 
             self.soup.builder._replace_cdata_list_attribute_values(
-                self.name, attributes)
+                self.name, attributes
+            )
             for name, value in list(attributes.items()):
                 self.element[name] = value
 
@@ -349,6 +400,7 @@ class Element(treebuilder_base.Node):
             # The Tag constructor called this method when the Tag was created,
             # but we just set/changed the attributes, so call it again.
             self.soup.builder.set_up_substitutions(self.element)
+
     attributes = property(getAttributes, setAttributes)
 
     def insertText(self, data, insertBefore=None):
@@ -360,10 +412,13 @@ class Element(treebuilder_base.Node):
 
     def insertBefore(self, node, refNode):
         index = self.element.index(refNode.element)
-        if (node.element.__class__ == NavigableString and self.element.contents
-            and self.element.contents[index-1].__class__ == NavigableString):
+        if (
+            node.element.__class__ == NavigableString
+            and self.element.contents
+            and self.element.contents[index - 1].__class__ == NavigableString
+        ):
             # (See comments in appendChild)
-            old_node = self.element.contents[index-1]
+            old_node = self.element.contents[index - 1]
             new_str = self.soup.new_string(old_node + node.element)
             old_node.replace_with(new_str)
         else:
@@ -385,16 +440,22 @@ class Element(treebuilder_base.Node):
         # are removed.
         final_next_element = element.next_sibling
 
-        new_parents_last_descendant = new_parent_element._last_descendant(False, False)
+        new_parents_last_descendant = new_parent_element._last_descendant(
+            False, False
+        )
         if len(new_parent_element.contents) > 0:
             # The new parent already contains children. We will be
             # appending this tag's children to the end.
             new_parents_last_child = new_parent_element.contents[-1]
-            new_parents_last_descendant_next_element = new_parents_last_descendant.next_element
+            new_parents_last_descendant_next_element = (
+                new_parents_last_descendant.next_element
+            )
         else:
             # The new parent contains no children.
             new_parents_last_child = None
-            new_parents_last_descendant_next_element = new_parent_element.next_element
+            new_parents_last_descendant_next_element = (
+                new_parent_element.next_element
+            )
 
         to_append = element.contents
         if len(to_append) > 0:
@@ -417,14 +478,20 @@ class Element(treebuilder_base.Node):
             # parent's last descendant. It has no .next_sibling and
             # its .next_element is whatever the previous last
             # descendant had.
-            last_childs_last_descendant = to_append[-1]._last_descendant(False, True)
+            last_childs_last_descendant = to_append[-1]._last_descendant(
+                False, True
+            )
 
-            last_childs_last_descendant.next_element = new_parents_last_descendant_next_element
+            last_childs_last_descendant.next_element = (
+                new_parents_last_descendant_next_element
+            )
             if new_parents_last_descendant_next_element is not None:
                 # TODO: This code has no test coverage and I'm not sure
                 # how to get html5lib to go through this path, but it's
                 # just the other side of the previous line.
-                new_parents_last_descendant_next_element.previous_element = last_childs_last_descendant
+                new_parents_last_descendant_next_element.previous_element = (
+                    last_childs_last_descendant
+                )
             last_childs_last_descendant.next_sibling = None
 
         for child in to_append:
@@ -442,7 +509,7 @@ class Element(treebuilder_base.Node):
     def cloneNode(self):
         tag = self.soup.new_tag(self.element.name, self.namespace)
         node = Element(tag, self.soup, self.namespace)
-        for key,value in self.attributes:
+        for key, value in self.attributes:
             node.attributes[key] = value
         return node
 
@@ -456,6 +523,7 @@ class Element(treebuilder_base.Node):
             return self.namespace, self.name
 
     nameTuple = property(getNameTuple)
+
 
 class TextNode(Element):
     def __init__(self, element, soup):

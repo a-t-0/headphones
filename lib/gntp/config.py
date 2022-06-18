@@ -13,65 +13,65 @@ import os
 import gntp.notifier
 import gntp.shim
 
-__all__ = [
-	'mini',
-	'GrowlNotifier'
-]
+__all__ = ["mini", "GrowlNotifier"]
 
 logger = logging.getLogger(__name__)
 
 
 class GrowlNotifier(gntp.notifier.GrowlNotifier):
-	"""
-	ConfigParser enhanced GrowlNotifier object
+    """
+    ConfigParser enhanced GrowlNotifier object
 
-	For right now, we are only interested in letting users overide certain
-	values from ~/.gntp
+    For right now, we are only interested in letting users overide certain
+    values from ~/.gntp
 
-	::
+    ::
 
-		[gntp]
-		hostname = ?
-		password = ?
-		port = ?
-	"""
-	def __init__(self, *args, **kwargs):
-		config = gntp.shim.RawConfigParser({
-			'hostname': kwargs.get('hostname', 'localhost'),
-			'password': kwargs.get('password'),
-			'port': kwargs.get('port', 23053),
-		})
+            [gntp]
+            hostname = ?
+            password = ?
+            port = ?
+    """
 
-		config.read([os.path.expanduser('~/.gntp')])
+    def __init__(self, *args, **kwargs):
+        config = gntp.shim.RawConfigParser(
+            {
+                "hostname": kwargs.get("hostname", "localhost"),
+                "password": kwargs.get("password"),
+                "port": kwargs.get("port", 23053),
+            }
+        )
 
-		# If the file does not exist, then there will be no gntp section defined
-		# and the config.get() lines below will get confused. Since we are not
-		# saving the config, it should be safe to just add it here so the
-		# code below doesn't complain
-		if not config.has_section('gntp'):
-			logger.info('Error reading ~/.gntp config file')
-			config.add_section('gntp')
+        config.read([os.path.expanduser("~/.gntp")])
 
-		kwargs['password'] = config.get('gntp', 'password')
-		kwargs['hostname'] = config.get('gntp', 'hostname')
-		kwargs['port'] = config.getint('gntp', 'port')
+        # If the file does not exist, then there will be no gntp section defined
+        # and the config.get() lines below will get confused. Since we are not
+        # saving the config, it should be safe to just add it here so the
+        # code below doesn't complain
+        if not config.has_section("gntp"):
+            logger.info("Error reading ~/.gntp config file")
+            config.add_section("gntp")
 
-		super(GrowlNotifier, self).__init__(*args, **kwargs)
+        kwargs["password"] = config.get("gntp", "password")
+        kwargs["hostname"] = config.get("gntp", "hostname")
+        kwargs["port"] = config.getint("gntp", "port")
+
+        super(GrowlNotifier, self).__init__(*args, **kwargs)
 
 
 def mini(description, **kwargs):
-	"""Single notification function
+    """Single notification function
 
-	Simple notification function in one line. Has only one required parameter
-	and attempts to use reasonable defaults for everything else
-	:param string description: Notification message
-	"""
-	kwargs['notifierFactory'] = GrowlNotifier
-	gntp.notifier.mini(description, **kwargs)
+    Simple notification function in one line. Has only one required parameter
+    and attempts to use reasonable defaults for everything else
+    :param string description: Notification message
+    """
+    kwargs["notifierFactory"] = GrowlNotifier
+    gntp.notifier.mini(description, **kwargs)
 
 
-if __name__ == '__main__':
-	# If we're running this module directly we're likely running it as a test
-	# so extra debugging is useful
-	logging.basicConfig(level=logging.INFO)
-	mini('Testing mini notification')
+if __name__ == "__main__":
+    # If we're running this module directly we're likely running it as a test
+    # so extra debugging is useful
+    logging.basicConfig(level=logging.INFO)
+    mini("Testing mini notification")

@@ -154,7 +154,10 @@ try:
     Security.SecKeyGetTypeID.argtypes = []
     Security.SecKeyGetTypeID.restype = CFTypeID
 
-    Security.SecCertificateCreateWithData.argtypes = [CFAllocatorRef, CFDataRef]
+    Security.SecCertificateCreateWithData.argtypes = [
+        CFAllocatorRef,
+        CFDataRef,
+    ]
     Security.SecCertificateCreateWithData.restype = SecCertificateRef
 
     Security.SecCertificateCopyData.argtypes = [SecCertificateRef]
@@ -190,12 +193,18 @@ try:
     ]
     Security.SecPKCS12Import.restype = OSStatus
 
-    SSLReadFunc = CFUNCTYPE(OSStatus, SSLConnectionRef, c_void_p, POINTER(c_size_t))
+    SSLReadFunc = CFUNCTYPE(
+        OSStatus, SSLConnectionRef, c_void_p, POINTER(c_size_t)
+    )
     SSLWriteFunc = CFUNCTYPE(
         OSStatus, SSLConnectionRef, POINTER(c_byte), POINTER(c_size_t)
     )
 
-    Security.SSLSetIOFuncs.argtypes = [SSLContextRef, SSLReadFunc, SSLWriteFunc]
+    Security.SSLSetIOFuncs.argtypes = [
+        SSLContextRef,
+        SSLReadFunc,
+        SSLWriteFunc,
+    ]
     Security.SSLSetIOFuncs.restype = OSStatus
 
     Security.SSLSetPeerID.argtypes = [SSLContextRef, c_char_p, c_size_t]
@@ -204,28 +213,49 @@ try:
     Security.SSLSetCertificate.argtypes = [SSLContextRef, CFArrayRef]
     Security.SSLSetCertificate.restype = OSStatus
 
-    Security.SSLSetCertificateAuthorities.argtypes = [SSLContextRef, CFTypeRef, Boolean]
+    Security.SSLSetCertificateAuthorities.argtypes = [
+        SSLContextRef,
+        CFTypeRef,
+        Boolean,
+    ]
     Security.SSLSetCertificateAuthorities.restype = OSStatus
 
     Security.SSLSetConnection.argtypes = [SSLContextRef, SSLConnectionRef]
     Security.SSLSetConnection.restype = OSStatus
 
-    Security.SSLSetPeerDomainName.argtypes = [SSLContextRef, c_char_p, c_size_t]
+    Security.SSLSetPeerDomainName.argtypes = [
+        SSLContextRef,
+        c_char_p,
+        c_size_t,
+    ]
     Security.SSLSetPeerDomainName.restype = OSStatus
 
     Security.SSLHandshake.argtypes = [SSLContextRef]
     Security.SSLHandshake.restype = OSStatus
 
-    Security.SSLRead.argtypes = [SSLContextRef, c_char_p, c_size_t, POINTER(c_size_t)]
+    Security.SSLRead.argtypes = [
+        SSLContextRef,
+        c_char_p,
+        c_size_t,
+        POINTER(c_size_t),
+    ]
     Security.SSLRead.restype = OSStatus
 
-    Security.SSLWrite.argtypes = [SSLContextRef, c_char_p, c_size_t, POINTER(c_size_t)]
+    Security.SSLWrite.argtypes = [
+        SSLContextRef,
+        c_char_p,
+        c_size_t,
+        POINTER(c_size_t),
+    ]
     Security.SSLWrite.restype = OSStatus
 
     Security.SSLClose.argtypes = [SSLContextRef]
     Security.SSLClose.restype = OSStatus
 
-    Security.SSLGetNumberSupportedCiphers.argtypes = [SSLContextRef, POINTER(c_size_t)]
+    Security.SSLGetNumberSupportedCiphers.argtypes = [
+        SSLContextRef,
+        POINTER(c_size_t),
+    ]
     Security.SSLGetNumberSupportedCiphers.restype = OSStatus
 
     Security.SSLGetSupportedCiphers.argtypes = [
@@ -242,7 +272,10 @@ try:
     ]
     Security.SSLSetEnabledCiphers.restype = OSStatus
 
-    Security.SSLGetNumberEnabledCiphers.argtype = [SSLContextRef, POINTER(c_size_t)]
+    Security.SSLGetNumberEnabledCiphers.argtype = [
+        SSLContextRef,
+        POINTER(c_size_t),
+    ]
     Security.SSLGetNumberEnabledCiphers.restype = OSStatus
 
     Security.SSLGetEnabledCiphers.argtypes = [
@@ -252,7 +285,10 @@ try:
     ]
     Security.SSLGetEnabledCiphers.restype = OSStatus
 
-    Security.SSLGetNegotiatedCipher.argtypes = [SSLContextRef, POINTER(SSLCipherSuite)]
+    Security.SSLGetNegotiatedCipher.argtypes = [
+        SSLContextRef,
+        POINTER(SSLCipherSuite),
+    ]
     Security.SSLGetNegotiatedCipher.restype = OSStatus
 
     Security.SSLGetNegotiatedProtocolVersion.argtypes = [
@@ -267,10 +303,16 @@ try:
     Security.SecTrustSetAnchorCertificates.argtypes = [SecTrustRef, CFArrayRef]
     Security.SecTrustSetAnchorCertificates.restype = OSStatus
 
-    Security.SecTrustSetAnchorCertificatesOnly.argstypes = [SecTrustRef, Boolean]
+    Security.SecTrustSetAnchorCertificatesOnly.argstypes = [
+        SecTrustRef,
+        Boolean,
+    ]
     Security.SecTrustSetAnchorCertificatesOnly.restype = OSStatus
 
-    Security.SecTrustEvaluate.argtypes = [SecTrustRef, POINTER(SecTrustResultType)]
+    Security.SecTrustEvaluate.argtypes = [
+        SecTrustRef,
+        POINTER(SecTrustResultType),
+    ]
     Security.SecTrustEvaluate.restype = OSStatus
 
     Security.SecTrustGetCertificateCount.argtypes = [SecTrustRef]
@@ -286,7 +328,11 @@ try:
     ]
     Security.SSLCreateContext.restype = SSLContextRef
 
-    Security.SSLSetSessionOption.argtypes = [SSLContextRef, SSLSessionOption, Boolean]
+    Security.SSLSetSessionOption.argtypes = [
+        SSLContextRef,
+        SSLSessionOption,
+        Boolean,
+    ]
     Security.SSLSetSessionOption.restype = OSStatus
 
     Security.SSLSetProtocolVersionMin.argtypes = [SSLContextRef, SSLProtocol]
@@ -341,7 +387,10 @@ try:
     ]
     CoreFoundation.CFStringCreateWithCString.restype = CFStringRef
 
-    CoreFoundation.CFStringGetCStringPtr.argtypes = [CFStringRef, CFStringEncoding]
+    CoreFoundation.CFStringGetCStringPtr.argtypes = [
+        CFStringRef,
+        CFStringEncoding,
+    ]
     CoreFoundation.CFStringGetCStringPtr.restype = c_char_p
 
     CoreFoundation.CFStringGetCString.argtypes = [

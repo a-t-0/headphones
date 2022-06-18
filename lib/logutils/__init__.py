@@ -13,7 +13,8 @@ of Python, and so are packaged here.
 import logging
 from string import Template
 
-__version__ = '0.3.3'
+__version__ = "0.3.3"
+
 
 class NullHandler(logging.Handler):
     """
@@ -29,7 +30,7 @@ class NullHandler(logging.Handler):
     def handle(self, record):
         """
         Handle a record. Does nothing in this class, but in other
-        handlers it typically filters and then emits the record in a 
+        handlers it typically filters and then emits the record in a
         thread-safe way.
         """
         pass
@@ -48,10 +49,11 @@ class NullHandler(logging.Handler):
         """
         self.lock = None
 
+
 class PercentStyle(object):
 
-    default_format = '%(message)s'
-    asctime_format = '%(asctime)s'
+    default_format = "%(message)s"
+    asctime_format = "%(asctime)s"
 
     def __init__(self, fmt):
         self._fmt = fmt or self.default_format
@@ -62,17 +64,18 @@ class PercentStyle(object):
     def format(self, record):
         return self._fmt % record.__dict__
 
+
 class StrFormatStyle(PercentStyle):
-    default_format = '{message}'
-    asctime_format = '{asctime}'
+    default_format = "{message}"
+    asctime_format = "{asctime}"
 
     def format(self, record):
         return self._fmt.format(**record.__dict__)
 
 
 class StringTemplateStyle(PercentStyle):
-    default_format = '${message}'
-    asctime_format = '${asctime}'
+    default_format = "${message}"
+    asctime_format = "${asctime}"
 
     def __init__(self, fmt):
         self._fmt = fmt or self.default_format
@@ -80,16 +83,14 @@ class StringTemplateStyle(PercentStyle):
 
     def usesTime(self):
         fmt = self._fmt
-        return fmt.find('$asctime') >= 0 or fmt.find(self.asctime_format) >= 0
+        return fmt.find("$asctime") >= 0 or fmt.find(self.asctime_format) >= 0
 
     def format(self, record):
         return self._tpl.substitute(**record.__dict__)
 
-_STYLES = {
-    '%': PercentStyle,
-    '{': StrFormatStyle,
-    '$': StringTemplateStyle
-}
+
+_STYLES = {"%": PercentStyle, "{": StrFormatStyle, "$": StringTemplateStyle}
+
 
 class Formatter(logging.Formatter):
     """
@@ -97,7 +98,8 @@ class Formatter(logging.Formatter):
     3.2 Formatter behaviour with respect to allowing %-, {} or $-
     formatting.
     """
-    def __init__(self, fmt=None, datefmt=None, style='%'):
+
+    def __init__(self, fmt=None, datefmt=None, style="%"):
         """
         Initialize the formatter with specified format strings.
 
@@ -110,8 +112,9 @@ class Formatter(logging.Formatter):
         :class:`string.Template` formatting in your format string.
         """
         if style not in _STYLES:
-            raise ValueError('Style must be one of: %s' % ','.join(
-                             list(_STYLES.keys())))
+            raise ValueError(
+                "Style must be one of: %s" % ",".join(list(_STYLES.keys()))
+            )
         self._style = _STYLES[style](fmt)
         self._fmt = self._style._fmt
         self.datefmt = datefmt
@@ -160,18 +163,19 @@ class BraceMessage(object):
         self.args = args
         self.kwargs = kwargs
         self.str = None
-        
+
     def __str__(self):
         if self.str is None:
             self.str = self.fmt.format(*self.args, **self.kwargs)
         return self.str
+
 
 class DollarMessage(object):
     def __init__(self, fmt, **kwargs):
         self.fmt = fmt
         self.kwargs = kwargs
         self.str = None
-        
+
     def __str__(self):
         if self.str is None:
             self.str = Template(self.fmt).substitute(**self.kwargs)
@@ -192,4 +196,3 @@ def hasHandlers(logger):
         else:
             logger = logger.parent
     return rv
-

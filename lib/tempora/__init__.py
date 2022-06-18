@@ -48,7 +48,7 @@ class Parser:
     ValueError: No format strings matched the target 22:21.
     """
 
-    formats = ('%m/%d/%Y', '%m/%d/%y', '%Y-%m-%d', '%d-%b-%Y', '%d-%b-%y')
+    formats = ("%m/%d/%Y", "%m/%d/%y", "%Y-%m-%d", "%d-%b-%Y", "%d-%b-%y")
     "some common default formats"
 
     def __init__(self, formats=None):
@@ -104,7 +104,7 @@ def _needs_year_help():
     Some versions of Python render %Y with only three characters :(
     https://bugs.python.org/issue39103
     """
-    return len(datetime.date(900, 1, 1).strftime('%Y')) != 4
+    return len(datetime.date(900, 1, 1).strftime("%Y")) != 4
 
 
 def ensure_datetime(ob):
@@ -185,11 +185,11 @@ def strftime(fmt, t):
         t = datetime.datetime(*t[:6])
     t = ensure_datetime(t)
     subs = (
-        ('%s', '%03d' % (t.microsecond // 1000)),
-        ('%µ', '%03d' % (t.microsecond % 1000)),
+        ("%s", "%03d" % (t.microsecond // 1000)),
+        ("%µ", "%03d" % (t.microsecond % 1000)),
     )
     if _needs_year_help():  # pragma: nocover
-        subs += (('%Y', '%04d' % t.year),)
+        subs += (("%Y", "%04d" % t.year),)
 
     def doSub(s, sub):
         return s.replace(*sub)
@@ -197,7 +197,7 @@ def strftime(fmt, t):
     def doSubs(s):
         return functools.reduce(doSub, subs, s)
 
-    fmt = '%%'.join(map(doSubs, fmt.split('%%')))
+    fmt = "%%".join(map(doSubs, fmt.split("%%")))
     return t.strftime(fmt)
 
 
@@ -236,7 +236,9 @@ def datetime_mod(dt, period, start=None):
     # pieces.  Also, using microseconds ensures perfect precision (no floating
     # point errors).
     def get_time_delta_microseconds(td):
-        return (td.days * seconds_per_day + td.seconds) * 1000000 + td.microseconds
+        return (
+            td.days * seconds_per_day + td.seconds
+        ) * 1000000 + td.microseconds
 
     delta, period = map(get_time_delta_microseconds, (delta, period))
     offset = datetime.timedelta(microseconds=delta % period)
@@ -320,7 +322,7 @@ def get_period_seconds(period):
     """
     if isinstance(period, str):
         try:
-            name = 'seconds_per_' + period.lower()
+            name = "seconds_per_" + period.lower()
             result = globals()[name]
         except KeyError:
             msg = "period not in (second, minute, hour, day, month, year)"
@@ -328,9 +330,9 @@ def get_period_seconds(period):
     elif isinstance(period, numbers.Number):
         result = period
     elif isinstance(period, datetime.timedelta):
-        result = period.days * get_period_seconds('day') + period.seconds
+        result = period.days * get_period_seconds("day") + period.seconds
     else:
-        raise TypeError('period must be a string or integer')
+        raise TypeError("period must be a string or integer")
     return result
 
 
@@ -359,10 +361,10 @@ def get_date_format_string(period):
     """
     # handle the special case of 'month' which doesn't have
     #  a static interval in seconds
-    if isinstance(period, str) and period.lower() == 'month':
-        return '%Y-%m'
+    if isinstance(period, str) and period.lower() == "month":
+        return "%Y-%m"
     file_period_secs = get_period_seconds(period)
-    format_pieces = ('%Y', '-%m-%d', ' %H', '-%M', '-%S')
+    format_pieces = ("%Y", "-%m-%d", " %H", "-%M", "-%S")
     seconds_per_second = 1
     intervals = (
         seconds_per_year,
@@ -373,7 +375,7 @@ def get_date_format_string(period):
     )
     mods = list(map(lambda interval: file_period_secs % interval, intervals))
     format_pieces = format_pieces[: mods.index(0) + 1]
-    return ''.join(format_pieces)
+    return "".join(format_pieces)
 
 
 def divide_timedelta_float(td, divisor):
@@ -422,10 +424,10 @@ def _prorated_values(rate):
     year: 175316.333
 
     """
-    res = re.match(r'(?P<value>[\d.]+)/(?P<period>\w+)$', rate).groupdict()
-    value = float(res['value'])
-    value_per_second = value / get_period_seconds(res['period'])
-    for period in ('minute', 'hour', 'day', 'month', 'year'):
+    res = re.match(r"(?P<value>[\d.]+)/(?P<period>\w+)$", rate).groupdict()
+    value = float(res["value"])
+    value_per_second = value / get_period_seconds(res["period"])
+    for period in ("minute", "hour", "day", "month", "year"):
         period_value = value_per_second * get_period_seconds(period)
         yield period, period_value
 
@@ -513,7 +515,7 @@ def parse_timedelta(str):
 
 
 def _parse_timedelta_nanos(str):
-    parts = re.finditer(r'(?P<value>[\d.:]+)\s?(?P<unit>[^\W\d_]+)?', str)
+    parts = re.finditer(r"(?P<value>[\d.:]+)\s?(?P<unit>[^\W\d_]+)?", str)
     chk_parts = _check_unmatched(parts, str)
     deltas = map(_parse_timedelta_part, chk_parts)
     return sum(deltas, _Saved_NS())
@@ -525,7 +527,7 @@ def _check_unmatched(matches, text):
     """
 
     def check_unmatched(unmatched):
-        found = re.search(r'\w+', unmatched)
+        found = re.search(r"\w+", unmatched)
         if found:
             raise ValueError(f"Unexpected {found.group(0)!r}")
 
@@ -538,58 +540,60 @@ def _check_unmatched(matches, text):
 
 
 _unit_lookup = {
-    'µs': 'microsecond',
-    'µsec': 'microsecond',
-    'us': 'microsecond',
-    'usec': 'microsecond',
-    'micros': 'microsecond',
-    'ms': 'millisecond',
-    'msec': 'millisecond',
-    'millis': 'millisecond',
-    's': 'second',
-    'sec': 'second',
-    'h': 'hour',
-    'hr': 'hour',
-    'm': 'minute',
-    'min': 'minute',
-    'w': 'week',
-    'wk': 'week',
-    'd': 'day',
-    'ns': 'nanosecond',
-    'nsec': 'nanosecond',
-    'nanos': 'nanosecond',
+    "µs": "microsecond",
+    "µsec": "microsecond",
+    "us": "microsecond",
+    "usec": "microsecond",
+    "micros": "microsecond",
+    "ms": "millisecond",
+    "msec": "millisecond",
+    "millis": "millisecond",
+    "s": "second",
+    "sec": "second",
+    "h": "hour",
+    "hr": "hour",
+    "m": "minute",
+    "min": "minute",
+    "w": "week",
+    "wk": "week",
+    "d": "day",
+    "ns": "nanosecond",
+    "nsec": "nanosecond",
+    "nanos": "nanosecond",
 }
 
 
 def _resolve_unit(raw_match):
     if raw_match is None:
-        return 'second'
+        return "second"
     text = raw_match.lower()
     return _unit_lookup.get(text, text)
 
 
 def _parse_timedelta_composite(raw_value, unit):
-    if unit != 'seconds':
+    if unit != "seconds":
         raise ValueError("Cannot specify units with composite delta")
-    values = raw_value.split(':')
-    units = 'hours', 'minutes', 'seconds'
-    composed = ' '.join(f'{value} {unit}' for value, unit in zip(values, units))
+    values = raw_value.split(":")
+    units = "hours", "minutes", "seconds"
+    composed = " ".join(
+        f"{value} {unit}" for value, unit in zip(values, units)
+    )
     return _parse_timedelta_nanos(composed)
 
 
 def _parse_timedelta_part(match):
-    unit = _resolve_unit(match.group('unit'))
-    if not unit.endswith('s'):
-        unit += 's'
-    raw_value = match.group('value')
-    if ':' in raw_value:
+    unit = _resolve_unit(match.group("unit"))
+    if not unit.endswith("s"):
+        unit += "s"
+    raw_value = match.group("value")
+    if ":" in raw_value:
         return _parse_timedelta_composite(raw_value, unit)
     value = float(raw_value)
-    if unit == 'months':
-        unit = 'years'
+    if unit == "months":
+        unit = "years"
         value = value / 12
-    if unit == 'years':
-        unit = 'days'
+    if unit == "years":
+        unit = "days"
         value = value * days_per_year
     return _Saved_NS.derive(unit, value)
 
@@ -615,7 +619,7 @@ class _Saved_NS:
 
     @classmethod
     def derive(cls, unit, value):
-        if unit == 'nanoseconds':
+        if unit == "nanoseconds":
             return _Saved_NS(nanoseconds=value)
 
         res = _Saved_NS(td=datetime.timedelta(**{unit: value}))
@@ -625,7 +629,8 @@ class _Saved_NS:
 
     def __add__(self, other):
         return _Saved_NS(
-            td=self.td + other.td, nanoseconds=self.nanoseconds + other.nanoseconds
+            td=self.td + other.td,
+            nanoseconds=self.nanoseconds + other.nanoseconds,
         )
 
     def resolve(self):
@@ -638,7 +643,7 @@ class _Saved_NS:
         return self.td + datetime.timedelta(microseconds=addl_micros)
 
     def __repr__(self):
-        return f'_Saved_NS(td={self.td!r}, nanoseconds={self.nanoseconds!r})'
+        return f"_Saved_NS(td={self.td!r}, nanoseconds={self.nanoseconds!r})"
 
 
 def divide_timedelta(td1, td2):

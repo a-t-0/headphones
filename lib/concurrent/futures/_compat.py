@@ -30,29 +30,46 @@ def namedtuple(typename, field_names):
     # Parse and validate the field names.  Validation serves two purposes,
     # generating informative error messages and preventing template injection attacks.
     if isinstance(field_names, str):
-        field_names = field_names.replace(',', ' ').split() # names separated by whitespace and/or commas
+        field_names = field_names.replace(
+            ",", " "
+        ).split()  # names separated by whitespace and/or commas
     field_names = tuple(map(str, field_names))
     for name in (typename,) + field_names:
-        if not all(c.isalnum() or c=='_' for c in name):
-            raise ValueError('Type names and field names can only contain alphanumeric characters and underscores: %r' % name)
+        if not all(c.isalnum() or c == "_" for c in name):
+            raise ValueError(
+                "Type names and field names can only contain alphanumeric characters and underscores: %r"
+                % name
+            )
         if _iskeyword(name):
-            raise ValueError('Type names and field names cannot be a keyword: %r' % name)
+            raise ValueError(
+                "Type names and field names cannot be a keyword: %r" % name
+            )
         if name[0].isdigit():
-            raise ValueError('Type names and field names cannot start with a number: %r' % name)
+            raise ValueError(
+                "Type names and field names cannot start with a number: %r"
+                % name
+            )
     seen_names = set()
     for name in field_names:
-        if name.startswith('_'):
-            raise ValueError('Field names cannot start with an underscore: %r' % name)
+        if name.startswith("_"):
+            raise ValueError(
+                "Field names cannot start with an underscore: %r" % name
+            )
         if name in seen_names:
-            raise ValueError('Encountered duplicate field name: %r' % name)
+            raise ValueError("Encountered duplicate field name: %r" % name)
         seen_names.add(name)
 
     # Create and fill-in the class template
     numfields = len(field_names)
-    argtxt = repr(field_names).replace("'", "")[1:-1]   # tuple repr without parens or quotes
-    reprtxt = ', '.join('%s=%%r' % name for name in field_names)
-    dicttxt = ', '.join('%r: t[%d]' % (name, pos) for pos, name in enumerate(field_names))
-    template = '''class %(typename)s(tuple):
+    argtxt = repr(field_names).replace("'", "")[
+        1:-1
+    ]  # tuple repr without parens or quotes
+    reprtxt = ", ".join("%s=%%r" % name for name in field_names)
+    dicttxt = ", ".join(
+        "%r: t[%d]" % (name, pos) for pos, name in enumerate(field_names)
+    )
+    template = (
+        """class %(typename)s(tuple):
         '%(typename)s(%(argtxt)s)' \n
         __slots__ = () \n
         _fields = %(field_names)r \n
@@ -77,35 +94,50 @@ def namedtuple(typename, field_names):
                 raise ValueError('Got unexpected field names: %%r' %% kwds.keys())
             return result \n
         def __getnewargs__(self):
-            return tuple(self) \n\n''' % locals()
+            return tuple(self) \n\n"""
+        % locals()
+    )
     for i, name in enumerate(field_names):
-        template += '        %s = _property(_itemgetter(%d))\n' % (name, i)
+        template += "        %s = _property(_itemgetter(%d))\n" % (name, i)
 
     # Execute the template string in a temporary namespace and
     # support tracing utilities by setting a value for frame.f_globals['__name__']
-    namespace = dict(_itemgetter=_itemgetter, __name__='namedtuple_%s' % typename,
-                     _property=property, _tuple=tuple)
+    namespace = dict(
+        _itemgetter=_itemgetter,
+        __name__="namedtuple_%s" % typename,
+        _property=property,
+        _tuple=tuple,
+    )
     try:
         exec(template, namespace)
     except SyntaxError:
         e = _sys.exc_info()[1]
-        raise SyntaxError(e.message + ':\n' + template)
+        raise SyntaxError(e.message + ":\n" + template)
     result = namespace[typename]
 
     # For pickling to work, the __module__ variable needs to be set to the frame
     # where the named tuple is created.  Bypass this step in enviroments where
     # sys._getframe is not defined (Jython for example).
-    if hasattr(_sys, '_getframe'):
-        result.__module__ = _sys._getframe(1).f_globals.get('__name__', '__main__')
+    if hasattr(_sys, "_getframe"):
+        result.__module__ = _sys._getframe(1).f_globals.get(
+            "__name__", "__main__"
+        )
 
     return result
 
 
 if _sys.version_info[0] < 3:
+
     def reraise(exc, traceback):
-        locals_ = {'exc_type': type(exc), 'exc_value': exc, 'traceback': traceback}
-        exec('raise exc_type, exc_value, traceback', {}, locals_)
+        locals_ = {
+            "exc_type": type(exc),
+            "exc_value": exc,
+            "traceback": traceback,
+        }
+        exec("raise exc_type, exc_value, traceback", {}, locals_)
+
 else:
+
     def reraise(exc, traceback):
         # Tracebacks are embedded in exceptions in Python 3
         raise exc

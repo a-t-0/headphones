@@ -56,8 +56,9 @@ ENCODER_INFO_TOTAL_BITS = ENCODER_INFO_CODEC_BITS + ENCODER_INFO_PROFILE_BITS
 
 SIZE_INFO_FRAME_DURATION_BITS = 4
 SIZE_INFO_SAMPLE_NUM_BITS = 35
-SIZE_INFO_TOTAL_BITS = (SIZE_INFO_FRAME_DURATION_BITS
-                        + SIZE_INFO_SAMPLE_NUM_BITS)
+SIZE_INFO_TOTAL_BITS = (
+    SIZE_INFO_FRAME_DURATION_BITS + SIZE_INFO_SAMPLE_NUM_BITS
+)
 
 AUDIO_FORMAT_DATA_TYPE_BITS = 3
 AUDIO_FORMAT_SAMPLE_RATE_BITS = 18
@@ -71,22 +72,21 @@ SAMPLE_RATE_MIN = 6000
 SAMPLE_BITS_MIN = 8
 CHANNEL_NUM_MIN = 1
 
-STREAM_INFO_BITS_MIN = (ENCODER_INFO_TOTAL_BITS
-                        + SIZE_INFO_TOTAL_BITS
-                        + AUDIO_FORMAT_BITS_MIN)
-STREAM_INFO_BITS_MAX = (ENCODER_INFO_TOTAL_BITS
-                        + SIZE_INFO_TOTAL_BITS
-                        + AUDIO_FORMAT_BITS_MAX)
+STREAM_INFO_BITS_MIN = (
+    ENCODER_INFO_TOTAL_BITS + SIZE_INFO_TOTAL_BITS + AUDIO_FORMAT_BITS_MIN
+)
+STREAM_INFO_BITS_MAX = (
+    ENCODER_INFO_TOTAL_BITS + SIZE_INFO_TOTAL_BITS + AUDIO_FORMAT_BITS_MAX
+)
 STREAM_INFO_SIZE_MIN = (STREAM_INFO_BITS_MIN + 7) / 8
 STREAM_INFO_SIZE_MAX = (STREAM_INFO_BITS_MAX + 7) / 8
 
 
 class _LSBBitReader(BitReader):
-    """BitReader implementation which reads bits starting at LSB in each byte.
-    """
+    """BitReader implementation which reads bits starting at LSB in each byte."""
 
     def _lsb(self, count):
-        value = self._buffer & 0xff >> (8 - count)
+        value = self._buffer & 0xFF >> (8 - count)
         self._buffer = self._buffer >> count
         self._bits -= count
         return value
@@ -166,7 +166,7 @@ class TAKInfo(StreamInfo):
         while True:
             type = TAKMetadata(bitreader.bits(7))
             bitreader.skip(1)  # Unused
-            size = struct.unpack("<I", bitreader.bytes(3) + b'\0')[0]
+            size = struct.unpack("<I", bitreader.bytes(3) + b"\0")[0]
             data_size = size - CRC_SIZE
             pos = fileobj.tell()
 
@@ -197,12 +197,15 @@ class TAKInfo(StreamInfo):
 
         # Audio Format
         bitreader.skip(AUDIO_FORMAT_DATA_TYPE_BITS)
-        self.sample_rate = (bitreader.bits(AUDIO_FORMAT_SAMPLE_RATE_BITS)
-                            + SAMPLE_RATE_MIN)
-        self.bits_per_sample = (bitreader.bits(AUDIO_FORMAT_SAMPLE_BITS_BITS)
-                                + SAMPLE_BITS_MIN)
-        self.channels = (bitreader.bits(AUDIO_FORMAT_CHANNEL_NUM_BITS)
-                         + CHANNEL_NUM_MIN)
+        self.sample_rate = (
+            bitreader.bits(AUDIO_FORMAT_SAMPLE_RATE_BITS) + SAMPLE_RATE_MIN
+        )
+        self.bits_per_sample = (
+            bitreader.bits(AUDIO_FORMAT_SAMPLE_BITS_BITS) + SAMPLE_BITS_MIN
+        )
+        self.channels = (
+            bitreader.bits(AUDIO_FORMAT_CHANNEL_NUM_BITS) + CHANNEL_NUM_MIN
+        )
         bitreader.skip(AUDIO_FORMAT_HAS_EXTENSION_BITS)
 
     def _parse_encoder_info(self, bitreader, size):
@@ -212,9 +215,13 @@ class TAKInfo(StreamInfo):
         self.encoder_info = "TAK %d.%d.%d" % (major, minor, patch)
 
     def pprint(self):
-        return u"%s, %d Hz, %d bits, %.2f seconds, %d channel(s)" % (
-            self.encoder_info or "TAK", self.sample_rate, self.bits_per_sample,
-            self.length, self.channels)
+        return "%s, %d Hz, %d bits, %.2f seconds, %d channel(s)" % (
+            self.encoder_info or "TAK",
+            self.sample_rate,
+            self.bits_per_sample,
+            self.length,
+            self.channels,
+        )
 
 
 class TAK(APEv2File):

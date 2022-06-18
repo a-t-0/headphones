@@ -15,15 +15,26 @@ from oauthlib.common import add_params_to_qs, add_params_to_uri
 from oauthlib.signals import scope_changed
 
 from .errors import (
-    InsecureTransportError, MismatchingStateError, MissingCodeError,
-    MissingTokenError, MissingTokenTypeError, raise_from_error,
+    InsecureTransportError,
+    MismatchingStateError,
+    MissingCodeError,
+    MissingTokenError,
+    MissingTokenTypeError,
+    raise_from_error,
 )
 from .tokens import OAuth2Token
 from .utils import is_secure_transport, list_to_scope, scope_to_list
 
 
-def prepare_grant_uri(uri, client_id, response_type, redirect_uri=None,
-                      scope=None, state=None, **kwargs):
+def prepare_grant_uri(
+    uri,
+    client_id,
+    response_type,
+    redirect_uri=None,
+    scope=None,
+    state=None,
+    **kwargs,
+):
     """Prepare the authorization grant request URI.
 
     The client constructs the request URI by adding the following
@@ -64,15 +75,14 @@ def prepare_grant_uri(uri, client_id, response_type, redirect_uri=None,
     if not is_secure_transport(uri):
         raise InsecureTransportError()
 
-    params = [(('response_type', response_type)),
-              (('client_id', client_id))]
+    params = [(("response_type", response_type)), (("client_id", client_id))]
 
     if redirect_uri:
-        params.append(('redirect_uri', redirect_uri))
+        params.append(("redirect_uri", redirect_uri))
     if scope:
-        params.append(('scope', list_to_scope(scope)))
+        params.append(("scope", list_to_scope(scope)))
     if state:
-        params.append(('state', state))
+        params.append(("state", state))
 
     for k in kwargs:
         if kwargs[k]:
@@ -81,7 +91,9 @@ def prepare_grant_uri(uri, client_id, response_type, redirect_uri=None,
     return add_params_to_uri(uri, params)
 
 
-def prepare_token_request(grant_type, body='', include_client_id=True, **kwargs):
+def prepare_token_request(
+    grant_type, body="", include_client_id=True, **kwargs
+):
     """Prepare the access token request.
 
     The client makes a request to the token endpoint by adding the
@@ -131,22 +143,22 @@ def prepare_token_request(grant_type, body='', include_client_id=True, **kwargs)
 
     .. _`Section 4.1.1`: https://tools.ietf.org/html/rfc6749#section-4.1.1
     """
-    params = [('grant_type', grant_type)]
+    params = [("grant_type", grant_type)]
 
-    if 'scope' in kwargs:
-        kwargs['scope'] = list_to_scope(kwargs['scope'])
+    if "scope" in kwargs:
+        kwargs["scope"] = list_to_scope(kwargs["scope"])
 
     # pull the `client_id` out of the kwargs.
-    client_id = kwargs.pop('client_id', None)
+    client_id = kwargs.pop("client_id", None)
     if include_client_id:
         if client_id is not None:
-            params.append(('client_id', client_id))
+            params.append(("client_id", client_id))
 
     # the kwargs iteration below only supports including boolean truth (truthy)
     # values, but some servers may require an empty string for `client_secret`
-    client_secret = kwargs.pop('client_secret', None)
+    client_secret = kwargs.pop("client_secret", None)
     if client_secret is not None:
-        params.append(('client_secret', client_secret))
+        params.append(("client_secret", client_secret))
 
     # this handles: `code`, `redirect_uri`, and other undocumented params
     for k in kwargs:
@@ -156,8 +168,14 @@ def prepare_token_request(grant_type, body='', include_client_id=True, **kwargs)
     return add_params_to_qs(body, params)
 
 
-def prepare_token_revocation_request(url, token, token_type_hint="access_token",
-        callback=None, body='', **kwargs):
+def prepare_token_revocation_request(
+    url,
+    token,
+    token_type_hint="access_token",
+    callback=None,
+    body="",
+    **kwargs,
+):
     """Prepare a token revocation request.
 
     The client constructs the request by including the following parameters
@@ -196,19 +214,19 @@ def prepare_token_revocation_request(url, token, token_type_hint="access_token",
     if not is_secure_transport(url):
         raise InsecureTransportError()
 
-    params = [('token', token)]
+    params = [("token", token)]
 
     if token_type_hint:
-        params.append(('token_type_hint', token_type_hint))
+        params.append(("token_type_hint", token_type_hint))
 
     for k in kwargs:
         if kwargs[k]:
             params.append((str(k), kwargs[k]))
 
-    headers = {'Content-Type': 'application/x-www-form-urlencoded'}
+    headers = {"Content-Type": "application/x-www-form-urlencoded"}
 
     if callback:
-        params.append(('callback', callback))
+        params.append(("callback", callback))
         return add_params_to_uri(url, params), headers, body
     else:
         return url, headers, add_params_to_qs(body, params)
@@ -258,13 +276,13 @@ def parse_authorization_code_response(uri, state=None):
     query = urlparse.urlparse(uri).query
     params = dict(urlparse.parse_qsl(query))
 
-    if state and params.get('state', None) != state:
+    if state and params.get("state", None) != state:
         raise MismatchingStateError()
 
-    if 'error' in params:
-        raise_from_error(params.get('error'), params)
+    if "error" in params:
+        raise_from_error(params.get("error"), params)
 
-    if not 'code' in params:
+    if not "code" in params:
         raise MissingCodeError("Missing code parameter in response.")
 
     return params
@@ -321,17 +339,17 @@ def parse_implicit_response(uri, state=None, scope=None):
     fragment = urlparse.urlparse(uri).fragment
     params = dict(urlparse.parse_qsl(fragment, keep_blank_values=True))
 
-    for key in ('expires_in',):
+    for key in ("expires_in",):
         if key in params:  # cast things to int
             params[key] = int(params[key])
 
-    if 'scope' in params:
-        params['scope'] = scope_to_list(params['scope'])
+    if "scope" in params:
+        params["scope"] = scope_to_list(params["scope"])
 
-    if 'expires_in' in params:
-        params['expires_at'] = time.time() + int(params['expires_in'])
+    if "expires_in" in params:
+        params["expires_at"] = time.time() + int(params["expires_in"])
 
-    if state and params.get('state', None) != state:
+    if state and params.get("state", None) != state:
         raise ValueError("Mismatching or missing state in params.")
 
     params = OAuth2Token(params, old_scope=scope)
@@ -408,18 +426,18 @@ def parse_token_response(body, scope=None):
         #   https://github.com/oauthlib/oauthlib/issues/267
 
         params = dict(urlparse.parse_qsl(body))
-        for key in ('expires_in',):
+        for key in ("expires_in",):
             if key in params:  # cast things to int
                 params[key] = int(params[key])
 
-    if 'scope' in params:
-        params['scope'] = scope_to_list(params['scope'])
+    if "scope" in params:
+        params["scope"] = scope_to_list(params["scope"])
 
-    if 'expires_in' in params:
-        if params['expires_in'] is None:
-            params.pop('expires_in')
+    if "expires_in" in params:
+        if params["expires_in"] is None:
+            params.pop("expires_in")
         else:
-            params['expires_at'] = time.time() + int(params['expires_in'])
+            params["expires_at"] = time.time() + int(params["expires_in"])
 
     params = OAuth2Token(params, old_scope=scope)
     validate_token_parameters(params)
@@ -428,14 +446,14 @@ def parse_token_response(body, scope=None):
 
 def validate_token_parameters(params):
     """Ensures token presence, token type, expiration and scope in params."""
-    if 'error' in params:
-        raise_from_error(params.get('error'), params)
+    if "error" in params:
+        raise_from_error(params.get("error"), params)
 
-    if not 'access_token' in params:
+    if not "access_token" in params:
         raise MissingTokenError(description="Missing access token parameter.")
 
-    if not 'token_type' in params:
-        if os.environ.get('OAUTHLIB_STRICT_TOKEN_TYPE'):
+    if not "token_type" in params:
+        if os.environ.get("OAUTHLIB_STRICT_TOKEN_TYPE"):
             raise MissingTokenTypeError()
 
     # If the issued access token scope is different from the one requested by
@@ -444,10 +462,13 @@ def validate_token_parameters(params):
     # https://tools.ietf.org/html/rfc6749#section-3.3
     if params.scope_changed:
         message = 'Scope has changed from "{old}" to "{new}".'.format(
-            old=params.old_scope, new=params.scope,
+            old=params.old_scope,
+            new=params.scope,
         )
-        scope_changed.send(message=message, old=params.old_scopes, new=params.scopes)
-        if not os.environ.get('OAUTHLIB_RELAX_TOKEN_SCOPE', None):
+        scope_changed.send(
+            message=message, old=params.old_scopes, new=params.scopes
+        )
+        if not os.environ.get("OAUTHLIB_RELAX_TOKEN_SCOPE", None):
             w = Warning(message)
             w.token = params
             w.old_scope = params.old_scopes

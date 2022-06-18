@@ -3,12 +3,12 @@ from collections import namedtuple
 import re
 
 RE_VER = re.compile(
-    r'''(?x)
+    r"""(?x)
     (?P<major>\d+)(?:\.(?P<minor>\d+))?(?:\.(?P<micro>\d+))?
     (?:(?P<type>a|b|rc)(?P<pre>\d+))?
     (?:\.post(?P<post>\d+))?
     (?:\.dev(?P<dev>\d+))?
-    '''
+    """
 )
 
 REL_MAP = {
@@ -19,7 +19,7 @@ REL_MAP = {
     "alpha": "a",
     "beta": "b",
     "candidate": "rc",
-    "final": ""
+    "final": "",
 }
 
 DEV_STATUS = {
@@ -30,13 +30,17 @@ DEV_STATUS = {
     "alpha": "3 - Alpha",
     "beta": "4 - Beta",
     "candidate": "4 - Beta",
-    "final": "5 - Production/Stable"
+    "final": "5 - Production/Stable",
 }
 
-PRE_REL_MAP = {"a": 'alpha', "b": 'beta', "rc": 'candidate'}
+PRE_REL_MAP = {"a": "alpha", "b": "beta", "rc": "candidate"}
 
 
-class Version(namedtuple("Version", ["major", "minor", "micro", "release", "pre", "post", "dev"])):
+class Version(
+    namedtuple(
+        "Version", ["major", "minor", "micro", "release", "pre", "post", "dev"]
+    )
+):
     """
     Get the version (PEP 440).
 
@@ -81,18 +85,27 @@ class Version(namedtuple("Version", ["major", "minor", "micro", "release", "pre"
 
     def __new__(
         cls,
-        major: int, minor: int, micro: int, release: str = "final",
-        pre: int = 0, post: int = 0, dev: int = 0
+        major: int,
+        minor: int,
+        micro: int,
+        release: str = "final",
+        pre: int = 0,
+        post: int = 0,
+        dev: int = 0,
     ) -> "Version":
         """Validate version info."""
 
         # Ensure all parts are positive integers.
         for value in (major, minor, micro, pre, post):
             if not (isinstance(value, int) and value >= 0):
-                raise ValueError("All version parts except 'release' should be integers.")
+                raise ValueError(
+                    "All version parts except 'release' should be integers."
+                )
 
         if release not in REL_MAP:
-            raise ValueError("'{}' is not a valid release type.".format(release))
+            raise ValueError(
+                "'{}' is not a valid release type.".format(release)
+            )
 
         # Ensure valid pre-release (we do not allow implicit pre-releases).
         if ".dev-candidate" < release < "final":
@@ -101,14 +114,18 @@ class Version(namedtuple("Version", ["major", "minor", "micro", "release", "pre"
             elif dev:
                 raise ValueError("Version is not a development release.")
             elif post:
-                raise ValueError("Post-releases are not allowed with pre-releases.")
+                raise ValueError(
+                    "Post-releases are not allowed with pre-releases."
+                )
 
         # Ensure valid development or development/pre release
         elif release < "alpha":
             if release > ".dev" and pre == 0:
                 raise ValueError("Implicit pre-release not allowed.")
             elif post:
-                raise ValueError("Post-releases are not allowed with pre-releases.")
+                raise ValueError(
+                    "Post-releases are not allowed with pre-releases."
+                )
 
         # Ensure a valid normal release
         else:
@@ -117,7 +134,9 @@ class Version(namedtuple("Version", ["major", "minor", "micro", "release", "pre"
             elif dev:
                 raise ValueError("Version is not a development release.")
 
-        return super(Version, cls).__new__(cls, major, minor, micro, release, pre, post, dev)
+        return super(Version, cls).__new__(
+            cls, major, minor, micro, release, pre, post, dev
+        )
 
     def _is_pre(self) -> bool:
         """Is prerelease."""
@@ -148,7 +167,7 @@ class Version(namedtuple("Version", ["major", "minor", "micro", "release", "pre"
         else:
             ver = "{}.{}.{}".format(self.major, self.minor, self.micro)
         if self._is_pre():
-            ver += '{}{}'.format(REL_MAP[self.release], self.pre)
+            ver += "{}{}".format(REL_MAP[self.release], self.pre)
         if self._is_post():
             ver += ".post{}".format(self.post)
         if self._is_dev():
@@ -166,28 +185,28 @@ def parse_version(ver: str) -> Version:
         raise ValueError("'{}' is not a valid version".format(ver))
 
     # Handle major, minor, micro
-    major = int(m.group('major'))
-    minor = int(m.group('minor')) if m.group('minor') else 0
-    micro = int(m.group('micro')) if m.group('micro') else 0
+    major = int(m.group("major"))
+    minor = int(m.group("minor")) if m.group("minor") else 0
+    micro = int(m.group("micro")) if m.group("micro") else 0
 
     # Handle pre releases
-    if m.group('type'):
-        release = PRE_REL_MAP[m.group('type')]
-        pre = int(m.group('pre'))
+    if m.group("type"):
+        release = PRE_REL_MAP[m.group("type")]
+        pre = int(m.group("pre"))
     else:
         release = "final"
         pre = 0
 
     # Handle development releases
-    dev = m.group('dev') if m.group('dev') else 0
-    if m.group('dev'):
-        dev = int(m.group('dev'))
-        release = '.dev-' + release if pre else '.dev'
+    dev = m.group("dev") if m.group("dev") else 0
+    if m.group("dev"):
+        dev = int(m.group("dev"))
+        release = ".dev-" + release if pre else ".dev"
     else:
         dev = 0
 
     # Handle post
-    post = int(m.group('post')) if m.group('post') else 0
+    post = int(m.group("post")) if m.group("post") else 0
 
     return Version(major, minor, micro, release, pre, post, dev)
 

@@ -31,8 +31,9 @@ class ASFBaseAttribute(object):
     stream = None
     """Stream"""
 
-    def __init__(self, value=None, data=None, language=None,
-                 stream=None, **kwargs):
+    def __init__(
+        self, value=None, data=None, language=None, stream=None, **kwargs
+    ):
         self.language = language
         self.stream = stream
         if data is not None:
@@ -78,8 +79,12 @@ class ASFBaseAttribute(object):
     def render(self, name):
         name = name.encode("utf-16-le") + b"\x00\x00"
         data = self._render()
-        return (struct.pack("<H", len(name)) + name +
-                struct.pack("<HH", self.TYPE, len(data)) + data)
+        return (
+            struct.pack("<H", len(name))
+            + name
+            + struct.pack("<HH", self.TYPE, len(data))
+            + data
+        )
 
     def render_m(self, name):
         name = name.encode("utf-16-le") + b"\x00\x00"
@@ -87,8 +92,13 @@ class ASFBaseAttribute(object):
             data = self._render(dword=False)
         else:
             data = self._render()
-        return (struct.pack("<HHHHI", 0, self.stream or 0, len(name),
-                            self.TYPE, len(data)) + name + data)
+        return (
+            struct.pack(
+                "<HHHHI", 0, self.stream or 0, len(name), self.TYPE, len(data)
+            )
+            + name
+            + data
+        )
 
     def render_ml(self, name):
         name = name.encode("utf-16-le") + b"\x00\x00"
@@ -97,8 +107,18 @@ class ASFBaseAttribute(object):
         else:
             data = self._render()
 
-        return (struct.pack("<HHHHI", self.language or 0, self.stream or 0,
-                            len(name), self.TYPE, len(data)) + name + data)
+        return (
+            struct.pack(
+                "<HHHHI",
+                self.language or 0,
+                self.stream or 0,
+                len(name),
+                self.TYPE,
+                len(data),
+            )
+            + name
+            + data
+        )
 
 
 @ASFBaseAttribute._register
@@ -154,6 +174,7 @@ class ASFByteArrayAttribute(ASFBaseAttribute):
 
         ASFByteArrayAttribute(b'1234')
     """
+
     TYPE = 0x0001
 
     def parse(self, data):
@@ -221,7 +242,7 @@ class ASFBoolAttribute(ASFBaseAttribute):
         return bool(self.value)
 
     def __bytes__(self):
-        return str(self.value).encode('utf-8')
+        return str(self.value).encode("utf-8")
 
     def __str__(self):
         return str(self.value)
@@ -255,7 +276,7 @@ class ASFDWordAttribute(ASFBaseAttribute):
 
     def _validate(self, value):
         value = int(value)
-        if not 0 <= value <= 2 ** 32 - 1:
+        if not 0 <= value <= 2**32 - 1:
             raise ValueError("Out of range")
         return value
 
@@ -266,7 +287,7 @@ class ASFDWordAttribute(ASFBaseAttribute):
         return self.value
 
     def __bytes__(self):
-        return str(self.value).encode('utf-8')
+        return str(self.value).encode("utf-8")
 
     def __str__(self):
         return str(self.value)
@@ -300,7 +321,7 @@ class ASFQWordAttribute(ASFBaseAttribute):
 
     def _validate(self, value):
         value = int(value)
-        if not 0 <= value <= 2 ** 64 - 1:
+        if not 0 <= value <= 2**64 - 1:
             raise ValueError("Out of range")
         return value
 
@@ -311,7 +332,7 @@ class ASFQWordAttribute(ASFBaseAttribute):
         return self.value
 
     def __bytes__(self):
-        return str(self.value).encode('utf-8')
+        return str(self.value).encode("utf-8")
 
     def __str__(self):
         return str(self.value)
@@ -345,7 +366,7 @@ class ASFWordAttribute(ASFBaseAttribute):
 
     def _validate(self, value):
         value = int(value)
-        if not 0 <= value <= 2 ** 16 - 1:
+        if not 0 <= value <= 2**16 - 1:
             raise ValueError("Out of range")
         return value
 
@@ -356,7 +377,7 @@ class ASFWordAttribute(ASFBaseAttribute):
         return self.value
 
     def __bytes__(self):
-        return str(self.value).encode('utf-8')
+        return str(self.value).encode("utf-8")
 
     def __str__(self):
         return str(self.value)

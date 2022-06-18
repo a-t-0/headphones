@@ -18,7 +18,6 @@
 ###################################
 
 
-
 import time
 
 import sqlite3
@@ -48,9 +47,13 @@ class DBConnection:
         # don't wait for the disk to finish writing
         self.connection.execute("PRAGMA synchronous = OFF")
         # default set to Write-Ahead Logging WAL
-        self.connection.execute("PRAGMA journal_mode = %s" % headphones.CONFIG.JOURNAL_MODE)
+        self.connection.execute(
+            "PRAGMA journal_mode = %s" % headphones.CONFIG.JOURNAL_MODE
+        )
         # 64mb of cache memory,probably need to make it user configurable
-        self.connection.execute("PRAGMA cache_size=-%s" % (getCacheSize() * 1024))
+        self.connection.execute(
+            "PRAGMA cache_size=-%s" % (getCacheSize() * 1024)
+        )
         self.connection.row_factory = sqlite3.Row
 
     def action(self, query, args=None, upsert_insert_qry=None):
@@ -69,9 +72,18 @@ class DBConnection:
                     # log that previous attempt was locked and we're trying again
                     if dberror:
                         if args is None:
-                            logger.debug('SQL: Database was previously locked, trying again. Attempt number %i. Query: %s', attempts + 1, query)
+                            logger.debug(
+                                "SQL: Database was previously locked, trying again. Attempt number %i. Query: %s",
+                                attempts + 1,
+                                query,
+                            )
                         else:
-                            logger.debug('SQL: Database was previously locked, trying again. Attempt number %i. Query: %s. Args: %s', attempts + 1, query, args)
+                            logger.debug(
+                                "SQL: Database was previously locked, trying again. Attempt number %i. Query: %s. Args: %s",
+                                attempts + 1,
+                                query,
+                                args,
+                            )
 
                     # debugging
                     # try:
@@ -117,27 +129,43 @@ class DBConnection:
                     break
 
             except sqlite3.OperationalError as e:
-                if "unable to open database file" in str(e) or "database is locked" in str(e):
+                if "unable to open database file" in str(
+                    e
+                ) or "database is locked" in str(e):
                     dberror = e
                     if args is None:
-                        logger.debug('Database error: %s. Query: %s', e, query)
+                        logger.debug("Database error: %s. Query: %s", e, query)
                     else:
-                        logger.debug('Database error: %s. Query: %s. Args: %s', e, query, args)
+                        logger.debug(
+                            "Database error: %s. Query: %s. Args: %s",
+                            e,
+                            query,
+                            args,
+                        )
                     attempts += 1
                     time.sleep(1)
                 else:
-                    logger.error('Database error: %s', e)
+                    logger.error("Database error: %s", e)
                     raise
             except sqlite3.DatabaseError as e:
-                logger.error('Fatal Error executing %s :: %s', query, e)
+                logger.error("Fatal Error executing %s :: %s", query, e)
                 raise
 
         # log if no results returned due to lock
         if not sqlResult and attempts:
             if args is None:
-                logger.warn('SQL: Query failed due to database error: %s. Query: %s', dberror, query)
+                logger.warn(
+                    "SQL: Query failed due to database error: %s. Query: %s",
+                    dberror,
+                    query,
+                )
             else:
-                logger.warn('SQL: Query failed due to database error: %s. Query: %s. Args: %s', dberror, query, args)
+                logger.warn(
+                    "SQL: Query failed due to database error: %s. Query: %s. Args: %s",
+                    dberror,
+                    query,
+                    args,
+                )
 
         return sqlResult
 
@@ -155,15 +183,39 @@ class DBConnection:
         Transactions an Update or Insert to a table based on key.
         If the table is not updated then the 'WHERE changes' will be 0 and the table inserted
         """
+
         def genParams(myDict):
             return [x + " = ?" for x in list(myDict.keys())]
 
-        update_query = "UPDATE " + tableName + " SET " + ", ".join(genParams(valueDict)) + " WHERE " + " AND ".join(genParams(keyDict))
+        update_query = (
+            "UPDATE "
+            + tableName
+            + " SET "
+            + ", ".join(genParams(valueDict))
+            + " WHERE "
+            + " AND ".join(genParams(keyDict))
+        )
 
-        insert_query = ("INSERT INTO " + tableName + " (" + ", ".join(list(valueDict.keys()) + list(keyDict.keys())) + ")" + " SELECT " + ", ".join(
-            ["?"] * len(list(valueDict.keys()) + list(keyDict.keys()))) + " WHERE changes()=0")
+        insert_query = (
+            "INSERT INTO "
+            + tableName
+            + " ("
+            + ", ".join(list(valueDict.keys()) + list(keyDict.keys()))
+            + ")"
+            + " SELECT "
+            + ", ".join(
+                ["?"] * len(list(valueDict.keys()) + list(keyDict.keys()))
+            )
+            + " WHERE changes()=0"
+        )
 
         try:
-            self.action(update_query, list(valueDict.values()) + list(keyDict.values()), upsert_insert_qry=insert_query)
+            self.action(
+                update_query,
+                list(valueDict.values()) + list(keyDict.values()),
+                upsert_insert_qry=insert_query,
+            )
         except sqlite3.IntegrityError:
-            logger.info('Queries failed: %s and %s', update_query, insert_query)
+            logger.info(
+                "Queries failed: %s and %s", update_query, insert_query
+            )

@@ -19,6 +19,7 @@ from sys import version_info
 
 Cache = {}
 
+
 def unidecode(string):
     """Transliterate an Unicode object into an ASCII string
 
@@ -27,43 +28,54 @@ def unidecode(string):
     """
 
     if version_info[0] < 3 and not isinstance(string, str):
-        warnings.warn(  "Argument %r is not an unicode object. "
-                        "Passing an encoded string will likely have "
-                        "unexpected results." % (type(string),),
-			RuntimeWarning, 2)
+        warnings.warn(
+            "Argument %r is not an unicode object. "
+            "Passing an encoded string will likely have "
+            "unexpected results." % (type(string),),
+            RuntimeWarning,
+            2,
+        )
 
     retval = []
 
     for char in string:
         codepoint = ord(char)
 
-        if codepoint < 0x80: # Basic ASCII
+        if codepoint < 0x80:  # Basic ASCII
             retval.append(str(char))
             continue
-        
-        if codepoint > 0xeffff:
-            continue # Characters in Private Use Area and above are ignored
 
-        if 0xd800 <= codepoint <= 0xdfff:
-            warnings.warn(  "Surrogate character %r will be ignored. "
-                            "You might be using a narrow Python build." % (char,),
-                            RuntimeWarning, 2)
+        if codepoint > 0xEFFFF:
+            continue  # Characters in Private Use Area and above are ignored
 
-        section = codepoint >> 8   # Chop off the last two hex digits
-        position = codepoint % 256 # Last two hex digits
+        if 0xD800 <= codepoint <= 0xDFFF:
+            warnings.warn(
+                "Surrogate character %r will be ignored. "
+                "You might be using a narrow Python build." % (char,),
+                RuntimeWarning,
+                2,
+            )
+
+        section = codepoint >> 8  # Chop off the last two hex digits
+        position = codepoint % 256  # Last two hex digits
 
         try:
             table = Cache[section]
         except KeyError:
             try:
-                mod = __import__('unidecode.x%03x'%(section), globals(), locals(), ['data'])
+                mod = __import__(
+                    "unidecode.x%03x" % (section),
+                    globals(),
+                    locals(),
+                    ["data"],
+                )
             except ImportError:
                 Cache[section] = None
-                continue   # No match: ignore this character and carry on.
+                continue  # No match: ignore this character and carry on.
 
             Cache[section] = table = mod.data
 
         if table and len(table) > position:
-            retval.append( table[position] )
+            retval.append(table[position])
 
-    return ''.join(retval)
+    return "".join(retval)

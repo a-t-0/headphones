@@ -48,7 +48,7 @@ class RequestMethods(object):
         headers=None,
         encode_multipart=True,
         multipart_boundary=None,
-        **kw
+        **kw,
     ):  # Abstract
         raise NotImplementedError(
             "Classes extending RequestMethods must implement "
@@ -79,7 +79,9 @@ class RequestMethods(object):
                 method, url, fields=fields, headers=headers, **urlopen_kw
             )
 
-    def request_encode_url(self, method, url, fields=None, headers=None, **urlopen_kw):
+    def request_encode_url(
+        self, method, url, fields=None, headers=None, **urlopen_kw
+    ):
         """
         Make a request using :meth:`urlopen` with the ``fields`` encoded in
         the url. This is useful for request methods like GET, HEAD, DELETE, etc.
@@ -103,7 +105,7 @@ class RequestMethods(object):
         headers=None,
         encode_multipart=True,
         multipart_boundary=None,
-        **urlopen_kw
+        **urlopen_kw,
     ):
         """
         Make a request using :meth:`urlopen` with the ``fields`` encoded in

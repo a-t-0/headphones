@@ -88,7 +88,7 @@ class PythonFragment(PythonCode):
         if not m:
             raise exceptions.CompileException(
                 "Fragment '%s' is not a partial control statement" % code,
-                **exception_kwargs
+                **exception_kwargs,
             )
         if m.group(3):
             code = code[: m.start(3)]
@@ -106,7 +106,7 @@ class PythonFragment(PythonCode):
         else:
             raise exceptions.CompileException(
                 "Unsupported control keyword: '%s'" % keyword,
-                **exception_kwargs
+                **exception_kwargs,
             )
         super(PythonFragment, self).__init__(code, **exception_kwargs)
 
@@ -124,13 +124,13 @@ class FunctionDecl(object):
         if not hasattr(self, "funcname"):
             raise exceptions.CompileException(
                 "Code '%s' is not a function declaration" % code,
-                **exception_kwargs
+                **exception_kwargs,
             )
         if not allow_kwargs and self.kwargs:
             raise exceptions.CompileException(
                 "'**%s' keyword argument not allowed here"
                 % self.kwargnames[-1],
-                **exception_kwargs
+                **exception_kwargs,
             )
 
     def get_argument_expressions(self, as_call=False):

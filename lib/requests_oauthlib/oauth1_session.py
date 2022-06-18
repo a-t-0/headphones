@@ -9,7 +9,11 @@ import logging
 
 from oauthlib.common import add_params_to_uri
 from oauthlib.common import urldecode as _urldecode
-from oauthlib.oauth1 import SIGNATURE_HMAC, SIGNATURE_RSA, SIGNATURE_TYPE_AUTH_HEADER
+from oauthlib.oauth1 import (
+    SIGNATURE_HMAC,
+    SIGNATURE_RSA,
+    SIGNATURE_TYPE_AUTH_HEADER,
+)
 import requests
 
 from . import OAuth1
@@ -117,7 +121,7 @@ class OAuth1Session(requests.Session):
         verifier=None,
         client_class=None,
         force_include_body=False,
-        **kwargs
+        **kwargs,
     ):
         """Construct the OAuth 1 session.
 
@@ -167,7 +171,7 @@ class OAuth1Session(requests.Session):
             verifier=verifier,
             client_class=client_class,
             force_include_body=force_include_body,
-            **kwargs
+            **kwargs,
         )
         self.auth = self._client
 
@@ -253,7 +257,9 @@ class OAuth1Session(requests.Session):
         >>> oauth_session.authorization_url(authorization_url)
         'https://api.twitter.com/oauth/authorize?oauth_token=sdf0o9823sjdfsdf&oauth_callback=https%3A%2F%2F127.0.0.1%2Fcallback'
         """
-        kwargs["oauth_token"] = request_token or self._client.client.resource_owner_key
+        kwargs["oauth_token"] = (
+            request_token or self._client.client.resource_owner_key
+        )
         log.debug("Adding parameters %s to url %s", kwargs, url)
         return add_params_to_uri(url, kwargs.items())
 
@@ -285,7 +291,9 @@ class OAuth1Session(requests.Session):
         """
         self._client.client.realm = " ".join(realm) if realm else None
         token = self._fetch_token(url, **request_kwargs)
-        log.debug("Resetting callback_uri and realm (not needed in next phase).")
+        log.debug(
+            "Resetting callback_uri and realm (not needed in next phase)."
+        )
         self._client.client.callback_uri = None
         self._client.client.realm = None
         return token
@@ -353,15 +361,20 @@ class OAuth1Session(requests.Session):
             self._client.client.resource_owner_key = token["oauth_token"]
         else:
             raise TokenMissing(
-                "Response does not contain a token: {resp}".format(resp=token), token
+                "Response does not contain a token: {resp}".format(resp=token),
+                token,
             )
         if "oauth_token_secret" in token:
-            self._client.client.resource_owner_secret = token["oauth_token_secret"]
+            self._client.client.resource_owner_secret = token[
+                "oauth_token_secret"
+            ]
         if "oauth_verifier" in token:
             self._client.client.verifier = token["oauth_verifier"]
 
     def _fetch_token(self, url, **request_kwargs):
-        log.debug("Fetching token from %s using client %s", url, self._client.client)
+        log.debug(
+            "Fetching token from %s using client %s", url, self._client.client
+        )
         r = self.post(url, **request_kwargs)
 
         if r.status_code >= 400:

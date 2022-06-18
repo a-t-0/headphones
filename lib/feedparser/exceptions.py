@@ -27,11 +27,11 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 __all__ = [
-    'ThingsNobodyCaresAboutButMe',
-    'CharacterEncodingOverride',
-    'CharacterEncodingUnknown',
-    'NonXMLContentType',
-    'UndeclaredNamespace',
+    "ThingsNobodyCaresAboutButMe",
+    "CharacterEncodingOverride",
+    "CharacterEncodingUnknown",
+    "NonXMLContentType",
+    "UndeclaredNamespace",
 ]
 
 

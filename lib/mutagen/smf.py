@@ -59,7 +59,7 @@ def _read_track(chunk):
             num, off = _var_int(chunk, off)
             # TODO: support offset/time signature
             if meta_type == 0x51:
-                data = chunk[off:off + num]
+                data = chunk[off : off + num]
                 if len(data) != 3:
                     raise SMFError
                 tempo = struct.unpack(">I", b"\x00" + bytes(data))[0]
@@ -154,8 +154,8 @@ def _read_midi_length(fileobj):
         duration = 0
         for (deltasum, tempo) in parts:
             quarter, tpq = deltasum / float(tickdiv), tempo
-            duration += (quarter * tpq)
-        duration /= 10 ** 6
+            duration += quarter * tpq
+        duration /= 10**6
 
         durations.append(duration)
 
@@ -177,7 +177,7 @@ class SMFInfo(StreamInfo):
         self.length = _read_midi_length(fileobj)
 
     def pprint(self):
-        return u"SMF, %.2f seconds" % self.length
+        return "SMF, %.2f seconds" % self.length
 
 
 class SMF(FileType):
@@ -206,7 +206,8 @@ class SMF(FileType):
     def score(filename, fileobj, header):
         filename = filename.lower()
         return header.startswith(b"MThd") and (
-            endswith(filename, ".mid") or endswith(filename, ".midi"))
+            endswith(filename, ".mid") or endswith(filename, ".midi")
+        )
 
 
 Open = SMF

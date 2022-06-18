@@ -38,6 +38,7 @@ class MetadataDict(dict):
     lowercase) in member variable self._lower. If case-sensitive lookup
     fails, another case-insensitive attempt is made.
     """
+
     def __setitem__(self, key, value):
         super(MetadataDict, self).__setitem__(key, value)
         self._lower.__setitem__(key.lower(), value)
@@ -78,19 +79,20 @@ class Vars:
     """
     Metadata $variable names (only ones set explicitly by headphones).
     """
-    DISC = '$Disc'
-    DISC_TOTAL = '$DiscTotal'
-    TRACK = '$Track'
-    TITLE = '$Title'
-    ARTIST = '$Artist'
-    SORT_ARTIST = '$SortArtist'
-    ALBUM = '$Album'
-    YEAR = '$Year'
-    DATE = '$Date'
-    EXTENSION = '$Extension'
-    ORIGINAL_FOLDER = '$OriginalFolder'
-    FIRST_LETTER = '$First'
-    TYPE = '$Type'
+
+    DISC = "$Disc"
+    DISC_TOTAL = "$DiscTotal"
+    TRACK = "$Track"
+    TITLE = "$Title"
+    ARTIST = "$Artist"
+    SORT_ARTIST = "$SortArtist"
+    ALBUM = "$Album"
+    YEAR = "$Year"
+    DATE = "$Date"
+    EXTENSION = "$Extension"
+    ORIGINAL_FOLDER = "$OriginalFolder"
+    FIRST_LETTER = "$First"
+    TYPE = "$Type"
     TITLE_LOWER = TITLE.lower()
     ARTIST_LOWER = ARTIST.lower()
     SORT_ARTIST_LOWER = SORT_ARTIST.lower()
@@ -120,15 +122,15 @@ def _media_file_to_dict(mf, d):
     Populate dict with tags read from media file.
     """
     for fld in mf.readable_fields():
-        if 'art' == fld:
+        if "art" == fld:
             # skip embedded artwork as it's a BLOB
             continue
         val = getattr(mf, fld)
         if val is None:
-            val = ''
+            val = ""
         # include only types with meaningful string representation
         if _verify_var_type(val):
-            d['$' + fld] = _as_str(val)
+            d["$" + fld] = _as_str(val)
 
 
 def _row_to_dict(row, d):
@@ -138,9 +140,9 @@ def _row_to_dict(row, d):
     for fld in list(row.keys()):
         val = row[fld]
         if val is None:
-            val = ''
+            val = ""
         if _verify_var_type(val):
-            d['$' + fld] = _as_str(val)
+            d["$" + fld] = _as_str(val)
 
 
 def _date_year(release):
@@ -149,14 +151,14 @@ def _date_year(release):
     Extract release date and year from database row
     """
     try:
-        date = release['ReleaseDate']
+        date = release["ReleaseDate"]
     except TypeError:
-        date = ''
+        date = ""
 
     if date is not None:
         year = date[:4]
     else:
-        year = ''
+        year = ""
     return date, year
 
 
@@ -197,19 +199,19 @@ def file_metadata(path, release, single_disc_ignore=False):
     date, year = _date_year(release)
 
     if not f.disctotal or (f.disctotal == 1 and single_disc_ignore):
-        disc_total = ''
+        disc_total = ""
     else:
-        disc_total = '%d' % f.disctotal
+        disc_total = "%d" % f.disctotal
 
     if not f.disc or (f.disctotal == 1 and single_disc_ignore):
-        disc_number = ''
+        disc_number = ""
     else:
-        disc_number = '%d' % f.disc
+        disc_number = "%d" % f.disc
 
     if not f.track:
-        track_number = ''
+        track_number = ""
     else:
-        track_number = '%02d' % f.track
+        track_number = "%02d" % f.track
 
     if not f.title:
         basename = os.path.basename(path)
@@ -220,17 +222,17 @@ def file_metadata(path, release, single_disc_ignore=False):
         from_metadata = True
 
     ext = os.path.splitext(path)[1]
-    if release['ArtistName'] == "Various Artists" and f.artist:
+    if release["ArtistName"] == "Various Artists" and f.artist:
         artist_name = f.artist
     else:
-        artist_name = release['ArtistName']
+        artist_name = release["ArtistName"]
 
-    if artist_name and artist_name.startswith('The '):
+    if artist_name and artist_name.startswith("The "):
         sort_name = artist_name[4:] + ", The"
     else:
         sort_name = artist_name
 
-    album_title = release['AlbumTitle']
+    album_title = release["AlbumTitle"]
     override_values = {
         Vars.DISC: disc_number,
         Vars.DISC_TOTAL: disc_total,
@@ -273,27 +275,27 @@ def album_metadata(path, release, common_tags):
     :return: metadata dictionary with substitution variables for rendering path.
     """
     date, year = _date_year(release)
-    artist = release['ArtistName']
+    artist = release["ArtistName"]
     if artist:
-        artist = artist.replace('/', '_')
-    album = release['AlbumTitle']
+        artist = artist.replace("/", "_")
+    album = release["AlbumTitle"]
     if album:
-        album = album.replace('/', '_')
-    release_type = release['Type']
+        album = album.replace("/", "_")
+    release_type = release["Type"]
     if release_type:
-        release_type = release_type.replace('/', '_')
+        release_type = release_type.replace("/", "_")
 
-    if artist and artist.startswith('The '):
+    if artist and artist.startswith("The "):
         sort_name = artist[4:] + ", The"
     else:
         sort_name = artist
 
     if not sort_name or sort_name[0].isdigit():
-        first_char = '0-9'
+        first_char = "0-9"
     else:
         first_char = sort_name[0]
 
-    orig_folder = ''
+    orig_folder = ""
 
     # Get from temp path
     if "_@hp@_" in path:
@@ -320,7 +322,7 @@ def album_metadata(path, release, common_tags):
         Vars.ALBUM_LOWER: _lower(album),
         Vars.TYPE_LOWER: _lower(release_type),
         Vars.FIRST_LETTER_LOWER: _lower(first_char),
-        Vars.ORIGINAL_FOLDER_LOWER: _lower(orig_folder)
+        Vars.ORIGINAL_FOLDER_LOWER: _lower(orig_folder),
     }
     res = MetadataDict(common_tags)
     res.add_items(iter(override_values.items()))
@@ -336,8 +338,8 @@ def albumart_metadata(release, common_tags):
     :return: metadata dictionary with substitution variables for rendering path.
     """
     date, year = _date_year(release)
-    artist = release['ArtistName']
-    album = release['AlbumTitle']
+    artist = release["ArtistName"]
+    album = release["AlbumTitle"]
 
     override_values = {
         Vars.ARTIST: artist,
@@ -345,7 +347,7 @@ def albumart_metadata(release, common_tags):
         Vars.YEAR: year,
         Vars.DATE: date,
         Vars.ARTIST_LOWER: _lower(artist),
-        Vars.ALBUM_LOWER: _lower(album)
+        Vars.ALBUM_LOWER: _lower(album),
     }
     res = MetadataDict(common_tags)
     res.add_items(iter(override_values.items()))

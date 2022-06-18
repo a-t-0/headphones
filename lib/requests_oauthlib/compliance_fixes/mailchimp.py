@@ -19,5 +19,7 @@ def mailchimp_compliance_fix(session):
         return r
 
     session.register_compliance_hook("access_token_response", _null_scope)
-    session.register_compliance_hook("access_token_response", _non_zero_expiration)
+    session.register_compliance_hook(
+        "access_token_response", _non_zero_expiration
+    )
     return session

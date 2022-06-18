@@ -40,12 +40,12 @@ class TimedLock(object):
         sleep_amount = self.minimum_delta - delta
         if sleep_amount >= 0:
             # zero sleeps give the cpu a chance to task-switch
-            headphones.logger.debug('Sleeping %s (interval)', sleep_amount)
+            headphones.logger.debug("Sleeping %s (interval)", sleep_amount)
             time.sleep(sleep_amount)
         while not self.queue.empty():
             try:
                 seconds = self.queue.get(False)
-                headphones.logger.debug('Sleeping %s (queued)', seconds)
+                headphones.logger.debug("Sleeping %s (queued)", seconds)
                 time.sleep(seconds)
             except queue.Empty:
                 continue
@@ -66,7 +66,7 @@ class TimedLock(object):
         """
         # We use a queue so that we don't have to synchronize
         # across threads and with or without locks
-        headphones.logger.info('Adding %s to queue', seconds)
+        headphones.logger.info("Adding %s to queue", seconds)
         self.queue.put(seconds)
 
 

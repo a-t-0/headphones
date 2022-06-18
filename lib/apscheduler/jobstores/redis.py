@@ -1,9 +1,14 @@
-
-
 import six
 
-from apscheduler.jobstores.base import BaseJobStore, JobLookupError, ConflictingIdError
-from apscheduler.util import datetime_to_utc_timestamp, utc_timestamp_to_datetime
+from apscheduler.jobstores.base import (
+    BaseJobStore,
+    JobLookupError,
+    ConflictingIdError,
+)
+from apscheduler.util import (
+    datetime_to_utc_timestamp,
+    utc_timestamp_to_datetime,
+)
 from apscheduler.job import Job
 
 try:
@@ -14,7 +19,7 @@ except ImportError:  # pragma: nocover
 try:
     from redis import StrictRedis
 except ImportError:  # pragma: nocover
-    raise ImportError('RedisJobStore requires redis installed')
+    raise ImportError("RedisJobStore requires redis installed")
 
 
 class RedisJobStore(BaseJobStore):
@@ -29,8 +34,14 @@ class RedisJobStore(BaseJobStore):
     :param int pickle_protocol: pickle protocol level to use (for serialization), defaults to the highest available
     """
 
-    def __init__(self, db=0, jobs_key='apscheduler.jobs', run_times_key='apscheduler.run_times',
-                 pickle_protocol=pickle.HIGHEST_PROTOCOL, **connect_args):
+    def __init__(
+        self,
+        db=0,
+        jobs_key="apscheduler.jobs",
+        run_times_key="apscheduler.run_times",
+        pickle_protocol=pickle.HIGHEST_PROTOCOL,
+        **connect_args,
+    ):
         super(RedisJobStore, self).__init__()
 
         if db is None:
@@ -58,7 +69,9 @@ class RedisJobStore(BaseJobStore):
         return []
 
     def get_next_run_time(self):
-        next_run_time = self.redis.zrange(self.run_times_key, 0, 0, withscores=True)
+        next_run_time = self.redis.zrange(
+            self.run_times_key, 0, 0, withscores=True
+        )
         if next_run_time:
             return utc_timestamp_to_datetime(next_run_time[0][1])
 
@@ -73,8 +86,16 @@ class RedisJobStore(BaseJobStore):
 
         with self.redis.pipeline() as pipe:
             pipe.multi()
-            pipe.hset(self.jobs_key, job.id, pickle.dumps(job.__getstate__(), self.pickle_protocol))
-            pipe.zadd(self.run_times_key, datetime_to_utc_timestamp(job.next_run_time), job.id)
+            pipe.hset(
+                self.jobs_key,
+                job.id,
+                pickle.dumps(job.__getstate__(), self.pickle_protocol),
+            )
+            pipe.zadd(
+                self.run_times_key,
+                datetime_to_utc_timestamp(job.next_run_time),
+                job.id,
+            )
             pipe.execute()
 
     def update_job(self, job):
@@ -82,9 +103,17 @@ class RedisJobStore(BaseJobStore):
             raise JobLookupError(job.id)
 
         with self.redis.pipeline() as pipe:
-            pipe.hset(self.jobs_key, job.id, pickle.dumps(job.__getstate__(), self.pickle_protocol))
+            pipe.hset(
+                self.jobs_key,
+                job.id,
+                pickle.dumps(job.__getstate__(), self.pickle_protocol),
+            )
             if job.next_run_time:
-                pipe.zadd(self.run_times_key, datetime_to_utc_timestamp(job.next_run_time), job.id)
+                pipe.zadd(
+                    self.run_times_key,
+                    datetime_to_utc_timestamp(job.next_run_time),
+                    job.id,
+                )
             else:
                 pipe.zrem(self.run_times_key, job.id)
             pipe.execute()
@@ -122,7 +151,9 @@ class RedisJobStore(BaseJobStore):
             try:
                 jobs.append(self._reconstitute_job(job_state))
             except:
-                self._logger.exception('Unable to restore job "%s" -- removing it', job_id)
+                self._logger.exception(
+                    'Unable to restore job "%s" -- removing it', job_id
+                )
                 failed_job_ids.append(job_id)
 
         # Remove all the jobs we failed to restore
@@ -135,4 +166,4 @@ class RedisJobStore(BaseJobStore):
         return jobs
 
     def __repr__(self):
-        return '<%s>' % self.__class__.__name__
+        return "<%s>" % self.__class__.__name__

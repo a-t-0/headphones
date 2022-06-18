@@ -12,8 +12,22 @@ INTERVIEW = "Interview"
 MIXTAPE = "Mixtape"
 UNKNOWN = "Unknown"
 
-ALL_RELEASE_TYPES = [ALBUM, SOUNDTRACK, EP, ANTHOLOGY, COMPILATION, DJ_MIX, SINGLE, LIVE_ALBUM, REMIX, BOOTLEG,
-                     INTERVIEW, MIXTAPE, UNKNOWN]
+ALL_RELEASE_TYPES = [
+    ALBUM,
+    SOUNDTRACK,
+    EP,
+    ANTHOLOGY,
+    COMPILATION,
+    DJ_MIX,
+    SINGLE,
+    LIVE_ALBUM,
+    REMIX,
+    BOOTLEG,
+    INTERVIEW,
+    MIXTAPE,
+    UNKNOWN,
+]
+
 
 def get_int_val(release_type):
     return ALL_RELEASE_TYPES.index(release_type) + 1

@@ -4,7 +4,7 @@ from headphones.exceptions import SoftChrootError
 
 
 class SoftChroot(object):
-    """ SoftChroot provides SOFT chrooting for UI
+    """SoftChroot provides SOFT chrooting for UI
 
     IMPORTANT: call methods of this class just in modules, which generates data for client UI. Try to avoid unnecessary usage.
     """
@@ -21,9 +21,8 @@ class SoftChroot(object):
         if not path:
             return
 
-        if (not os.path.exists(path) or
-                not os.path.isdir(path)):
-            raise SoftChrootError('No such directory: %s' % path)
+        if not os.path.exists(path) or not os.path.isdir(path):
+            raise SoftChrootError("No such directory: %s" % path)
 
         path = path.rstrip(os.path.sep) + os.path.sep
 
@@ -48,7 +47,7 @@ class SoftChroot(object):
             return path
 
         if path.startswith(self.chroot):
-            p = os.path.sep + path[len(self.chroot):]
+            p = os.path.sep + path[len(self.chroot) :]
         else:
             p = os.path.sep
 

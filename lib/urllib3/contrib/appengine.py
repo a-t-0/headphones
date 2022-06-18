@@ -137,13 +137,15 @@ class AppEngineManager(RequestMethods):
         retries=None,
         redirect=True,
         timeout=Timeout.DEFAULT_TIMEOUT,
-        **response_kw
+        **response_kw,
     ):
 
         retries = self._get_retries(retries, redirect)
 
         try:
-            follow_redirects = redirect and retries.redirect != 0 and retries.total
+            follow_redirects = (
+                redirect and retries.redirect != 0 and retries.total
+            )
             response = urlfetch.fetch(
                 url,
                 payload=body,
@@ -220,13 +222,15 @@ class AppEngineManager(RequestMethods):
                     retries=retries,
                     redirect=redirect,
                     timeout=timeout,
-                    **response_kw
+                    **response_kw,
                 )
 
         # Check if we should retry the HTTP response.
         has_retry_after = bool(http_response.getheader("Retry-After"))
         if retries.is_retry(method, http_response.status, has_retry_after):
-            retries = retries.increment(method, url, response=http_response, _pool=self)
+            retries = retries.increment(
+                method, url, response=http_response, _pool=self
+            )
             log.debug("Retry: %s", url)
             retries.sleep(http_response)
             return self.urlopen(
@@ -237,12 +241,14 @@ class AppEngineManager(RequestMethods):
                 retries=retries,
                 redirect=redirect,
                 timeout=timeout,
-                **response_kw
+                **response_kw,
             )
 
         return http_response
 
-    def _urlfetch_response_to_http_response(self, urlfetch_resp, **response_kw):
+    def _urlfetch_response_to_http_response(
+        self, urlfetch_resp, **response_kw
+    ):
 
         if is_prod_appengine():
             # Production GAE handles deflate encoding automatically, but does
@@ -267,7 +273,7 @@ class AppEngineManager(RequestMethods):
             msg=urlfetch_resp.header_msg,
             headers=urlfetch_resp.headers,
             status=urlfetch_resp.status_code,
-            **response_kw
+            **response_kw,
         )
 
         return HTTPResponse(
@@ -275,7 +281,7 @@ class AppEngineManager(RequestMethods):
             headers=urlfetch_resp.headers,
             status=urlfetch_resp.status_code,
             original_response=original_response,
-            **response_kw
+            **response_kw,
         )
 
     def _get_absolute_timeout(self, timeout):
@@ -293,7 +299,9 @@ class AppEngineManager(RequestMethods):
 
     def _get_retries(self, retries, redirect):
         if not isinstance(retries, Retry):
-            retries = Retry.from_int(retries, redirect=redirect, default=self.retries)
+            retries = Retry.from_int(
+                retries, redirect=redirect, default=self.retries
+            )
 
         if retries.connect or retries.read or retries.redirect:
             warnings.warn(

@@ -25,20 +25,20 @@ class RiffChunk(IffChunk):
 
     @classmethod
     def parse_header(cls, header):
-        return struct.unpack('<4sI', header)
+        return struct.unpack("<4sI", header)
 
     @classmethod
     def get_class(cls, id):
-        if id in (u'LIST', u'RIFF'):
+        if id in ("LIST", "RIFF"):
             return RiffListChunk
         else:
             return cls
 
     def write_new_header(self, id_, size):
-        self._fileobj.write(pack('<4sI', id_, size))
+        self._fileobj.write(pack("<4sI", id_, size))
 
     def write_size(self):
-        self._fileobj.write(pack('<I', self.data_size))
+        self._fileobj.write(pack("<I", self.data_size))
 
 
 class RiffListChunk(RiffChunk, IffContainerChunkMixin):
@@ -50,8 +50,8 @@ class RiffListChunk(RiffChunk, IffContainerChunkMixin):
         return RiffChunk.parse(self._fileobj, self)
 
     def __init__(self, fileobj, id, data_size, parent_chunk):
-        if id not in (u'RIFF', u'LIST'):
-            raise InvalidChunk('Expected RIFF or LIST chunk, got %s' % id)
+        if id not in ("RIFF", "LIST"):
+            raise InvalidChunk("Expected RIFF or LIST chunk, got %s" % id)
 
         RiffChunk.__init__(self, fileobj, id, data_size, parent_chunk)
         self.init_container()
@@ -63,8 +63,9 @@ class RiffFile(IffFile):
     def __init__(self, fileobj):
         super().__init__(RiffChunk, fileobj)
 
-        if self.root.id != u'RIFF':
-            raise InvalidChunk("Root chunk must be a RIFF chunk, got %s"
-                               % self.root.id)
+        if self.root.id != "RIFF":
+            raise InvalidChunk(
+                "Root chunk must be a RIFF chunk, got %s" % self.root.id
+            )
 
         self.file_type = self.root.name

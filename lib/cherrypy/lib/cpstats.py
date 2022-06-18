@@ -198,7 +198,7 @@ from cherrypy._json import json
 
 # ------------------------------- Statistics -------------------------------- #
 
-if not hasattr(logging, 'statistics'):
+if not hasattr(logging, "statistics"):
     logging.statistics = {}
 
 
@@ -210,7 +210,7 @@ def extrapolate_statistics(scope):
             v = extrapolate_statistics(v)
         elif isinstance(v, (list, tuple)):
             v = [extrapolate_statistics(record) for record in v]
-        elif hasattr(v, '__call__'):
+        elif hasattr(v, "__call__"):
             v = v(scope)
         c[k] = v
     return c
@@ -218,39 +218,42 @@ def extrapolate_statistics(scope):
 
 # -------------------- CherryPy Applications Statistics --------------------- #
 
-appstats = logging.statistics.setdefault('CherryPy Applications', {})
-appstats.update({
-    'Enabled': True,
-    'Bytes Read/Request': lambda s: (
-        s['Total Requests'] and
-        (s['Total Bytes Read'] / float(s['Total Requests'])) or
-        0.0
-    ),
-    'Bytes Read/Second': lambda s: s['Total Bytes Read'] / s['Uptime'](s),
-    'Bytes Written/Request': lambda s: (
-        s['Total Requests'] and
-        (s['Total Bytes Written'] / float(s['Total Requests'])) or
-        0.0
-    ),
-    'Bytes Written/Second': lambda s: (
-        s['Total Bytes Written'] / s['Uptime'](s)
-    ),
-    'Current Time': lambda s: time.time(),
-    'Current Requests': 0,
-    'Requests/Second': lambda s: float(s['Total Requests']) / s['Uptime'](s),
-    'Server Version': cherrypy.__version__,
-    'Start Time': time.time(),
-    'Total Bytes Read': 0,
-    'Total Bytes Written': 0,
-    'Total Requests': 0,
-    'Total Time': 0,
-    'Uptime': lambda s: time.time() - s['Start Time'],
-    'Requests': {},
-})
+appstats = logging.statistics.setdefault("CherryPy Applications", {})
+appstats.update(
+    {
+        "Enabled": True,
+        "Bytes Read/Request": lambda s: (
+            s["Total Requests"]
+            and (s["Total Bytes Read"] / float(s["Total Requests"]))
+            or 0.0
+        ),
+        "Bytes Read/Second": lambda s: s["Total Bytes Read"] / s["Uptime"](s),
+        "Bytes Written/Request": lambda s: (
+            s["Total Requests"]
+            and (s["Total Bytes Written"] / float(s["Total Requests"]))
+            or 0.0
+        ),
+        "Bytes Written/Second": lambda s: (
+            s["Total Bytes Written"] / s["Uptime"](s)
+        ),
+        "Current Time": lambda s: time.time(),
+        "Current Requests": 0,
+        "Requests/Second": lambda s: float(s["Total Requests"])
+        / s["Uptime"](s),
+        "Server Version": cherrypy.__version__,
+        "Start Time": time.time(),
+        "Total Bytes Read": 0,
+        "Total Bytes Written": 0,
+        "Total Requests": 0,
+        "Total Time": 0,
+        "Uptime": lambda s: time.time() - s["Start Time"],
+        "Requests": {},
+    }
+)
 
 
 def proc_time(s):
-    return time.time() - s['Start Time']
+    return time.time() - s["Start Time"]
 
 
 class ByteCountWrapper(object):
@@ -297,7 +300,7 @@ class ByteCountWrapper(object):
 
 
 def average_uriset_time(s):
-    return s['Count'] and (s['Sum'] / s['Count']) or 0
+    return s["Count"] and (s["Sum"] / s["Count"]) or 0
 
 
 def _get_threading_ident():
@@ -311,7 +314,7 @@ class StatsTool(cherrypy.Tool):
     """Record various information about the current request."""
 
     def __init__(self):
-        cherrypy.Tool.__init__(self, 'on_end_request', self.record_stop)
+        cherrypy.Tool.__init__(self, "on_end_request", self.record_stop)
 
     def _setup(self):
         """Hook this tool into cherrypy.request.
@@ -319,78 +322,91 @@ class StatsTool(cherrypy.Tool):
         The standard CherryPy request object will automatically call this
         method when the tool is "turned on" in config.
         """
-        if appstats.get('Enabled', False):
+        if appstats.get("Enabled", False):
             cherrypy.Tool._setup(self)
             self.record_start()
 
     def record_start(self):
         """Record the beginning of a request."""
         request = cherrypy.serving.request
-        if not hasattr(request.rfile, 'bytes_read'):
+        if not hasattr(request.rfile, "bytes_read"):
             request.rfile = ByteCountWrapper(request.rfile)
             request.body.fp = request.rfile
 
         r = request.remote
 
-        appstats['Current Requests'] += 1
-        appstats['Total Requests'] += 1
-        appstats['Requests'][_get_threading_ident()] = {
-            'Bytes Read': None,
-            'Bytes Written': None,
+        appstats["Current Requests"] += 1
+        appstats["Total Requests"] += 1
+        appstats["Requests"][_get_threading_ident()] = {
+            "Bytes Read": None,
+            "Bytes Written": None,
             # Use a lambda so the ip gets updated by tools.proxy later
-            'Client': lambda s: '%s:%s' % (r.ip, r.port),
-            'End Time': None,
-            'Processing Time': proc_time,
-            'Request-Line': request.request_line,
-            'Response Status': None,
-            'Start Time': time.time(),
+            "Client": lambda s: "%s:%s" % (r.ip, r.port),
+            "End Time": None,
+            "Processing Time": proc_time,
+            "Request-Line": request.request_line,
+            "Response Status": None,
+            "Start Time": time.time(),
         }
 
     def record_stop(
-            self, uriset=None, slow_queries=1.0, slow_queries_count=100,
-            debug=False, **kwargs):
+        self,
+        uriset=None,
+        slow_queries=1.0,
+        slow_queries_count=100,
+        debug=False,
+        **kwargs
+    ):
         """Record the end of a request."""
         resp = cherrypy.serving.response
-        w = appstats['Requests'][_get_threading_ident()]
+        w = appstats["Requests"][_get_threading_ident()]
 
         r = cherrypy.request.rfile.bytes_read
-        w['Bytes Read'] = r
-        appstats['Total Bytes Read'] += r
+        w["Bytes Read"] = r
+        appstats["Total Bytes Read"] += r
 
         if resp.stream:
-            w['Bytes Written'] = 'chunked'
+            w["Bytes Written"] = "chunked"
         else:
-            cl = int(resp.headers.get('Content-Length', 0))
-            w['Bytes Written'] = cl
-            appstats['Total Bytes Written'] += cl
+            cl = int(resp.headers.get("Content-Length", 0))
+            w["Bytes Written"] = cl
+            appstats["Total Bytes Written"] += cl
 
-        w['Response Status'] = \
-            getattr(resp, 'output_status', resp.status).decode()
+        w["Response Status"] = getattr(
+            resp, "output_status", resp.status
+        ).decode()
 
-        w['End Time'] = time.time()
-        p = w['End Time'] - w['Start Time']
-        w['Processing Time'] = p
-        appstats['Total Time'] += p
+        w["End Time"] = time.time()
+        p = w["End Time"] - w["Start Time"]
+        w["Processing Time"] = p
+        appstats["Total Time"] += p
 
-        appstats['Current Requests'] -= 1
+        appstats["Current Requests"] -= 1
 
         if debug:
-            cherrypy.log('Stats recorded: %s' % repr(w), 'TOOLS.CPSTATS')
+            cherrypy.log("Stats recorded: %s" % repr(w), "TOOLS.CPSTATS")
 
         if uriset:
-            rs = appstats.setdefault('URI Set Tracking', {})
-            r = rs.setdefault(uriset, {
-                'Min': None, 'Max': None, 'Count': 0, 'Sum': 0,
-                'Avg': average_uriset_time})
-            if r['Min'] is None or p < r['Min']:
-                r['Min'] = p
-            if r['Max'] is None or p > r['Max']:
-                r['Max'] = p
-            r['Count'] += 1
-            r['Sum'] += p
+            rs = appstats.setdefault("URI Set Tracking", {})
+            r = rs.setdefault(
+                uriset,
+                {
+                    "Min": None,
+                    "Max": None,
+                    "Count": 0,
+                    "Sum": 0,
+                    "Avg": average_uriset_time,
+                },
+            )
+            if r["Min"] is None or p < r["Min"]:
+                r["Min"] = p
+            if r["Max"] is None or p > r["Max"]:
+                r["Max"] = p
+            r["Count"] += 1
+            r["Sum"] += p
 
         if slow_queries and p > slow_queries:
-            sq = appstats.setdefault('Slow Queries', [])
+            sq = appstats.setdefault("Slow Queries", [])
             sq.append(w.copy())
             if len(sq) > slow_queries_count:
                 sq.pop(0)
@@ -407,17 +423,17 @@ missing = object()
 
 
 def locale_date(v):
-    return time.strftime('%c', time.gmtime(v))
+    return time.strftime("%c", time.gmtime(v))
 
 
 def iso_format(v):
-    return time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime(v))
+    return time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime(v))
 
 
 def pause_resume(ns):
     def _pause_resume(enabled):
-        pause_disabled = ''
-        resume_disabled = ''
+        pause_disabled = ""
+        resume_disabled = ""
         if enabled:
             resume_disabled = 'disabled="disabled" '
         else:
@@ -431,47 +447,53 @@ def pause_resume(ns):
             <input type="hidden" name="namespace" value="%s" />
             <input type="submit" value="Resume" %s/>
             </form>
-            """ % (ns, pause_disabled, ns, resume_disabled)
+            """ % (
+            ns,
+            pause_disabled,
+            ns,
+            resume_disabled,
+        )
+
     return _pause_resume
 
 
 class StatsPage(object):
 
     formatting = {
-        'CherryPy Applications': {
-            'Enabled': pause_resume('CherryPy Applications'),
-            'Bytes Read/Request': '%.3f',
-            'Bytes Read/Second': '%.3f',
-            'Bytes Written/Request': '%.3f',
-            'Bytes Written/Second': '%.3f',
-            'Current Time': iso_format,
-            'Requests/Second': '%.3f',
-            'Start Time': iso_format,
-            'Total Time': '%.3f',
-            'Uptime': '%.3f',
-            'Slow Queries': {
-                'End Time': None,
-                'Processing Time': '%.3f',
-                'Start Time': iso_format,
+        "CherryPy Applications": {
+            "Enabled": pause_resume("CherryPy Applications"),
+            "Bytes Read/Request": "%.3f",
+            "Bytes Read/Second": "%.3f",
+            "Bytes Written/Request": "%.3f",
+            "Bytes Written/Second": "%.3f",
+            "Current Time": iso_format,
+            "Requests/Second": "%.3f",
+            "Start Time": iso_format,
+            "Total Time": "%.3f",
+            "Uptime": "%.3f",
+            "Slow Queries": {
+                "End Time": None,
+                "Processing Time": "%.3f",
+                "Start Time": iso_format,
             },
-            'URI Set Tracking': {
-                'Avg': '%.3f',
-                'Max': '%.3f',
-                'Min': '%.3f',
-                'Sum': '%.3f',
+            "URI Set Tracking": {
+                "Avg": "%.3f",
+                "Max": "%.3f",
+                "Min": "%.3f",
+                "Sum": "%.3f",
             },
-            'Requests': {
-                'Bytes Read': '%s',
-                'Bytes Written': '%s',
-                'End Time': None,
-                'Processing Time': '%.3f',
-                'Start Time': None,
+            "Requests": {
+                "Bytes Read": "%s",
+                "Bytes Written": "%s",
+                "End Time": None,
+                "Processing Time": "%.3f",
+                "Start Time": None,
             },
         },
-        'CherryPy WSGIServer': {
-            'Enabled': pause_resume('CherryPy WSGIServer'),
-            'Connections/second': '%.3f',
-            'Start time': iso_format,
+        "CherryPy WSGIServer": {
+            "Enabled": pause_resume("CherryPy WSGIServer"),
+            "Connections/second": "%.3f",
+            "Start time": iso_format,
         },
     }
 
@@ -531,8 +553,8 @@ table.stats2 th {
         <tr>"""
                 yield (
                     """
-            <th>%(key)s</th><td id='%(title)s-%(key)s'>%(value)s</td>""" %
-                    vars()
+            <th>%(key)s</th><td id='%(title)s-%(key)s'>%(value)s</td>"""
+                    % vars()
                 )
                 if colnum == 2:
                     yield """
@@ -591,7 +613,7 @@ table.stats2 th {
                 fmt = ns_fmt.get(k, {})
                 if isinstance(v, dict):
                     headers, subrows = self.get_dict_collection(v, fmt)
-                    collections.append((k, ['ID'] + headers, subrows))
+                    collections.append((k, ["ID"] + headers, subrows))
                 elif isinstance(v, (list, tuple)):
                     headers, subrows = self.get_list_collection(v, fmt)
                     collections.append((k, headers, subrows))
@@ -600,7 +622,7 @@ table.stats2 th {
                     if format is None:
                         # Don't output this column.
                         continue
-                    if hasattr(format, '__call__'):
+                    if hasattr(format, "__call__"):
                         v = format(v)
                     elif format is not missing:
                         v = format % v
@@ -626,12 +648,12 @@ table.stats2 th {
         for k2, record in sorted(v.items()):
             subrow = [k2]
             for k3 in headers:
-                v3 = record.get(k3, '')
+                v3 = record.get(k3, "")
                 format = formatting.get(k3, missing)
                 if format is None:
                     # Don't output this column.
                     continue
-                if hasattr(format, '__call__'):
+                if hasattr(format, "__call__"):
                     v3 = format(v3)
                 elif format is not missing:
                     v3 = format % v3
@@ -658,12 +680,12 @@ table.stats2 th {
         for record in v:
             subrow = []
             for k3 in headers:
-                v3 = record.get(k3, '')
+                v3 = record.get(k3, "")
                 format = formatting.get(k3, missing)
                 if format is None:
                     # Don't output this column.
                     continue
-                if hasattr(format, '__call__'):
+                if hasattr(format, "__call__"):
                     v3 = format(v3)
                 elif format is not missing:
                     v3 = format % v3
@@ -673,22 +695,26 @@ table.stats2 th {
         return headers, subrows
 
     if json is not None:
+
         @cherrypy.expose
         def data(self):
             s = extrapolate_statistics(logging.statistics)
-            cherrypy.response.headers['Content-Type'] = 'application/json'
-            return json.dumps(s, sort_keys=True, indent=4).encode('utf-8')
+            cherrypy.response.headers["Content-Type"] = "application/json"
+            return json.dumps(s, sort_keys=True, indent=4).encode("utf-8")
 
     @cherrypy.expose
     def pause(self, namespace):
-        logging.statistics.get(namespace, {})['Enabled'] = False
-        raise cherrypy.HTTPRedirect('./')
-    pause.cp_config = {'tools.allow.on': True,
-                       'tools.allow.methods': ['POST']}
+        logging.statistics.get(namespace, {})["Enabled"] = False
+        raise cherrypy.HTTPRedirect("./")
+
+    pause.cp_config = {"tools.allow.on": True, "tools.allow.methods": ["POST"]}
 
     @cherrypy.expose
     def resume(self, namespace):
-        logging.statistics.get(namespace, {})['Enabled'] = True
-        raise cherrypy.HTTPRedirect('./')
-    resume.cp_config = {'tools.allow.on': True,
-                        'tools.allow.methods': ['POST']}
+        logging.statistics.get(namespace, {})["Enabled"] = True
+        raise cherrypy.HTTPRedirect("./")
+
+    resume.cp_config = {
+        "tools.allow.on": True,
+        "tools.allow.methods": ["POST"],
+    }

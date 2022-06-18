@@ -50,19 +50,22 @@ class OggTheoraInfo(StreamInfo):
 
     def __init__(self, fileobj):
         page = OggPage(fileobj)
-        while not page.packets or \
-                not page.packets[0].startswith(b"\x80theora"):
+        while not page.packets or not page.packets[0].startswith(
+            b"\x80theora"
+        ):
             page = OggPage(fileobj)
         if not page.first:
             raise OggTheoraHeaderError(
-                "page has ID header, but doesn't start a stream")
+                "page has ID header, but doesn't start a stream"
+            )
         data = page.packets[0]
         if len(data) < 42:
             raise OggTheoraHeaderError("Truncated header")
         vmaj, vmin = struct.unpack("2B", data[7:9])
         if (vmaj, vmin) != (3, 2):
             raise OggTheoraHeaderError(
-                "found Theora version %d.%d != 3.2" % (vmaj, vmin))
+                "found Theora version %d.%d != 3.2" % (vmaj, vmin)
+            )
         fps_num, fps_den = struct.unpack(">2I", data[22:30])
         if not fps_den or not fps_num:
             raise OggTheoraHeaderError("FRN or FRD is equal to zero")
@@ -82,8 +85,7 @@ class OggTheoraInfo(StreamInfo):
         self.length = frames / float(self.fps)
 
     def pprint(self):
-        return u"Ogg Theora, %.2f seconds, %d bps" % (self.length,
-                                                      self.bitrate)
+        return "Ogg Theora, %.2f seconds, %d bps" % (self.length, self.bitrate)
 
 
 class OggTheoraCommentDict(VCommentDict):
@@ -109,8 +111,9 @@ class OggTheoraCommentDict(VCommentDict):
 
         fileobj.seek(0)
         page = OggPage(fileobj)
-        while not page.packets or \
-                not page.packets[0].startswith(b"\x81theora"):
+        while not page.packets or not page.packets[0].startswith(
+            b"\x81theora"
+        ):
             page = OggPage(fileobj)
 
         old_pages = [page]
@@ -157,8 +160,11 @@ class OggTheora(OggFileType):
 
     @staticmethod
     def score(filename, fileobj, header):
-        return (header.startswith(b"OggS") *
-                ((b"\x80theora" in header) + (b"\x81theora" in header)) * 2)
+        return (
+            header.startswith(b"OggS")
+            * ((b"\x80theora" in header) + (b"\x81theora" in header))
+            * 2
+        )
 
 
 Open = OggTheora
@@ -167,7 +173,7 @@ Open = OggTheora
 @convert_error(IOError, error)
 @loadfile(method=False, writable=True)
 def delete(filething):
-    """ delete(filething)
+    """delete(filething)
 
     Arguments:
         filething (filething)

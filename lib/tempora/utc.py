@@ -27,10 +27,12 @@ import datetime as std
 import functools
 
 
-__all__ = ['now', 'fromtimestamp', 'datetime', 'time']
+__all__ = ["now", "fromtimestamp", "datetime", "time"]
 
 
 now = functools.partial(std.datetime.now, std.timezone.utc)
-fromtimestamp = functools.partial(std.datetime.fromtimestamp, tz=std.timezone.utc)
+fromtimestamp = functools.partial(
+    std.datetime.fromtimestamp, tz=std.timezone.utc
+)
 datetime = functools.partial(std.datetime, tzinfo=std.timezone.utc)
 time = functools.partial(std.time, tzinfo=std.timezone.utc)

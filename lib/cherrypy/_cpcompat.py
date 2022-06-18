@@ -21,7 +21,7 @@ and their .encode/.decode methods as needed.
 import http.client
 
 
-def ntob(n, encoding='ISO-8859-1'):
+def ntob(n, encoding="ISO-8859-1"):
     """Return the given native string as a byte string in the given
     encoding.
     """
@@ -30,7 +30,7 @@ def ntob(n, encoding='ISO-8859-1'):
     return n.encode(encoding)
 
 
-def ntou(n, encoding='ISO-8859-1'):
+def ntou(n, encoding="ISO-8859-1"):
     """Return the given native string as a unicode string with the given
     encoding.
     """
@@ -39,7 +39,7 @@ def ntou(n, encoding='ISO-8859-1'):
     return n
 
 
-def tonative(n, encoding='ISO-8859-1'):
+def tonative(n, encoding="ISO-8859-1"):
     """Return the given string as a native string in the given encoding."""
     # In Python 3, the native string type is unicode
     if isinstance(n, bytes):
@@ -49,11 +49,11 @@ def tonative(n, encoding='ISO-8859-1'):
 
 def assert_native(n):
     if not isinstance(n, str):
-        raise TypeError('n must be a native str (got %s)' % type(n).__name__)
+        raise TypeError("n must be a native str (got %s)" % type(n).__name__)
 
 
 # Some platforms don't expose HTTPSConnection, so handle it separately
-HTTPSConnection = getattr(http.client, 'HTTPSConnection', None)
+HTTPSConnection = getattr(http.client, "HTTPSConnection", None)
 
 
 text_or_bytes = str, bytes

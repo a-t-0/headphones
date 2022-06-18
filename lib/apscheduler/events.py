@@ -1,7 +1,21 @@
-__all__ = ('EVENT_SCHEDULER_START', 'EVENT_SCHEDULER_SHUTDOWN', 'EVENT_EXECUTOR_ADDED', 'EVENT_EXECUTOR_REMOVED',
-           'EVENT_JOBSTORE_ADDED', 'EVENT_JOBSTORE_REMOVED', 'EVENT_ALL_JOBS_REMOVED', 'EVENT_JOB_ADDED',
-           'EVENT_JOB_REMOVED', 'EVENT_JOB_MODIFIED', 'EVENT_JOB_EXECUTED', 'EVENT_JOB_ERROR', 'EVENT_JOB_MISSED',
-           'SchedulerEvent', 'JobEvent', 'JobExecutionEvent')
+__all__ = (
+    "EVENT_SCHEDULER_START",
+    "EVENT_SCHEDULER_SHUTDOWN",
+    "EVENT_EXECUTOR_ADDED",
+    "EVENT_EXECUTOR_REMOVED",
+    "EVENT_JOBSTORE_ADDED",
+    "EVENT_JOBSTORE_REMOVED",
+    "EVENT_ALL_JOBS_REMOVED",
+    "EVENT_JOB_ADDED",
+    "EVENT_JOB_REMOVED",
+    "EVENT_JOB_MODIFIED",
+    "EVENT_JOB_EXECUTED",
+    "EVENT_JOB_ERROR",
+    "EVENT_JOB_MISSED",
+    "SchedulerEvent",
+    "JobEvent",
+    "JobExecutionEvent",
+)
 
 
 EVENT_SCHEDULER_START = 1
@@ -17,9 +31,18 @@ EVENT_JOB_MODIFIED = 512
 EVENT_JOB_EXECUTED = 1024
 EVENT_JOB_ERROR = 2048
 EVENT_JOB_MISSED = 4096
-EVENT_ALL = (EVENT_SCHEDULER_START | EVENT_SCHEDULER_SHUTDOWN | EVENT_JOBSTORE_ADDED | EVENT_JOBSTORE_REMOVED |
-             EVENT_JOB_ADDED | EVENT_JOB_REMOVED | EVENT_JOB_MODIFIED | EVENT_JOB_EXECUTED |
-             EVENT_JOB_ERROR | EVENT_JOB_MISSED)
+EVENT_ALL = (
+    EVENT_SCHEDULER_START
+    | EVENT_SCHEDULER_SHUTDOWN
+    | EVENT_JOBSTORE_ADDED
+    | EVENT_JOBSTORE_REMOVED
+    | EVENT_JOB_ADDED
+    | EVENT_JOB_REMOVED
+    | EVENT_JOB_MODIFIED
+    | EVENT_JOB_EXECUTED
+    | EVENT_JOB_ERROR
+    | EVENT_JOB_MISSED
+)
 
 
 class SchedulerEvent(object):
@@ -36,7 +59,7 @@ class SchedulerEvent(object):
         self.alias = alias
 
     def __repr__(self):
-        return '<%s (code=%d)>' % (self.__class__.__name__, self.code)
+        return "<%s (code=%d)>" % (self.__class__.__name__, self.code)
 
 
 class JobEvent(SchedulerEvent):
@@ -65,7 +88,16 @@ class JobExecutionEvent(JobEvent):
     :ivar traceback: a formatted traceback for the exception
     """
 
-    def __init__(self, code, job_id, jobstore, scheduled_run_time, retval=None, exception=None, traceback=None):
+    def __init__(
+        self,
+        code,
+        job_id,
+        jobstore,
+        scheduled_run_time,
+        retval=None,
+        exception=None,
+        traceback=None,
+    ):
         super(JobExecutionEvent, self).__init__(code, job_id, jobstore)
         self.scheduled_run_time = scheduled_run_time
         self.retval = retval

@@ -1,14 +1,20 @@
 from abc import abstractmethod
 from typing import Any
 
-class Adapter():
+class Adapter:
     certificate: Any
     private_key: Any
     certificate_chain: Any
     ciphers: Any
     context: Any
     @abstractmethod
-    def __init__(self, certificate, private_key, certificate_chain: Any | None = ..., ciphers: Any | None = ...): ...
+    def __init__(
+        self,
+        certificate,
+        private_key,
+        certificate_chain: Any | None = ...,
+        ciphers: Any | None = ...,
+    ): ...
     @abstractmethod
     def bind(self, sock): ...
     @abstractmethod

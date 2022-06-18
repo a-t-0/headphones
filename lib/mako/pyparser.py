@@ -51,7 +51,7 @@ def parse(code, mode="exec", **exception_kwargs):
                 compat.exception_as(),
                 code[0:50],
             ),
-            **exception_kwargs
+            **exception_kwargs,
         )
 
 
@@ -177,7 +177,7 @@ class FindIdentifiers(_ast_util.NodeVisitor):
                         "names must be explicitly declared.  Please use the "
                         "form 'from <modulename> import <name1>, <name2>, "
                         "...' instead.",
-                        **self.exception_kwargs
+                        **self.exception_kwargs,
                     )
                 self._add_declared(name.name)
 

@@ -36,10 +36,14 @@ class ID3OptionParser(OptionParser):
         version = "mid3cp %s\nUses Mutagen %s" % (my_version, mutagen_version)
         self.disable_interspersed_args()
         OptionParser.__init__(
-            self, version=version,
+            self,
+            version=version,
             usage="%prog [option(s)] <src> <dst>",
-            description=("Copies ID3 tags from <src> to <dst>. Mutagen-based "
-                         "replacement for id3lib's id3cp."))
+            description=(
+                "Copies ID3 tags from <src> to <dst>. Mutagen-based "
+                "replacement for id3lib's id3cp."
+            ),
+        )
 
 
 def copy(src, dst, merge, write_v1=True, excluded_tags=None, verbose=False):
@@ -51,14 +55,14 @@ def copy(src, dst, merge, write_v1=True, excluded_tags=None, verbose=False):
     try:
         id3 = mutagen.id3.ID3(src, translate=False)
     except mutagen.id3.ID3NoHeaderError:
-        print_(u"No ID3 header found in ", src, file=sys.stderr)
+        print_("No ID3 header found in ", src, file=sys.stderr)
         return 1
     except Exception as err:
         print_(str(err), file=sys.stderr)
         return 1
 
     if verbose:
-        print_(u"File", src, u"contains:", file=sys.stderr)
+        print_("File", src, "contains:", file=sys.stderr)
         print_(id3.pprint(), file=sys.stderr)
 
     for tag in excluded_tags:
@@ -90,26 +94,46 @@ def copy(src, dst, merge, write_v1=True, excluded_tags=None, verbose=False):
     try:
         id3.save(dst, v1=(2 if write_v1 else 0), v2_version=v2_version)
     except Exception as err:
-        print_(u"Error saving", dst, u":\n%s" % str(err),
-               file=sys.stderr)
+        print_("Error saving", dst, ":\n%s" % str(err), file=sys.stderr)
         return 1
     else:
         if verbose:
-            print_(u"Successfully saved", dst, file=sys.stderr)
+            print_("Successfully saved", dst, file=sys.stderr)
         return 0
 
 
 def main(argv):
     parser = ID3OptionParser()
-    parser.add_option("-v", "--verbose", action="store_true", dest="verbose",
-                      help="print out saved tags", default=False)
-    parser.add_option("--write-v1", action="store_true", dest="write_v1",
-                      default=False, help="write id3v1 tags")
-    parser.add_option("-x", "--exclude-tag", metavar="TAG", action="append",
-                      dest="x", help="exclude the specified tag", default=[])
-    parser.add_option("--merge", action="store_true",
-                      help="Copy over frames instead of the whole ID3 tag",
-                      default=False)
+    parser.add_option(
+        "-v",
+        "--verbose",
+        action="store_true",
+        dest="verbose",
+        help="print out saved tags",
+        default=False,
+    )
+    parser.add_option(
+        "--write-v1",
+        action="store_true",
+        dest="write_v1",
+        default=False,
+        help="write id3v1 tags",
+    )
+    parser.add_option(
+        "-x",
+        "--exclude-tag",
+        metavar="TAG",
+        action="append",
+        dest="x",
+        help="exclude the specified tag",
+        default=[],
+    )
+    parser.add_option(
+        "--merge",
+        action="store_true",
+        help="Copy over frames instead of the whole ID3 tag",
+        default=False,
+    )
     (options, args) = parser.parse_args(argv[1:])
 
     if len(args) != 2:
@@ -119,12 +143,12 @@ def main(argv):
     (src, dst) = args
 
     if not os.path.isfile(src):
-        print_(u"File not found:", src, file=sys.stderr)
+        print_("File not found:", src, file=sys.stderr)
         parser.print_help(file=sys.stderr)
         return 1
 
     if not os.path.isfile(dst):
-        printerr(u"File not found:", dst, file=sys.stderr)
+        printerr("File not found:", dst, file=sys.stderr)
         parser.print_help(file=sys.stderr)
         return 1
 
@@ -132,8 +156,14 @@ def main(argv):
     excluded_tags = [x.strip() for x in options.x]
 
     with _sig.block():
-        return copy(src, dst, options.merge, options.write_v1, excluded_tags,
-                    options.verbose)
+        return copy(
+            src,
+            dst,
+            options.merge,
+            options.write_v1,
+            excluded_tags,
+            options.verbose,
+        )
 
 
 def entry_point():

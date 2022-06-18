@@ -4,6 +4,7 @@
 import logging
 import logutils
 
+
 class LoggerAdapter(object):
     """
     An adapter for loggers which makes it easier to specify contextual
@@ -113,4 +114,3 @@ class LoggerAdapter(object):
         See if the underlying logger has any handlers.
         """
         return logutils.hasHandlers(self.logger)
-

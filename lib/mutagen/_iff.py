@@ -39,7 +39,7 @@ class EmptyChunk(InvalidChunk):
 
 
 def is_valid_chunk_id(id):
-    """ is_valid_chunk_id(FOURCC)
+    """is_valid_chunk_id(FOURCC)
 
     Arguments:
         id (FOURCC)
@@ -49,11 +49,12 @@ def is_valid_chunk_id(id):
     Check if argument id is valid FOURCC type.
     """
 
-    assert isinstance(id, str), \
-        'id is of type %s, must be str: %r' % (type(id), id)
+    assert isinstance(id, str), "id is of type %s, must be str: %r" % (
+        type(id),
+        id,
+    )
 
-    return ((0 < len(id) <= 4) and (min(id) >= ' ') and
-            (max(id) <= '~'))
+    return (0 < len(id) <= 4) and (min(id) >= " ") and (max(id) <= "~")
 
 
 #  Assert FOURCC formatted valid
@@ -101,15 +102,15 @@ class IffChunk(object):
     def parse(cls, fileobj, parent_chunk=None):
         header = fileobj.read(cls.HEADER_SIZE)
         if len(header) < cls.HEADER_SIZE:
-            raise EmptyChunk('Header size < %i' % cls.HEADER_SIZE)
+            raise EmptyChunk("Header size < %i" % cls.HEADER_SIZE)
         id, data_size = cls.parse_header(header)
         try:
-            id = id.decode('ascii').rstrip()
+            id = id.decode("ascii").rstrip()
         except UnicodeDecodeError as e:
             raise InvalidChunk(e)
 
         if not is_valid_chunk_id(id):
-            raise InvalidChunk('Invalid chunk ID %r' % id)
+            raise InvalidChunk("Invalid chunk ID %r" % id)
 
         return cls.get_class(id)(fileobj, id, data_size, parent_chunk)
 
@@ -123,9 +124,17 @@ class IffChunk(object):
         self._calculate_size()
 
     def __repr__(self):
-        return ("<%s id=%s, offset=%i, size=%i, data_offset=%i, data_size=%i>"
-            % (type(self).__name__, self.id, self.offset, self.size,
-               self.data_offset, self.data_size))
+        return (
+            "<%s id=%s, offset=%i, size=%i, data_offset=%i, data_size=%i>"
+            % (
+                type(self).__name__,
+                self.id,
+                self.offset,
+                self.size,
+                self.data_offset,
+                self.data_size,
+            )
+        )
 
     def read(self):
         """Read the chunks data"""
@@ -145,7 +154,7 @@ class IffChunk(object):
         padding = self.padding()
         if padding:
             self._fileobj.seek(self.data_offset + self.data_size)
-            self._fileobj.write(b'\x00' * padding)
+            self._fileobj.write(b"\x00" * padding)
 
     def delete(self):
         """Removes the chunk from the file"""
@@ -167,7 +176,8 @@ class IffChunk(object):
             self.parent_chunk._update_size(self.size - old_size, self)
         if changed_subchunk:
             self._update_sibling_offsets(
-                changed_subchunk, old_size - self.size)
+                changed_subchunk, old_size - self.size
+            )
 
     def _calculate_size(self):
         self.size = self.HEADER_SIZE + self.data_size + self.padding()
@@ -177,8 +187,12 @@ class IffChunk(object):
         """Resize the file and update the chunk sizes"""
 
         padding = new_data_size % 2
-        resize_bytes(self._fileobj, self.data_size + self.padding(),
-                     new_data_size + padding, self.data_offset)
+        resize_bytes(
+            self._fileobj,
+            self.data_size + self.padding(),
+            new_data_size + padding,
+            self.data_offset,
+        )
         size_diff = new_data_size - self.data_size
         self._update_size(size_diff)
         self._fileobj.flush()
@@ -191,7 +205,7 @@ class IffChunk(object):
         return self.data_size % 2
 
 
-class IffContainerChunkMixin():
+class IffContainerChunkMixin:
     """A IFF chunk containing other chunks.
 
     A container chunk can have an additional name as the first 4 bytes of the
@@ -209,13 +223,12 @@ class IffContainerChunkMixin():
         # Lists can store an additional name identifier before the subchunks
         self.__name_size = name_size
         if self.data_size < name_size:
-            raise InvalidChunk(
-                'Container chunk data size < %i' % name_size)
+            raise InvalidChunk("Container chunk data size < %i" % name_size)
 
         # Read the container name
         if name_size > 0:
             try:
-                self.name = self._fileobj.read(name_size).decode('ascii')
+                self.name = self._fileobj.read(name_size).decode("ascii")
             except UnicodeDecodeError as e:
                 raise error(e)
         else:
@@ -259,7 +272,7 @@ class IffContainerChunkMixin():
             size += data_size + padding
         insert_bytes(self._fileobj, size, next_offset)
         self._fileobj.seek(next_offset)
-        self.write_new_header(id_.ljust(4).encode('ascii'), data_size)
+        self.write_new_header(id_.ljust(4).encode("ascii"), data_size)
         self._fileobj.seek(next_offset)
         chunk = self.parse_next_subchunk()
         self._update_size(chunk.size)
@@ -301,10 +314,9 @@ class IffContainerChunkMixin():
         self.__subchunks.remove(chunk)
 
     def _update_sibling_offsets(self, changed_subchunk, size_diff):
-        """Update the offsets of subchunks after `changed_subchunk`.
-        """
+        """Update the offsets of subchunks after `changed_subchunk`."""
         index = self.__subchunks.index(changed_subchunk)
-        sibling_chunks = self.__subchunks[index + 1:len(self.__subchunks)]
+        sibling_chunks = self.__subchunks[index + 1 : len(self.__subchunks)]
         for sibling in sibling_chunks:
             sibling.offset -= size_diff
             sibling.data_offset -= size_diff
@@ -346,28 +358,33 @@ class IffID3(ID3):
 
     def _pre_load_header(self, fileobj):
         try:
-            fileobj.seek(self._load_file(fileobj)['ID3'].data_offset)
+            fileobj.seek(self._load_file(fileobj)["ID3"].data_offset)
         except (InvalidChunk, KeyError):
             raise ID3NoHeaderError("No ID3 chunk")
 
     @convert_error(IOError, error)
     @loadfile(writable=True)
-    def save(self, filething=None, v2_version=4, v23_sep='/', padding=None):
+    def save(self, filething=None, v2_version=4, v23_sep="/", padding=None):
         """Save ID3v2 data to the IFF file"""
 
         fileobj = filething.fileobj
 
         iff_file = self._load_file(fileobj)
 
-        if 'ID3' not in iff_file:
-            iff_file.insert_chunk('ID3')
+        if "ID3" not in iff_file:
+            iff_file.insert_chunk("ID3")
 
-        chunk = iff_file['ID3']
+        chunk = iff_file["ID3"]
 
         try:
             data = self._prepare_data(
-                fileobj, chunk.data_offset, chunk.data_size, v2_version,
-                v23_sep, padding)
+                fileobj,
+                chunk.data_offset,
+                chunk.data_size,
+                v2_version,
+                v23_sep,
+                padding,
+            )
         except ID3Error as e:
             reraise(error, e, sys.exc_info()[2])
 
@@ -381,7 +398,7 @@ class IffID3(ID3):
 
         try:
             iff_file = self._load_file(filething.fileobj)
-            del iff_file['ID3']
+            del iff_file["ID3"]
         except KeyError:
             pass
         self.clear()

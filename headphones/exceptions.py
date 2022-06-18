@@ -30,4 +30,5 @@ class SoftChrootError(HeadphonesException):
     """
     Fatal errors in SoftChroot module
     """
+
     pass

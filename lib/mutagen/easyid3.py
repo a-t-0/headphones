@@ -19,7 +19,7 @@ from mutagen._util import DictMixin, dict_match, loadfile
 from mutagen.id3 import ID3, error, delete, ID3FileType
 
 
-__all__ = ['EasyID3', 'Open', 'delete']
+__all__ = ["EasyID3", "Open", "delete"]
 
 
 class EasyID3KeyError(KeyError, ValueError, error):
@@ -78,8 +78,9 @@ class EasyID3(DictMixin, Metadata):
     ListFallback = None
 
     @classmethod
-    def RegisterKey(cls, key,
-                    getter=None, setter=None, deleter=None, lister=None):
+    def RegisterKey(
+        cls, key, getter=None, setter=None, deleter=None, lister=None
+    ):
         """Register a new key mapping.
 
         A key mapping is four functions, a getter, setter, deleter,
@@ -116,6 +117,7 @@ class EasyID3(DictMixin, Metadata):
 
             EasyID3.RegisterTextKey("title", "TIT2")
         """
+
         def getter(id3, key):
             return list(id3[frameid])
 
@@ -129,7 +131,7 @@ class EasyID3(DictMixin, Metadata):
                 frame.text = value
 
         def deleter(id3, key):
-            del(id3[frameid])
+            del id3[frameid]
 
         cls.RegisterKey(key, getter, setter, deleter)
 
@@ -152,14 +154,14 @@ class EasyID3(DictMixin, Metadata):
             enc = 0
             # Store 8859-1 if we can, per MusicBrainz spec.
             for v in value:
-                if v and max(v) > u'\x7f':
+                if v and max(v) > "\x7f":
                     enc = 3
                     break
 
             id3.add(mutagen.id3.TXXX(encoding=enc, text=value, desc=desc))
 
         def deleter(id3, key):
-            del(id3[frameid])
+            del id3[frameid]
 
         cls.RegisterKey(key, getter, setter, deleter)
 
@@ -168,12 +170,14 @@ class EasyID3(DictMixin, Metadata):
         if filename is not None:
             self.load(filename)
 
-    load = property(lambda s: s.__id3.load,
-                    lambda s, v: setattr(s.__id3, 'load', v))
+    load = property(
+        lambda s: s.__id3.load, lambda s, v: setattr(s.__id3, "load", v)
+    )
 
     @loadfile(writable=True, create=True)
-    def save(self, filething=None, v1=1, v2_version=4, v23_sep='/',
-             padding=None):
+    def save(
+        self, filething=None, v1=1, v2_version=4, v23_sep="/", padding=None
+    ):
         """save(filething=None, v1=1, v2_version=4, v23_sep='/', padding=None)
 
         Save changes to a file.
@@ -189,19 +193,31 @@ class EasyID3(DictMixin, Metadata):
             try:
                 self.__id3.update_to_v23()
                 self.__id3.save(
-                    filething, v1=v1, v2_version=v2_version, v23_sep=v23_sep,
-                    padding=padding)
+                    filething,
+                    v1=v1,
+                    v2_version=v2_version,
+                    v23_sep=v23_sep,
+                    padding=padding,
+                )
             finally:
                 self.__id3._restore(backup)
         else:
-            self.__id3.save(filething, v1=v1, v2_version=v2_version,
-                            v23_sep=v23_sep, padding=padding)
+            self.__id3.save(
+                filething,
+                v1=v1,
+                v2_version=v2_version,
+                v23_sep=v23_sep,
+                padding=padding,
+            )
 
-    delete = property(lambda s: s.__id3.delete,
-                      lambda s, v: setattr(s.__id3, 'delete', v))
+    delete = property(
+        lambda s: s.__id3.delete, lambda s, v: setattr(s.__id3, "delete", v)
+    )
 
-    filename = property(lambda s: s.__id3.filename,
-                        lambda s, fn: setattr(s.__id3, 'filename', fn))
+    filename = property(
+        lambda s: s.__id3.filename,
+        lambda s, fn: setattr(s.__id3, "filename", fn),
+    )
 
     @property
     def size(self):
@@ -269,7 +285,7 @@ def genre_set(id3, key, value):
 
 
 def genre_delete(id3, key):
-    del(id3["TCON"])
+    del id3["TCON"]
 
 
 def date_get(id3, key):
@@ -281,7 +297,7 @@ def date_set(id3, key, value):
 
 
 def date_delete(id3, key):
-    del(id3["TDRC"])
+    del id3["TDRC"]
 
 
 def original_date_get(id3, key):
@@ -293,7 +309,7 @@ def original_date_set(id3, key, value):
 
 
 def original_date_delete(id3, key):
-    del(id3["TDOR"])
+    del id3["TDOR"]
 
 
 def performer_get(id3, key):
@@ -338,7 +354,7 @@ def performer_delete(id3, key):
     elif people:
         mcl.people = people
     else:
-        del(id3["TMCL"])
+        del id3["TMCL"]
 
 
 def performer_list(id3, key):
@@ -351,13 +367,13 @@ def performer_list(id3, key):
 
 
 def musicbrainz_trackid_get(id3, key):
-    return [id3["UFID:http://musicbrainz.org"].data.decode('ascii')]
+    return [id3["UFID:http://musicbrainz.org"].data.decode("ascii")]
 
 
 def musicbrainz_trackid_set(id3, key, value):
     if len(value) != 1:
         raise ValueError("only one track ID may be set per song")
-    value = value[0].encode('ascii')
+    value = value[0].encode("ascii")
     try:
         frame = id3["UFID:http://musicbrainz.org"]
     except KeyError:
@@ -368,7 +384,7 @@ def musicbrainz_trackid_set(id3, key, value):
 
 
 def musicbrainz_trackid_delete(id3, key):
-    del(id3["UFID:http://musicbrainz.org"])
+    del id3["UFID:http://musicbrainz.org"]
 
 
 def website_get(id3, key):
@@ -395,13 +411,14 @@ def gain_get(id3, key):
     except KeyError:
         raise EasyID3KeyError(key)
     else:
-        return [u"%+f dB" % frame.gain]
+        return ["%+f dB" % frame.gain]
 
 
 def gain_set(id3, key, value):
     if len(value) != 1:
         raise ValueError(
-            "there must be exactly one gain value, not %r.", value)
+            "there must be exactly one gain value, not %r.", value
+        )
     gain = float(value[0].split()[0])
     try:
         frame = id3["RVA2:" + key[11:-5]]
@@ -420,7 +437,7 @@ def gain_delete(id3, key):
         if frame.peak:
             frame.gain = 0.0
         else:
-            del(id3["RVA2:" + key[11:-5]])
+            del id3["RVA2:" + key[11:-5]]
 
 
 def peak_get(id3, key):
@@ -429,13 +446,14 @@ def peak_get(id3, key):
     except KeyError:
         raise EasyID3KeyError(key)
     else:
-        return [u"%f" % frame.peak]
+        return ["%f" % frame.peak]
 
 
 def peak_set(id3, key, value):
     if len(value) != 1:
         raise ValueError(
-            "there must be exactly one peak value, not %r.", value)
+            "there must be exactly one peak value, not %r.", value
+        )
     peak = float(value[0])
     if peak >= 2 or peak < 0:
         raise ValueError("peak must be => 0 and < 2.")
@@ -456,7 +474,7 @@ def peak_delete(id3, key):
         if frame.gain:
             frame.peak = 0.0
         else:
-            del(id3["RVA2:" + key[11:-5]])
+            del id3["RVA2:" + key[11:-5]]
 
 
 def peakgain_list(id3, key):
@@ -465,6 +483,7 @@ def peakgain_list(id3, key):
         keys.append("replaygain_%s_gain" % frame.desc)
         keys.append("replaygain_%s_peak" % frame.desc)
     return keys
+
 
 for frameid, key in {
     "TALB": "album",
@@ -500,16 +519,26 @@ for frameid, key in {
 
 EasyID3.RegisterKey("genre", genre_get, genre_set, genre_delete)
 EasyID3.RegisterKey("date", date_get, date_set, date_delete)
-EasyID3.RegisterKey("originaldate", original_date_get, original_date_set,
-                    original_date_delete)
 EasyID3.RegisterKey(
-    "performer:*", performer_get, performer_set, performer_delete,
-    performer_list)
-EasyID3.RegisterKey("musicbrainz_trackid", musicbrainz_trackid_get,
-                    musicbrainz_trackid_set, musicbrainz_trackid_delete)
+    "originaldate", original_date_get, original_date_set, original_date_delete
+)
+EasyID3.RegisterKey(
+    "performer:*",
+    performer_get,
+    performer_set,
+    performer_delete,
+    performer_list,
+)
+EasyID3.RegisterKey(
+    "musicbrainz_trackid",
+    musicbrainz_trackid_get,
+    musicbrainz_trackid_set,
+    musicbrainz_trackid_delete,
+)
 EasyID3.RegisterKey("website", website_get, website_set, website_delete)
 EasyID3.RegisterKey(
-    "replaygain_*_gain", gain_get, gain_set, gain_delete, peakgain_list)
+    "replaygain_*_gain", gain_get, gain_set, gain_delete, peakgain_list
+)
 EasyID3.RegisterKey("replaygain_*_peak", peak_get, peak_set, peak_delete)
 
 # At various times, information for this came from
@@ -517,26 +546,26 @@ EasyID3.RegisterKey("replaygain_*_peak", peak_get, peak_set, peak_delete)
 # http://bugs.musicbrainz.org/ticket/1383
 # http://musicbrainz.org/doc/MusicBrainzTag
 for desc, key in {
-    u"MusicBrainz Artist Id": "musicbrainz_artistid",
-    u"MusicBrainz Album Id": "musicbrainz_albumid",
-    u"MusicBrainz Album Artist Id": "musicbrainz_albumartistid",
-    u"MusicBrainz TRM Id": "musicbrainz_trmid",
-    u"MusicIP PUID": "musicip_puid",
-    u"MusicMagic Fingerprint": "musicip_fingerprint",
-    u"MusicBrainz Album Status": "musicbrainz_albumstatus",
-    u"MusicBrainz Album Type": "musicbrainz_albumtype",
-    u"MusicBrainz Album Release Country": "releasecountry",
-    u"MusicBrainz Disc Id": "musicbrainz_discid",
-    u"ASIN": "asin",
-    u"ALBUMARTISTSORT": "albumartistsort",
-    u"PERFORMER": "performer",
-    u"BARCODE": "barcode",
-    u"CATALOGNUMBER": "catalognumber",
-    u"MusicBrainz Release Track Id": "musicbrainz_releasetrackid",
-    u"MusicBrainz Release Group Id": "musicbrainz_releasegroupid",
-    u"MusicBrainz Work Id": "musicbrainz_workid",
-    u"Acoustid Fingerprint": "acoustid_fingerprint",
-    u"Acoustid Id": "acoustid_id",
+    "MusicBrainz Artist Id": "musicbrainz_artistid",
+    "MusicBrainz Album Id": "musicbrainz_albumid",
+    "MusicBrainz Album Artist Id": "musicbrainz_albumartistid",
+    "MusicBrainz TRM Id": "musicbrainz_trmid",
+    "MusicIP PUID": "musicip_puid",
+    "MusicMagic Fingerprint": "musicip_fingerprint",
+    "MusicBrainz Album Status": "musicbrainz_albumstatus",
+    "MusicBrainz Album Type": "musicbrainz_albumtype",
+    "MusicBrainz Album Release Country": "releasecountry",
+    "MusicBrainz Disc Id": "musicbrainz_discid",
+    "ASIN": "asin",
+    "ALBUMARTISTSORT": "albumartistsort",
+    "PERFORMER": "performer",
+    "BARCODE": "barcode",
+    "CATALOGNUMBER": "catalognumber",
+    "MusicBrainz Release Track Id": "musicbrainz_releasetrackid",
+    "MusicBrainz Release Group Id": "musicbrainz_releasegroupid",
+    "MusicBrainz Work Id": "musicbrainz_workid",
+    "Acoustid Fingerprint": "acoustid_fingerprint",
+    "Acoustid Id": "acoustid_id",
 }.items():
     EasyID3.RegisterTXXXKey(key, desc)
 

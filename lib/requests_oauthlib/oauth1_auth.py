@@ -40,7 +40,7 @@ class OAuth1(AuthBase):
         decoding="utf-8",
         client_class=None,
         force_include_body=False,
-        **kwargs
+        **kwargs,
     ):
 
         try:
@@ -63,7 +63,7 @@ class OAuth1(AuthBase):
             rsa_key,
             verifier,
             decoding=decoding,
-            **kwargs
+            **kwargs,
         )
 
     def __call__(self, r):

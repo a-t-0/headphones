@@ -23,7 +23,7 @@
 import sys
 import ctypes
 
-if sys.platform == 'win32':
+if sys.platform == "win32":
     from ctypes import WinDLL, CDLL, wintypes
 
     shell32 = WinDLL("shell32")
@@ -37,7 +37,9 @@ if sys.platform == 'win32':
 
     CommandLineToArgvW = shell32.CommandLineToArgvW
     CommandLineToArgvW.argtypes = [
-        wintypes.LPCWSTR, ctypes.POINTER(ctypes.c_int)]
+        wintypes.LPCWSTR,
+        ctypes.POINTER(ctypes.c_int),
+    ]
     CommandLineToArgvW.restype = ctypes.POINTER(wintypes.LPWSTR)
 
     LocalFree = kernel32.LocalFree
@@ -76,7 +78,8 @@ if sys.platform == 'win32':
     INTERNET_MAX_SCHEME_LENGTH = 32
     INTERNET_MAX_PATH_LENGTH = 2048
     INTERNET_MAX_URL_LENGTH = (
-        INTERNET_MAX_SCHEME_LENGTH + len("://") + INTERNET_MAX_PATH_LENGTH)
+        INTERNET_MAX_SCHEME_LENGTH + len("://") + INTERNET_MAX_PATH_LENGTH
+    )
 
     FOREGROUND_BLUE = 0x0001
     FOREGROUND_GREEN = 0x0002
@@ -92,8 +95,7 @@ if sys.platform == 'win32':
     COMMON_LVB_UNDERSCORE = 0x8000
 
     UrlCreateFromPathW = shlwapi.UrlCreateFromPathW
-    UrlCreateFromPathW.argtypes = [
-        PCTSTR, PTSTR, ctypes.POINTER(DWORD), DWORD]
+    UrlCreateFromPathW.argtypes = [PCTSTR, PTSTR, ctypes.POINTER(DWORD), DWORD]
     UrlCreateFromPathW.restype = ctypes.HRESULT
 
     SetEnvironmentVariableW = kernel32.SetEnvironmentVariableW
@@ -144,7 +146,9 @@ if sys.platform == 'win32':
 
     GetConsoleScreenBufferInfo = kernel32.GetConsoleScreenBufferInfo
     GetConsoleScreenBufferInfo.argtypes = [
-        HANDLE, ctypes.POINTER(CONSOLE_SCREEN_BUFFER_INFO)]
+        HANDLE,
+        ctypes.POINTER(CONSOLE_SCREEN_BUFFER_INFO),
+    ]
     GetConsoleScreenBufferInfo.restype = BOOL
 
     GetConsoleOutputCP = kernel32.GetConsoleOutputCP
@@ -173,18 +177,36 @@ if sys.platform == 'win32':
 
     ReadConsoleW = kernel32.ReadConsoleW
     ReadConsoleW.argtypes = [
-        HANDLE, LPVOID, DWORD, ctypes.POINTER(DWORD), LPVOID]
+        HANDLE,
+        LPVOID,
+        DWORD,
+        ctypes.POINTER(DWORD),
+        LPVOID,
+    ]
     ReadConsoleW.restype = BOOL
 
     MultiByteToWideChar = kernel32.MultiByteToWideChar
     MultiByteToWideChar.argtypes = [
-        UINT, DWORD, LPCSTR, ctypes.c_int, LPWSTR, ctypes.c_int]
+        UINT,
+        DWORD,
+        LPCSTR,
+        ctypes.c_int,
+        LPWSTR,
+        ctypes.c_int,
+    ]
     MultiByteToWideChar.restype = ctypes.c_int
 
     WideCharToMultiByte = kernel32.WideCharToMultiByte
     WideCharToMultiByte.argtypes = [
-        UINT, DWORD, LPCWSTR, ctypes.c_int, LPSTR, ctypes.c_int,
-        LPCSTR, LPBOOL]
+        UINT,
+        DWORD,
+        LPCWSTR,
+        ctypes.c_int,
+        LPSTR,
+        ctypes.c_int,
+        LPCSTR,
+        LPBOOL,
+    ]
     WideCharToMultiByte.restype = ctypes.c_int
 
     MoveFileW = kernel32.MoveFileW
@@ -195,7 +217,11 @@ if sys.platform == 'win32':
     if hasattr(kernel32, "GetFileInformationByHandleEx"):
         GetFileInformationByHandleEx = kernel32.GetFileInformationByHandleEx
         GetFileInformationByHandleEx.argtypes = [
-            HANDLE, ctypes.c_int, ctypes.c_void_p, DWORD]
+            HANDLE,
+            ctypes.c_int,
+            ctypes.c_void_p,
+            DWORD,
+        ]
         GetFileInformationByHandleEx.restype = BOOL
     else:
         # Windows XP

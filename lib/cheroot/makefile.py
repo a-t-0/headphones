@@ -1,6 +1,7 @@
 """Socket file object."""
 
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 import socket
@@ -37,7 +38,7 @@ class BufferedWriter(io.BufferedWriter):
             return len(b)
 
     def _flush_unlocked(self):
-        self._checkClosed('flush of closed file')
+        self._checkClosed("flush of closed file")
         while self._write_buf:
             try:
                 # ssl sockets only except 'bytes', not bytearrays
@@ -48,7 +49,7 @@ class BufferedWriter(io.BufferedWriter):
             del self._write_buf[:n]
 
 
-class MakeFile_PY2(getattr(socket, '_fileobject', object)):
+class MakeFile_PY2(getattr(socket, "_fileobject", object)):
     """Faux file object attached to a socket object."""
 
     def __init__(self, *args, **kwargs):
@@ -75,7 +76,7 @@ class MakeFile_PY2(getattr(socket, '_fileobject', object)):
         while bytes_sent < payload_size:
             try:
                 bytes_sent += self.send(
-                    data_mv[bytes_sent:bytes_sent + SOCK_WRITE_BLOCKSIZE],
+                    data_mv[bytes_sent : bytes_sent + SOCK_WRITE_BLOCKSIZE],
                 )
             except socket.error as e:
                 if e.args[0] not in errors.socket_errors_nonblocking:
@@ -90,7 +91,7 @@ class MakeFile_PY2(getattr(socket, '_fileobject', object)):
     def flush(self):
         """Write all data from buffer to socket and reset write buffer."""
         if self._wbuf:
-            buffer = ''.join(self._wbuf)
+            buffer = "".join(self._wbuf)
             self._wbuf = []
             self.write(buffer)
 
@@ -116,13 +117,15 @@ class MakeFile_PY2(getattr(socket, '_fileobject', object)):
             pass
 
     _fileobject_uses_str_type = six.PY2 and isinstance(
-        socket._fileobject(FauxSocket())._rbuf, six.string_types,
+        socket._fileobject(FauxSocket())._rbuf,
+        six.string_types,
     )
 
     # FauxSocket is no longer needed
     del FauxSocket
 
     if not _fileobject_uses_str_type:  # noqa: C901  # FIXME
+
         def read(self, size=-1):
             """Read data from the socket to buffer."""
             # Use max, disallow tiny reads in a loop as they are very
@@ -182,7 +185,7 @@ class MakeFile_PY2(getattr(socket, '_fileobject', object)):
                         buf.write(data)
                         del data  # explicit free
                         break
-                    assert n <= left, 'recv(%d) returned %d bytes' % (left, n)
+                    assert n <= left, "recv(%d) returned %d bytes" % (left, n)
                     buf.write(data)
                     buf_len += n
                     del data  # explicit free
@@ -197,7 +200,7 @@ class MakeFile_PY2(getattr(socket, '_fileobject', object)):
                 # check if we already have it in our buffer
                 buf.seek(0)
                 bline = buf.readline(size)
-                if bline.endswith('\n') or len(bline) == size:
+                if bline.endswith("\n") or len(bline) == size:
                     self._rbuf = io.BytesIO()
                     self._rbuf.write(buf.read())
                     return bline
@@ -212,12 +215,12 @@ class MakeFile_PY2(getattr(socket, '_fileobject', object)):
                     self._rbuf = io.BytesIO()
                     data = None
                     recv = self.recv
-                    while data != '\n':
+                    while data != "\n":
                         data = recv(1)
                         if not data:
                             break
                         buffers.append(data)
-                    return ''.join(buffers)
+                    return "".join(buffers)
 
                 buf.seek(0, 2)  # seek end
                 # reset _rbuf.  we consume it via buf.
@@ -226,7 +229,7 @@ class MakeFile_PY2(getattr(socket, '_fileobject', object)):
                     data = self.recv(self._rbufsize)
                     if not data:
                         break
-                    nl = data.find('\n')
+                    nl = data.find("\n")
                     if nl >= 0:
                         nl += 1
                         buf.write(data[:nl])
@@ -255,7 +258,7 @@ class MakeFile_PY2(getattr(socket, '_fileobject', object)):
                         break
                     left = size - buf_len
                     # did we just receive a newline?
-                    nl = data.find('\n', 0, left)
+                    nl = data.find("\n", 0, left)
                     if nl >= 0:
                         nl += 1
                         # save the excess data to _rbuf
@@ -286,12 +289,13 @@ class MakeFile_PY2(getattr(socket, '_fileobject', object)):
             return bool(self._rbuf.getvalue())
 
     else:
+
         def read(self, size=-1):
             """Read data from the socket to buffer."""
             if size < 0:
                 # Read until EOF
                 buffers = [self._rbuf]
-                self._rbuf = ''
+                self._rbuf = ""
                 if self._rbufsize <= 1:
                     recv_size = self.default_bufsize
                 else:
@@ -302,7 +306,7 @@ class MakeFile_PY2(getattr(socket, '_fileobject', object)):
                     if not data:
                         break
                     buffers.append(data)
-                return ''.join(buffers)
+                return "".join(buffers)
             else:
                 # Read until size bytes or EOF seen, whichever comes first
                 data = self._rbuf
@@ -313,7 +317,7 @@ class MakeFile_PY2(getattr(socket, '_fileobject', object)):
                 buffers = []
                 if data:
                     buffers.append(data)
-                self._rbuf = ''
+                self._rbuf = ""
                 while True:
                     left = size - buf_len
                     recv_size = max(self._rbufsize, left)
@@ -327,7 +331,7 @@ class MakeFile_PY2(getattr(socket, '_fileobject', object)):
                         buffers[-1] = data[:left]
                         break
                     buf_len += n
-                return ''.join(buffers)
+                return "".join(buffers)
 
         def readline(self, size=-1):
             """Read line from the socket to buffer."""
@@ -336,15 +340,15 @@ class MakeFile_PY2(getattr(socket, '_fileobject', object)):
                 # Read until \n or EOF, whichever comes first
                 if self._rbufsize <= 1:
                     # Speed up unbuffered case
-                    assert data == ''
+                    assert data == ""
                     buffers = []
-                    while data != '\n':
+                    while data != "\n":
                         data = self.recv(1)
                         if not data:
                             break
                         buffers.append(data)
-                    return ''.join(buffers)
-                nl = data.find('\n')
+                    return "".join(buffers)
+                nl = data.find("\n")
                 if nl >= 0:
                     nl += 1
                     self._rbuf = data[nl:]
@@ -352,23 +356,23 @@ class MakeFile_PY2(getattr(socket, '_fileobject', object)):
                 buffers = []
                 if data:
                     buffers.append(data)
-                self._rbuf = ''
+                self._rbuf = ""
                 while True:
                     data = self.recv(self._rbufsize)
                     if not data:
                         break
                     buffers.append(data)
-                    nl = data.find('\n')
+                    nl = data.find("\n")
                     if nl >= 0:
                         nl += 1
                         self._rbuf = data[nl:]
                         buffers[-1] = data[:nl]
                         break
-                return ''.join(buffers)
+                return "".join(buffers)
             else:
                 # Read until size bytes or \n or EOF seen, whichever comes
                 # first
-                nl = data.find('\n', 0, size)
+                nl = data.find("\n", 0, size)
                 if nl >= 0:
                     nl += 1
                     self._rbuf = data[nl:]
@@ -380,14 +384,14 @@ class MakeFile_PY2(getattr(socket, '_fileobject', object)):
                 buffers = []
                 if data:
                     buffers.append(data)
-                self._rbuf = ''
+                self._rbuf = ""
                 while True:
                     data = self.recv(self._rbufsize)
                     if not data:
                         break
                     buffers.append(data)
                     left = size - buf_len
-                    nl = data.find('\n', 0, left)
+                    nl = data.find("\n", 0, left)
                     if nl >= 0:
                         nl += 1
                         self._rbuf = data[nl:]
@@ -399,7 +403,7 @@ class MakeFile_PY2(getattr(socket, '_fileobject', object)):
                         buffers[-1] = data[:left]
                         break
                     buf_len += n
-                return ''.join(buffers)
+                return "".join(buffers)
 
         def has_data(self):
             """Return true if there is buffered data to read."""
@@ -407,10 +411,11 @@ class MakeFile_PY2(getattr(socket, '_fileobject', object)):
 
 
 if not six.PY2:
+
     class StreamReader(io.BufferedReader):
         """Socket stream reader."""
 
-        def __init__(self, sock, mode='r', bufsize=io.DEFAULT_BUFFER_SIZE):
+        def __init__(self, sock, mode="r", bufsize=io.DEFAULT_BUFFER_SIZE):
             """Initialize socket stream reader."""
             super().__init__(socket.SocketIO(sock, mode), bufsize)
             self.bytes_read = 0
@@ -428,7 +433,7 @@ if not six.PY2:
     class StreamWriter(BufferedWriter):
         """Socket stream writer."""
 
-        def __init__(self, sock, mode='w', bufsize=io.DEFAULT_BUFFER_SIZE):
+        def __init__(self, sock, mode="w", bufsize=io.DEFAULT_BUFFER_SIZE):
             """Initialize socket stream writer."""
             super().__init__(socket.SocketIO(sock, mode), bufsize)
             self.bytes_written = 0
@@ -439,9 +444,10 @@ if not six.PY2:
             self.bytes_written += len(val)
             return res
 
-    def MakeFile(sock, mode='r', bufsize=io.DEFAULT_BUFFER_SIZE):
+    def MakeFile(sock, mode="r", bufsize=io.DEFAULT_BUFFER_SIZE):
         """File object attached to a socket object."""
-        cls = StreamReader if 'r' in mode else StreamWriter
+        cls = StreamReader if "r" in mode else StreamWriter
         return cls(sock, mode, bufsize)
+
 else:
     StreamReader = StreamWriter = MakeFile = MakeFile_PY2

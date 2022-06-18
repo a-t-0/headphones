@@ -19,6 +19,7 @@ import traceback
 import sys
 import cProfile
 
+
 def diagnose(data):
     """Diagnostic suite for isolating common problems.
 
@@ -35,38 +36,57 @@ def diagnose(data):
                 break
         else:
             basic_parsers.remove(name)
-            print((
-                "I noticed that %s is not installed. Installing it may help." %
-                name))
+            print(
+                (
+                    "I noticed that %s is not installed. Installing it may help."
+                    % name
+                )
+            )
 
-    if 'lxml' in basic_parsers:
+    if "lxml" in basic_parsers:
         basic_parsers.append("lxml-xml")
         try:
             from lxml import etree
-            print(("Found lxml version %s" % ".".join(map(str,etree.LXML_VERSION))))
-        except ImportError as e:
+
             print(
-                "lxml is not installed or couldn't be imported.")
+                (
+                    "Found lxml version %s"
+                    % ".".join(map(str, etree.LXML_VERSION))
+                )
+            )
+        except ImportError as e:
+            print("lxml is not installed or couldn't be imported.")
 
-
-    if 'html5lib' in basic_parsers:
+    if "html5lib" in basic_parsers:
         try:
             import html5lib
+
             print(("Found html5lib version %s" % html5lib.__version__))
         except ImportError as e:
-            print(
-                "html5lib is not installed or couldn't be imported.")
+            print("html5lib is not installed or couldn't be imported.")
 
-    if hasattr(data, 'read'):
+    if hasattr(data, "read"):
         data = data.read()
     elif data.startswith("http:") or data.startswith("https:"):
-        print(('"%s" looks like a URL. Beautiful Soup is not an HTTP client.' % data))
-        print("You need to use some other library to get the document behind the URL, and feed that document to Beautiful Soup.")
+        print(
+            (
+                '"%s" looks like a URL. Beautiful Soup is not an HTTP client.'
+                % data
+            )
+        )
+        print(
+            "You need to use some other library to get the document behind the URL, and feed that document to Beautiful Soup."
+        )
         return
     else:
         try:
             if os.path.exists(data):
-                print(('"%s" looks like a filename. Reading data from the file.' % data))
+                print(
+                    (
+                        '"%s" looks like a filename. Reading data from the file.'
+                        % data
+                    )
+                )
                 with open(data) as fp:
                     data = fp.read()
         except ValueError:
@@ -90,6 +110,7 @@ def diagnose(data):
 
         print(("-" * 80))
 
+
 def lxml_trace(data, html=True, **kwargs):
     """Print out the lxml events that occur during parsing.
 
@@ -103,8 +124,10 @@ def lxml_trace(data, html=True, **kwargs):
        if False, lxml's XML parser will be used.
     """
     from lxml import etree
+
     for event, element in etree.iterparse(StringIO(data), html=html, **kwargs):
         print(("%s, %4s, %s" % (event, element.tag, element.text)))
+
 
 class AnnouncingParser(HTMLParser):
     """Subclass of HTMLParser that announces parse events, without doing
@@ -144,6 +167,7 @@ class AnnouncingParser(HTMLParser):
     def handle_pi(self, data):
         self._p("%s PI" % data)
 
+
 def htmlparser_trace(data):
     """Print out the HTMLParser events that occur during parsing.
 
@@ -155,12 +179,14 @@ def htmlparser_trace(data):
     parser = AnnouncingParser()
     parser.feed(data)
 
+
 _vowels = "aeiou"
 _consonants = "bcdfghjklmnpqrstvwxyz"
 
+
 def rword(length=5):
     "Generate a random word-like string."
-    s = ''
+    s = ""
     for i in range(length):
         if i % 2 == 0:
             t = _consonants
@@ -169,34 +195,37 @@ def rword(length=5):
         s += random.choice(t)
     return s
 
+
 def rsentence(length=4):
     "Generate a random sentence-like string."
-    return " ".join(rword(random.randint(4,9)) for i in range(length))
-        
+    return " ".join(rword(random.randint(4, 9)) for i in range(length))
+
+
 def rdoc(num_elements=1000):
     """Randomly generate an invalid HTML document."""
-    tag_names = ['p', 'div', 'span', 'i', 'b', 'script', 'table']
+    tag_names = ["p", "div", "span", "i", "b", "script", "table"]
     elements = []
     for i in range(num_elements):
-        choice = random.randint(0,3)
+        choice = random.randint(0, 3)
         if choice == 0:
             # New tag.
             tag_name = random.choice(tag_names)
             elements.append("<%s>" % tag_name)
         elif choice == 1:
-            elements.append(rsentence(random.randint(1,4)))
+            elements.append(rsentence(random.randint(1, 4)))
         elif choice == 2:
             # Close a tag.
             tag_name = random.choice(tag_names)
             elements.append("</%s>" % tag_name)
     return "<html>" + "\n".join(elements) + "</html>"
 
+
 def benchmark_parsers(num_elements=100000):
     """Very basic head-to-head performance benchmark."""
     print(("Comparative parser benchmark on Beautiful Soup %s" % __version__))
     data = rdoc(num_elements)
     print(("Generated a large invalid HTML document (%d bytes)." % len(data)))
-    
+
     for parser in ["lxml", ["lxml", "html"], "html5lib", "html.parser"]:
         success = False
         try:
@@ -208,20 +237,23 @@ def benchmark_parsers(num_elements=100000):
             print(("%s could not parse the markup." % parser))
             traceback.print_exc()
         if success:
-            print(("BS4+%s parsed the markup in %.2fs." % (parser, b-a)))
+            print(("BS4+%s parsed the markup in %.2fs." % (parser, b - a)))
 
     from lxml import etree
+
     a = time.time()
     etree.HTML(data)
     b = time.time()
-    print(("Raw lxml parsed the markup in %.2fs." % (b-a)))
+    print(("Raw lxml parsed the markup in %.2fs." % (b - a)))
 
     import html5lib
+
     parser = html5lib.HTMLParser()
     a = time.time()
     parser.parse(data)
     b = time.time()
-    print(("Raw html5lib parsed the markup in %.2fs." % (b-a)))
+    print(("Raw html5lib parsed the markup in %.2fs." % (b - a)))
+
 
 def profile(num_elements=100000, parser="lxml"):
     """Use Python's profiler on a randomly generated document."""
@@ -230,13 +262,14 @@ def profile(num_elements=100000, parser="lxml"):
 
     data = rdoc(num_elements)
     vars = dict(bs4=bs4, data=data, parser=parser)
-    cProfile.runctx('bs4.BeautifulSoup(data, parser)' , vars, vars, filename)
+    cProfile.runctx("bs4.BeautifulSoup(data, parser)", vars, vars, filename)
 
     stats = pstats.Stats(filename)
     # stats.strip_dirs()
     stats.sort_stats("cumulative")
-    stats.print_stats('_html5lib|bs4', 50)
+    stats.print_stats("_html5lib|bs4", 50)
+
 
 # If this file is run as a script, standard input is diagnosed.
-if __name__ == '__main__':
+if __name__ == "__main__":
     diagnose(sys.stdin.read())

@@ -8,7 +8,6 @@ log = logging.getLogger(__name__)
 
 
 class RequestValidator:
-
     def client_authentication_required(self, request, *args, **kwargs):
         """Determine if client authentication is required for current request.
 
@@ -48,12 +47,12 @@ class RequestValidator:
         Headers may be accesses through request.headers and parameters found in
         both body and query can be obtained by direct attribute access, i.e.
         request.client_id for client_id in the URL query.
-		
+
         The authentication process is required to contain the identification of
         the client (i.e. search the database based on the client_id). In case the
         client doesn't exist based on the received client_id, this method has to
         return False and the HTTP response created by the library will contain
-        'invalid_client' message. 
+        'invalid_client' message.
 
         After the client identification succeeds, this method needs to set the
         client on the request, i.e. request.client = client. A client object's
@@ -72,7 +71,7 @@ class RequestValidator:
 
         .. _`HTTP Basic Authentication Scheme`: https://tools.ietf.org/html/rfc1945#section-11.1
         """
-        raise NotImplementedError('Subclasses must implement this method.')
+        raise NotImplementedError("Subclasses must implement this method.")
 
     def authenticate_client_id(self, client_id, request, *args, **kwargs):
         """Ensure client_id belong to a non-confidential client.
@@ -92,10 +91,11 @@ class RequestValidator:
         Method is used by:
             - Authorization Code Grant
         """
-        raise NotImplementedError('Subclasses must implement this method.')
+        raise NotImplementedError("Subclasses must implement this method.")
 
-    def confirm_redirect_uri(self, client_id, code, redirect_uri, client, request,
-                             *args, **kwargs):
+    def confirm_redirect_uri(
+        self, client_id, code, redirect_uri, client, request, *args, **kwargs
+    ):
         """Ensure that the authorization process represented by this authorization
         code began with this 'redirect_uri'.
 
@@ -116,7 +116,7 @@ class RequestValidator:
         Method is used by:
             - Authorization Code Grant (during token request)
         """
-        raise NotImplementedError('Subclasses must implement this method.')
+        raise NotImplementedError("Subclasses must implement this method.")
 
     def get_default_redirect_uri(self, client_id, request, *args, **kwargs):
         """Get the default redirect URI for the client.
@@ -130,7 +130,7 @@ class RequestValidator:
             - Authorization Code Grant
             - Implicit Grant
         """
-        raise NotImplementedError('Subclasses must implement this method.')
+        raise NotImplementedError("Subclasses must implement this method.")
 
     def get_default_scopes(self, client_id, request, *args, **kwargs):
         """Get the default scopes for the client.
@@ -146,7 +146,7 @@ class RequestValidator:
             - Resource Owner Password Credentials Grant
             - Client Credentials grant
         """
-        raise NotImplementedError('Subclasses must implement this method.')
+        raise NotImplementedError("Subclasses must implement this method.")
 
     def get_original_scopes(self, refresh_token, request, *args, **kwargs):
         """Get the list of scopes associated with the refresh token.
@@ -159,9 +159,11 @@ class RequestValidator:
         Method is used by:
             - Refresh token grant
         """
-        raise NotImplementedError('Subclasses must implement this method.')
+        raise NotImplementedError("Subclasses must implement this method.")
 
-    def is_within_original_scope(self, request_scopes, refresh_token, request, *args, **kwargs):
+    def is_within_original_scope(
+        self, request_scopes, refresh_token, request, *args, **kwargs
+    ):
         """Check if requested scopes are within a scope of the refresh token.
 
         When access tokens are refreshed the scope of the new token
@@ -183,7 +185,9 @@ class RequestValidator:
         """
         return False
 
-    def introspect_token(self, token, token_type_hint, request, *args, **kwargs):
+    def introspect_token(
+        self, token, token_type_hint, request, *args, **kwargs
+    ):
         """Introspect an access or refresh token.
 
         Called once the introspect request is validated. This method should
@@ -222,9 +226,11 @@ class RequestValidator:
         .. _`Introspect Claims`: https://tools.ietf.org/html/rfc7662#section-2.2
         .. _`JWT Claims`: https://tools.ietf.org/html/rfc7519#section-4
         """
-        raise NotImplementedError('Subclasses must implement this method.')
+        raise NotImplementedError("Subclasses must implement this method.")
 
-    def invalidate_authorization_code(self, client_id, code, request, *args, **kwargs):
+    def invalidate_authorization_code(
+        self, client_id, code, request, *args, **kwargs
+    ):
         """Invalidate an authorization code after use.
 
         :param client_id: Unicode client identifier.
@@ -235,7 +241,7 @@ class RequestValidator:
         Method is used by:
             - Authorization Code Grant
         """
-        raise NotImplementedError('Subclasses must implement this method.')
+        raise NotImplementedError("Subclasses must implement this method.")
 
     def revoke_token(self, token, token_type_hint, request, *args, **kwargs):
         """Revoke an access or refresh token.
@@ -248,7 +254,7 @@ class RequestValidator:
         Method is used by:
             - Revocation Endpoint
         """
-        raise NotImplementedError('Subclasses must implement this method.')
+        raise NotImplementedError("Subclasses must implement this method.")
 
     def rotate_refresh_token(self, request):
         """Determine whether to rotate the refresh token. Default, yes.
@@ -266,7 +272,9 @@ class RequestValidator:
         """
         return True
 
-    def save_authorization_code(self, client_id, code, request, *args, **kwargs):
+    def save_authorization_code(
+        self, client_id, code, request, *args, **kwargs
+    ):
         """Persist the authorization_code.
 
         The code should at minimum be stored with:
@@ -300,7 +308,7 @@ class RequestValidator:
         Method is used by:
             - Authorization Code Grant
         """
-        raise NotImplementedError('Subclasses must implement this method.')
+        raise NotImplementedError("Subclasses must implement this method.")
 
     def save_token(self, token, request, *args, **kwargs):
         """Persist the token with a token type specific method.
@@ -361,7 +369,7 @@ class RequestValidator:
             - Resource Owner Password Credentials Grant (might not associate a client)
             - Client Credentials grant
         """
-        raise NotImplementedError('Subclasses must implement this method.')
+        raise NotImplementedError("Subclasses must implement this method.")
 
     def validate_bearer_token(self, token, scopes, request):
         """Ensure the Bearer token is valid and authorized access to scopes.
@@ -413,7 +421,7 @@ class RequestValidator:
             - Resource Owner Password Credentials Grant
             - Client Credentials Grant
         """
-        raise NotImplementedError('Subclasses must implement this method.')
+        raise NotImplementedError("Subclasses must implement this method.")
 
     def validate_client_id(self, client_id, request, *args, **kwargs):
         """Ensure client_id belong to a valid and active client.
@@ -431,7 +439,7 @@ class RequestValidator:
             - Authorization Code Grant
             - Implicit Grant
         """
-        raise NotImplementedError('Subclasses must implement this method.')
+        raise NotImplementedError("Subclasses must implement this method.")
 
     def validate_code(self, client_id, code, client, request, *args, **kwargs):
         """Verify that the authorization_code is valid and assigned to the given
@@ -464,9 +472,11 @@ class RequestValidator:
         Method is used by:
             - Authorization Code Grant
         """
-        raise NotImplementedError('Subclasses must implement this method.')
+        raise NotImplementedError("Subclasses must implement this method.")
 
-    def validate_grant_type(self, client_id, grant_type, client, request, *args, **kwargs):
+    def validate_grant_type(
+        self, client_id, grant_type, client, request, *args, **kwargs
+    ):
         """Ensure client is authorized to use the grant_type requested.
 
         :param client_id: Unicode client identifier.
@@ -482,9 +492,11 @@ class RequestValidator:
             - Client Credentials Grant
             - Refresh Token Grant
         """
-        raise NotImplementedError('Subclasses must implement this method.')
+        raise NotImplementedError("Subclasses must implement this method.")
 
-    def validate_redirect_uri(self, client_id, redirect_uri, request, *args, **kwargs):
+    def validate_redirect_uri(
+        self, client_id, redirect_uri, request, *args, **kwargs
+    ):
         """Ensure client is authorized to redirect to the redirect_uri requested.
 
         All clients should register the absolute URIs of all URIs they intend
@@ -500,9 +512,11 @@ class RequestValidator:
             - Authorization Code Grant
             - Implicit Grant
         """
-        raise NotImplementedError('Subclasses must implement this method.')
+        raise NotImplementedError("Subclasses must implement this method.")
 
-    def validate_refresh_token(self, refresh_token, client, request, *args, **kwargs):
+    def validate_refresh_token(
+        self, refresh_token, client, request, *args, **kwargs
+    ):
         """Ensure the Bearer token is valid and authorized access to scopes.
 
         OBS! The request.user attribute should be set to the resource owner
@@ -519,9 +533,11 @@ class RequestValidator:
             - Resource Owner Password Credentials Grant (also indirectly)
             - Refresh Token Grant
         """
-        raise NotImplementedError('Subclasses must implement this method.')
+        raise NotImplementedError("Subclasses must implement this method.")
 
-    def validate_response_type(self, client_id, response_type, client, request, *args, **kwargs):
+    def validate_response_type(
+        self, client_id, response_type, client, request, *args, **kwargs
+    ):
         """Ensure client is authorized to use the response_type requested.
 
         :param client_id: Unicode client identifier.
@@ -535,9 +551,11 @@ class RequestValidator:
             - Authorization Code Grant
             - Implicit Grant
         """
-        raise NotImplementedError('Subclasses must implement this method.')
+        raise NotImplementedError("Subclasses must implement this method.")
 
-    def validate_scopes(self, client_id, scopes, client, request, *args, **kwargs):
+    def validate_scopes(
+        self, client_id, scopes, client, request, *args, **kwargs
+    ):
         """Ensure the client is authorized access to requested scopes.
 
         :param client_id: Unicode client identifier.
@@ -553,9 +571,11 @@ class RequestValidator:
             - Resource Owner Password Credentials Grant
             - Client Credentials Grant
         """
-        raise NotImplementedError('Subclasses must implement this method.')
+        raise NotImplementedError("Subclasses must implement this method.")
 
-    def validate_user(self, username, password, client, request, *args, **kwargs):
+    def validate_user(
+        self, username, password, client, request, *args, **kwargs
+    ):
         """Ensure the username and password is valid.
 
         OBS! The validation should also set the user attribute of the request
@@ -573,7 +593,7 @@ class RequestValidator:
         Method is used by:
             - Resource Owner Password Credentials Grant
         """
-        raise NotImplementedError('Subclasses must implement this method.')
+        raise NotImplementedError("Subclasses must implement this method.")
 
     def is_pkce_required(self, client_id, request):
         """Determine if current request requires PKCE. Default, False.
@@ -648,4 +668,4 @@ class RequestValidator:
             - Authorization Code Grant - when PKCE is active
 
         """
-        raise NotImplementedError('Subclasses must implement this method.')
+        raise NotImplementedError("Subclasses must implement this method.")

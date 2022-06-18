@@ -106,7 +106,9 @@ _stdlib_to_openssl_verify = {
     ssl.CERT_REQUIRED: OpenSSL.SSL.VERIFY_PEER
     + OpenSSL.SSL.VERIFY_FAIL_IF_NO_PEER_CERT,
 }
-_openssl_to_stdlib_verify = dict((v, k) for k, v in _stdlib_to_openssl_verify.items())
+_openssl_to_stdlib_verify = dict(
+    (v, k) for k, v in _stdlib_to_openssl_verify.items()
+)
 
 # OpenSSL will only write 16K at a time
 SSL_WRITE_BLOCKSIZE = 16384
@@ -191,7 +193,7 @@ def _dnsname_to_stdlib(name):
         import idna
 
         try:
-            for prefix in [u"*.", u"."]:
+            for prefix in ["*.", "."]:
                 if name.startswith(prefix):
                     name = name[len(prefix) :]
                     return prefix.encode("ascii") + idna.encode(name)
@@ -226,7 +228,9 @@ def get_subj_alt_name(peer_cert):
     # We want to find the SAN extension. Ask Cryptography to locate it (it's
     # faster than looping in Python)
     try:
-        ext = cert.extensions.get_extension_for_class(x509.SubjectAlternativeName).value
+        ext = cert.extensions.get_extension_for_class(
+            x509.SubjectAlternativeName
+        ).value
     except x509.ExtensionNotFound:
         # No such extension, return the empty list.
         return []
@@ -255,11 +259,14 @@ def get_subj_alt_name(peer_cert):
     # We also want to skip over names which cannot be idna encoded.
     names = [
         ("DNS", name)
-        for name in map(_dnsname_to_stdlib, ext.get_values_for_type(x509.DNSName))
+        for name in map(
+            _dnsname_to_stdlib, ext.get_values_for_type(x509.DNSName)
+        )
         if name is not None
     ]
     names.extend(
-        ("IP Address", str(name)) for name in ext.get_values_for_type(x509.IPAddress)
+        ("IP Address", str(name))
+        for name in ext.get_values_for_type(x509.IPAddress)
     )
 
     return names
@@ -345,7 +352,9 @@ class WrappedSocket(object):
             try:
                 return self.connection.send(data)
             except OpenSSL.SSL.WantWriteError:
-                if not util.wait_for_write(self.socket, self.socket.gettimeout()):
+                if not util.wait_for_write(
+                    self.socket, self.socket.gettimeout()
+                ):
                     raise timeout()
                 continue
             except OpenSSL.SSL.SysCallError as e:
@@ -380,7 +389,9 @@ class WrappedSocket(object):
             return x509
 
         if binary_form:
-            return OpenSSL.crypto.dump_certificate(OpenSSL.crypto.FILETYPE_ASN1, x509)
+            return OpenSSL.crypto.dump_certificate(
+                OpenSSL.crypto.FILETYPE_ASN1, x509
+            )
 
         return {
             "subject": ((("commonName", x509.get_subject().CN),),),
@@ -405,7 +416,6 @@ if _fileobject:  # Platform-specific: Python 2
     def makefile(self, mode, bufsize=-1):
         self._makefile_refs += 1
         return _fileobject(self, mode, bufsize, close=True)
-
 
 else:  # Platform-specific: Python 3
     makefile = backport_makefile
@@ -441,7 +451,9 @@ class PyOpenSSLContext(object):
 
     @verify_mode.setter
     def verify_mode(self, value):
-        self._ctx.set_verify(_stdlib_to_openssl_verify[value], _verify_callback)
+        self._ctx.set_verify(
+            _stdlib_to_openssl_verify[value], _verify_callback
+        )
 
     def set_default_verify_paths(self):
         self._ctx.set_default_verify_paths()
@@ -485,7 +497,9 @@ class PyOpenSSLContext(object):
     ):
         cnx = OpenSSL.SSL.Connection(self._ctx, sock)
 
-        if isinstance(server_hostname, six.text_type):  # Platform-specific: Python 3
+        if isinstance(
+            server_hostname, six.text_type
+        ):  # Platform-specific: Python 3
             server_hostname = server_hostname.encode("utf-8")
 
         if server_hostname is not None:

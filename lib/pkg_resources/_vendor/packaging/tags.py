@@ -36,7 +36,7 @@ INTERPRETER_SHORT_NAMES: Dict[str, str] = {
 }
 
 
-_32_BIT_INTERPRETER = sys.maxsize <= 2 ** 32
+_32_BIT_INTERPRETER = sys.maxsize <= 2**32
 
 
 class Tag:
@@ -113,7 +113,8 @@ def _get_config_var(name: str, warn: bool = False) -> Union[int, str, None]:
     value = sysconfig.get_config_var(name)
     if value is None and warn:
         logger.debug(
-            "Config variable '%s' is unset, Python ABI tag may be incorrect", name
+            "Config variable '%s' is unset, Python ABI tag may be incorrect",
+            name,
         )
     return value
 
@@ -212,7 +213,9 @@ def cpython_tags(
         for platform_ in platforms:
             yield Tag(interpreter, abi, platform_)
     if _abi3_applies(python_version):
-        yield from (Tag(interpreter, "abi3", platform_) for platform_ in platforms)
+        yield from (
+            Tag(interpreter, "abi3", platform_) for platform_ in platforms
+        )
     yield from (Tag(interpreter, "none", platform_) for platform_ in platforms)
 
     if _abi3_applies(python_version):
@@ -272,7 +275,9 @@ def _py_interpreter_range(py_version: PythonVersion) -> Iterator[str]:
     yield "py{major}".format(major=py_version[0])
     if len(py_version) > 1:
         for minor in range(py_version[1] - 1, -1, -1):
-            yield "py{version}".format(version=_version_nodot((py_version[0], minor)))
+            yield "py{version}".format(
+                version=_version_nodot((py_version[0], minor))
+            )
 
 
 def compatible_tags(
@@ -355,7 +360,9 @@ def mac_platforms(
     """
     version_str, _, cpu_arch = platform.mac_ver()
     if version is None:
-        version = cast("MacVersion", tuple(map(int, version_str.split(".")[:2])))
+        version = cast(
+            "MacVersion", tuple(map(int, version_str.split(".")[:2]))
+        )
     else:
         version = version
     if arch is None:

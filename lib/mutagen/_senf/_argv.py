@@ -22,6 +22,7 @@
 
 import sys
 import ctypes
+
 try:
     from collections import abc
 except ImportError:
@@ -45,14 +46,15 @@ def _get_win_argv():
     argc = ctypes.c_int()
     try:
         argv = winapi.CommandLineToArgvW(
-            winapi.GetCommandLineW(), ctypes.byref(argc))
+            winapi.GetCommandLineW(), ctypes.byref(argc)
+        )
     except WindowsError:
         return []
 
     if not argv:
         return []
 
-    res = argv[max(0, argc.value - len(sys.argv)):argc.value]
+    res = argv[max(0, argc.value - len(sys.argv)) : argc.value]
 
     winapi.LocalFree(argv)
 

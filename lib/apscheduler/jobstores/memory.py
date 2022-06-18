@@ -1,6 +1,8 @@
-
-
-from apscheduler.jobstores.base import BaseJobStore, JobLookupError, ConflictingIdError
+from apscheduler.jobstores.base import (
+    BaseJobStore,
+    JobLookupError,
+    ConflictingIdError,
+)
 from apscheduler.util import datetime_to_utc_timestamp
 
 
@@ -13,7 +15,9 @@ class MemoryJobStore(BaseJobStore):
 
     def __init__(self):
         super(MemoryJobStore, self).__init__()
-        self._jobs = []  # list of (job, timestamp), sorted by next_run_time and job id (ascending)
+        self._jobs = (
+            []
+        )  # list of (job, timestamp), sorted by next_run_time and job id (ascending)
         self._jobs_index = {}  # id -> (job, timestamp) lookup table
 
     def lookup_job(self, job_id):
@@ -88,11 +92,13 @@ class MemoryJobStore(BaseJobStore):
         """
 
         lo, hi = 0, len(self._jobs)
-        timestamp = float('inf') if timestamp is None else timestamp
+        timestamp = float("inf") if timestamp is None else timestamp
         while lo < hi:
             mid = (lo + hi) // 2
             mid_job, mid_timestamp = self._jobs[mid]
-            mid_timestamp = float('inf') if mid_timestamp is None else mid_timestamp
+            mid_timestamp = (
+                float("inf") if mid_timestamp is None else mid_timestamp
+            )
             if mid_timestamp > timestamp:
                 hi = mid
             elif mid_timestamp < timestamp:

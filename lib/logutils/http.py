@@ -3,6 +3,7 @@
 #
 import logging
 
+
 class HTTPHandler(logging.Handler):
     """
     A class which sends records to a Web server, using either GET or
@@ -18,7 +19,10 @@ class HTTPHandler(logging.Handler):
                         to avoid sending usernames and passwords in
                         cleartext over the wire.
     """
-    def __init__(self, host, url, method="GET", secure=False, credentials=None):
+
+    def __init__(
+        self, host, url, method="GET", secure=False, credentials=None
+    ):
         """
         Initialize an instance.
         """
@@ -37,7 +41,7 @@ class HTTPHandler(logging.Handler):
         Default implementation of mapping the log record into a dict
         that is sent as the CGI data. Overwrite in your class.
         Contributed by Franz Glasner.
-        
+
         :param record: The record to be mapped.
         """
         return record.__dict__
@@ -52,6 +56,7 @@ class HTTPHandler(logging.Handler):
         """
         try:
             import http.client, urllib.parse
+
             host = self.host
             if self.secure:
                 h = http.client.HTTPSConnection(host)
@@ -60,10 +65,10 @@ class HTTPHandler(logging.Handler):
             url = self.url
             data = urllib.parse.urlencode(self.mapLogRecord(record))
             if self.method == "GET":
-                if (url.find('?') >= 0):
-                    sep = '&'
+                if url.find("?") >= 0:
+                    sep = "&"
                 else:
-                    sep = '?'
+                    sep = "?"
                 url = url + "%c%s" % (sep, data)
             h.putrequest(self.method, url)
             # support multiple hosts on one IP address...
@@ -73,18 +78,19 @@ class HTTPHandler(logging.Handler):
                 host = host[:i]
             h.putheader("Host", host)
             if self.method == "POST":
-                h.putheader("Content-type",
-                            "application/x-www-form-urlencoded")
+                h.putheader(
+                    "Content-type", "application/x-www-form-urlencoded"
+                )
                 h.putheader("Content-length", str(len(data)))
             if self.credentials:
                 import base64
-                s = ('u%s:%s' % self.credentials).encode('utf-8')
-                s = 'Basic ' + base64.b64encode(s).strip()
-                h.putheader('Authorization', s)
+
+                s = ("u%s:%s" % self.credentials).encode("utf-8")
+                s = "Basic " + base64.b64encode(s).strip()
+                h.putheader("Authorization", s)
             h.endheaders(data if self.method == "POST" else None)
-            h.getresponse()    #can't do anything with the result
+            h.getresponse()  # can't do anything with the result
         except (KeyboardInterrupt, SystemExit):
             raise
         except:
             self.handleError(record)
-

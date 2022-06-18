@@ -29,6 +29,7 @@ def createKeyPair(type, bits):
     pkey.generate_key(type, bits)
     return pkey
 
+
 def createCertRequest(pkey, digest="md5", **name):
     """
     Create a certificate request.
@@ -49,14 +50,17 @@ def createCertRequest(pkey, digest="md5", **name):
     req = crypto.X509Req()
     subj = req.get_subject()
 
-    for (key,value) in list(name.items()):
+    for (key, value) in list(name.items()):
         setattr(subj, key, value)
 
     req.set_pubkey(pkey)
     req.sign(pkey, digest)
     return req
 
-def createCertificate(req, xxx_todo_changeme, serial, xxx_todo_changeme1, digest="md5"):
+
+def createCertificate(
+    req, xxx_todo_changeme, serial, xxx_todo_changeme1, digest="md5"
+):
     """
     Generate a certificate given a certificate request.
 

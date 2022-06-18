@@ -27,7 +27,7 @@ class MockSocket:
         try:
             return self.messages.pop(0)
         except IndexError:
-            return ''
+            return ""
 
     def send(self, val):
         """Simulate a send."""
@@ -37,8 +37,8 @@ class MockSocket:
 def test_bytes_read():
     """Reader should capture bytes read."""
     sock = MockSocket()
-    sock.messages.append(b'foo')
-    rfile = makefile.MakeFile(sock, 'r')
+    sock.messages.append(b"foo")
+    rfile = makefile.MakeFile(sock, "r")
     rfile.read()
     assert rfile.bytes_read == 3
 
@@ -46,7 +46,7 @@ def test_bytes_read():
 def test_bytes_written():
     """Writer should capture bytes written."""
     sock = MockSocket()
-    sock.messages.append(b'foo')
-    wfile = makefile.MakeFile(sock, 'w')
-    wfile.write(b'bar')
+    sock.messages.append(b"foo")
+    wfile = makefile.MakeFile(sock, "w")
+    wfile.write(b"bar")
     assert wfile.bytes_written == 3

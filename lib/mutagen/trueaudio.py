@@ -53,8 +53,10 @@ class TrueAudioInfo(StreamInfo):
         self.length = float(samples) / self.sample_rate
 
     def pprint(self):
-        return u"True Audio, %.2f seconds, %d Hz." % (
-            self.length, self.sample_rate)
+        return "True Audio, %.2f seconds, %d Hz." % (
+            self.length,
+            self.sample_rate,
+        )
 
 
 class TrueAudio(ID3FileType):
@@ -76,8 +78,11 @@ class TrueAudio(ID3FileType):
 
     @staticmethod
     def score(filename, fileobj, header):
-        return (header.startswith(b"ID3") + header.startswith(b"TTA") +
-                endswith(filename.lower(), b".tta") * 2)
+        return (
+            header.startswith(b"ID3")
+            + header.startswith(b"TTA")
+            + endswith(filename.lower(), b".tta") * 2
+        )
 
 
 Open = TrueAudio
@@ -98,4 +103,5 @@ class EasyTrueAudio(TrueAudio):
     """
 
     from mutagen.easyid3 import EasyID3 as ID3
+
     ID3 = ID3

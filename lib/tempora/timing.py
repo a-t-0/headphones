@@ -91,7 +91,10 @@ class IntervalGovernor:
     def decorate(self, func):
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
-            allow = not self.last_call or self.last_call.split() > self.min_interval
+            allow = (
+                not self.last_call
+                or self.last_call.split() > self.min_interval
+            )
             if allow:
                 self.last_call = Stopwatch()
                 return func(*args, **kwargs)
@@ -113,7 +116,7 @@ class Timer(Stopwatch):
     True
     """
 
-    def __init__(self, target=float('Inf')):
+    def __init__(self, target=float("Inf")):
         self.target = self._accept(target)
         super(Timer, self).__init__()
 
@@ -132,7 +135,7 @@ class Timer(Stopwatch):
 
         if target is None:
             # treat None as infinite target
-            target = float('Inf')
+            target = float("Inf")
 
         return target
 
@@ -229,7 +232,7 @@ class BackoffDelay(collections.abc.Iterator):
     "Number or callable returning extra seconds to add to delay"
 
     @jaraco.functools.save_method_args
-    def __init__(self, delay=0, factor=1, limit=float('inf'), jitter=0):
+    def __init__(self, delay=0, factor=1, limit=float("inf"), jitter=0):
         self.delay = delay
         self.factor = factor
         if isinstance(limit, numbers.Number):

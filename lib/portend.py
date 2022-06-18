@@ -26,14 +26,14 @@ def client_host(server_host):
     >>> client_host('::')
     '::1'
     """
-    if server_host == '0.0.0.0':
+    if server_host == "0.0.0.0":
         # 0.0.0.0 is INADDR_ANY, which should answer on localhost.
-        return '127.0.0.1'
-    if server_host in ('::', '::0', '::0.0.0.0'):
+        return "127.0.0.1"
+    if server_host in ("::", "::0", "::0.0.0.0"):
         # :: is IN6ADDR_ANY, which should answer on localhost.
         # ::0 and ::0.0.0.0 are non-canonical but common
         # ways to write IN6ADDR_ANY.
-        return '::1'
+        return "::1"
     return server_host
 
 
@@ -65,9 +65,11 @@ class Checker(object):
         """
         if port is None and isinstance(host, abc.Sequence):
             host, port = host[:2]
-        if platform.system() == 'Windows':
+        if platform.system() == "Windows":
             host = client_host(host)  # pragma: nocover
-        info = socket.getaddrinfo(host, port, socket.AF_UNSPEC, socket.SOCK_STREAM)
+        info = socket.getaddrinfo(
+            host, port, socket.AF_UNSPEC, socket.SOCK_STREAM
+        )
         list(itertools.starmap(self._connect, info))
 
     def _connect(self, af, socktype, proto, canonname, sa):
@@ -95,7 +97,7 @@ class PortNotFree(IOError):
     pass
 
 
-def free(host, port, timeout=float('Inf')):
+def free(host, port, timeout=float("Inf")):
     """
     Wait for the specified port to become free (dropping or rejecting
     requests). Return when the port is free or raise a Timeout if timeout has
@@ -123,12 +125,14 @@ def free(host, port, timeout=float('Inf')):
             return
         except PortNotFree:
             if timer.expired():
-                raise Timeout("Port {port} not free on {host}.".format(**locals()))
+                raise Timeout(
+                    "Port {port} not free on {host}.".format(**locals())
+                )
             # Politely wait.
             time.sleep(0.1)
 
 
-def occupied(host, port, timeout=float('Inf')):
+def occupied(host, port, timeout=float("Inf")):
     """
     Wait for the specified port to become occupied (accepting requests).
     Return when the port is occupied or raise a Timeout if timeout has
@@ -156,7 +160,9 @@ def occupied(host, port, timeout=float('Inf')):
         try:
             Checker(timeout=0.5).assert_free(host, port)
             if timer.expired():
-                raise Timeout("Port {port} not bound on {host}.".format(**locals()))
+                raise Timeout(
+                    "Port {port} not bound on {host}.".format(**locals())
+                )
             # Politely wait
             time.sleep(0.1)
         except PortNotFree:
@@ -206,18 +212,18 @@ class HostPort(str):
 
     @property
     def host(self):
-        return urllib.parse.urlparse(f'//{self}').hostname
+        return urllib.parse.urlparse(f"//{self}").hostname
 
     @property
     def port(self):
-        return urllib.parse.urlparse(f'//{self}').port
+        return urllib.parse.urlparse(f"//{self}").port
 
     @classmethod
     def from_addr(cls, addr):
         listen_host, port = addr[:2]
         plain_host = client_host(listen_host)
-        host = f'[{plain_host}]' if ':' in plain_host else plain_host
-        return cls(':'.join([host, str(port)]))
+        host = f"[{plain_host}]" if ":" in plain_host else plain_host
+        return cls(":".join([host, str(port)]))
 
 
 def _main(args=None):
@@ -226,9 +232,9 @@ def _main(args=None):
     def global_lookup(key):
         return globals()[key]
 
-    parser.add_argument('target', metavar='host:port', type=HostPort)
-    parser.add_argument('func', metavar='state', type=global_lookup)
-    parser.add_argument('-t', '--timeout', default=None, type=float)
+    parser.add_argument("target", metavar="host:port", type=HostPort)
+    parser.add_argument("func", metavar="state", type=global_lookup)
+    parser.add_argument("-t", "--timeout", default=None, type=float)
     args = parser.parse_args(args)
     try:
         args.func(args.target.host, args.target.port, timeout=args.timeout)
@@ -237,4 +243,4 @@ def _main(args=None):
         raise SystemExit(1)
 
 
-__name__ == '__main__' and _main()
+__name__ == "__main__" and _main()

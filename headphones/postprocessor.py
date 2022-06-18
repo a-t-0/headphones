@@ -36,31 +36,47 @@ postprocessor_lock = threading.Lock()
 
 
 def checkFolder():
-    logger.debug("Checking download folder for completed downloads (only snatched ones).")
+    logger.debug(
+        "Checking download folder for completed downloads (only snatched ones)."
+    )
 
     with postprocessor_lock:
         myDB = db.DBConnection()
-        snatched = myDB.select('SELECT * from snatched WHERE Status="Snatched"')
+        snatched = myDB.select(
+            'SELECT * from snatched WHERE Status="Snatched"'
+        )
 
         for album in snatched:
-            if album['FolderName']:
-                folder_name = album['FolderName']
+            if album["FolderName"]:
+                folder_name = album["FolderName"]
                 single = False
-                if album['Kind'] == 'nzb':
+                if album["Kind"] == "nzb":
                     download_dir = headphones.CONFIG.DOWNLOAD_DIR
                 else:
-                    if headphones.CONFIG.DELUGE_DONE_DIRECTORY and headphones.CONFIG.TORRENT_DOWNLOADER == 3:
+                    if (
+                        headphones.CONFIG.DELUGE_DONE_DIRECTORY
+                        and headphones.CONFIG.TORRENT_DOWNLOADER == 3
+                    ):
                         download_dir = headphones.CONFIG.DELUGE_DONE_DIRECTORY
                     else:
                         download_dir = headphones.CONFIG.DOWNLOAD_TORRENT_DIR
 
                     # Get folder from torrent hash
-                    if album['TorrentHash'] and headphones.CONFIG.TORRENT_DOWNLOADER:
+                    if (
+                        album["TorrentHash"]
+                        and headphones.CONFIG.TORRENT_DOWNLOADER
+                    ):
                         torrent_folder_name = None
                         if headphones.CONFIG.TORRENT_DOWNLOADER == 1:
-                            torrent_folder_name, single = transmission.getFolder(album['TorrentHash'])
+                            (
+                                torrent_folder_name,
+                                single,
+                            ) = transmission.getFolder(album["TorrentHash"])
                         elif headphones.CONFIG.TORRENT_DOWNLOADER == 4:
-                            torrent_folder_name, single = qbittorrent.getFolder(album['TorrentHash'])
+                            (
+                                torrent_folder_name,
+                                single,
+                            ) = qbittorrent.getFolder(album["TorrentHash"])
                         if torrent_folder_name:
                             folder_name = torrent_folder_name
 
@@ -69,19 +85,38 @@ def checkFolder():
                     logger.debug("Checking if %s exists" % album_path)
 
                     if os.path.exists(album_path):
-                        logger.info('Found "' + folder_name + '" in ' + album[
-                            'Kind'] + ' download folder. Verifying....')
-                        verify(album['AlbumID'], album_path, album['Kind'], single=single)
+                        logger.info(
+                            'Found "'
+                            + folder_name
+                            + '" in '
+                            + album["Kind"]
+                            + " download folder. Verifying...."
+                        )
+                        verify(
+                            album["AlbumID"],
+                            album_path,
+                            album["Kind"],
+                            single=single,
+                        )
             else:
-                logger.info("No folder name found for " + album['Title'])
+                logger.info("No folder name found for " + album["Title"])
 
     logger.debug("Checking download folder finished.")
 
 
-def verify(albumid, albumpath, Kind=None, forced=False, keep_original_folder=False, single=False):
+def verify(
+    albumid,
+    albumpath,
+    Kind=None,
+    forced=False,
+    keep_original_folder=False,
+    single=False,
+):
     myDB = db.DBConnection()
-    release = myDB.action('SELECT * from albums WHERE AlbumID=?', [albumid]).fetchone()
-    tracks = myDB.select('SELECT * from tracks WHERE AlbumID=?', [albumid])
+    release = myDB.action(
+        "SELECT * from albums WHERE AlbumID=?", [albumid]
+    ).fetchone()
+    tracks = myDB.select("SELECT * from tracks WHERE AlbumID=?", [albumid])
 
     if not release or not tracks:
         release_list = None
@@ -91,24 +126,29 @@ def verify(albumid, albumpath, Kind=None, forced=False, keep_original_folder=Fal
             release_list = mb.getReleaseGroup(albumid)
         except Exception as e:
             logger.error(
-                'Unable to get release information for manual album with rgid: %s. Error: %s',
-                albumid, e)
+                "Unable to get release information for manual album with rgid: %s. Error: %s",
+                albumid,
+                e,
+            )
             return
 
         if not release_list:
-            logger.error('Unable to get release information for manual album with rgid: %s',
-                         albumid)
+            logger.error(
+                "Unable to get release information for manual album with rgid: %s",
+                albumid,
+            )
             return
 
         # Since we're just using this to create the bare minimum information to
         # insert an artist/album combo, use the first release
-        releaseid = release_list[0]['id']
+        releaseid = release_list[0]["id"]
         release_dict = mb.getRelease(releaseid)
 
         if not release_dict:
             logger.error(
-                'Unable to get release information for manual album with rgid: %s. Cannot continue',
-                albumid)
+                "Unable to get release information for manual album with rgid: %s. Cannot continue",
+                albumid,
+            )
             return
 
         # Check if the artist is added to the database. In case the database is
@@ -118,110 +158,141 @@ def verify(albumid, albumpath, Kind=None, forced=False, keep_original_folder=Fal
         if headphones.CONFIG.FREEZE_DB and not forced:
             artist = myDB.select(
                 "SELECT ArtistName, ArtistID FROM artists WHERE ArtistId=? OR ArtistName=?",
-                [release_dict['artist_id'], release_dict['artist_name']])
+                [release_dict["artist_id"], release_dict["artist_name"]],
+            )
 
             if not artist:
-                logger.warn("Continuing would add new artist '%s' (ID %s), "
-                            "but database is frozen. Will skip postprocessing for "
-                            "album with rgid: %s", release_dict['artist_name'],
-                            release_dict['artist_id'], albumid)
+                logger.warn(
+                    "Continuing would add new artist '%s' (ID %s), "
+                    "but database is frozen. Will skip postprocessing for "
+                    "album with rgid: %s",
+                    release_dict["artist_name"],
+                    release_dict["artist_id"],
+                    albumid,
+                )
 
                 myDB.action(
                     'UPDATE snatched SET status = "Frozen" WHERE status NOT LIKE "Seed%" and AlbumID=?',
-                    [albumid])
-                frozen = re.search(r' \(Frozen\)(?:\[\d+\])?', albumpath)
+                    [albumid],
+                )
+                frozen = re.search(r" \(Frozen\)(?:\[\d+\])?", albumpath)
                 if not frozen:
                     if headphones.CONFIG.RENAME_FROZEN:
                         renameUnprocessedFolder(albumpath, tag="Frozen")
                     else:
-                        logger.warn("Won't rename %s to mark as 'Frozen', because it is disabled.",
-                                    albumpath)
+                        logger.warn(
+                            "Won't rename %s to mark as 'Frozen', because it is disabled.",
+                            albumpath,
+                        )
                 return
 
-        logger.info("Now adding/updating artist: " + release_dict['artist_name'])
+        logger.info(
+            "Now adding/updating artist: " + release_dict["artist_name"]
+        )
 
-        if release_dict['artist_name'].startswith('The '):
-            sortname = release_dict['artist_name'][4:]
+        if release_dict["artist_name"].startswith("The "):
+            sortname = release_dict["artist_name"][4:]
         else:
-            sortname = release_dict['artist_name']
+            sortname = release_dict["artist_name"]
 
-        controlValueDict = {"ArtistID": release_dict['artist_id']}
-        newValueDict = {"ArtistName": release_dict['artist_name'],
-                        "ArtistSortName": sortname,
-                        "DateAdded": helpers.today(),
-                        "Status": "Paused"}
+        controlValueDict = {"ArtistID": release_dict["artist_id"]}
+        newValueDict = {
+            "ArtistName": release_dict["artist_name"],
+            "ArtistSortName": sortname,
+            "DateAdded": helpers.today(),
+            "Status": "Paused",
+        }
 
-        logger.info("ArtistID: " + release_dict['artist_id'] + " , ArtistName: " + release_dict[
-            'artist_name'])
+        logger.info(
+            "ArtistID: "
+            + release_dict["artist_id"]
+            + " , ArtistName: "
+            + release_dict["artist_name"]
+        )
 
         if headphones.CONFIG.INCLUDE_EXTRAS:
-            newValueDict['IncludeExtras'] = 1
-            newValueDict['Extras'] = headphones.CONFIG.EXTRAS
+            newValueDict["IncludeExtras"] = 1
+            newValueDict["Extras"] = headphones.CONFIG.EXTRAS
 
         myDB.upsert("artists", newValueDict, controlValueDict)
 
-        logger.info("Now adding album: " + release_dict['title'])
+        logger.info("Now adding album: " + release_dict["title"])
         controlValueDict = {"AlbumID": albumid}
 
-        newValueDict = {"ArtistID": release_dict['artist_id'],
-                        "ReleaseID": albumid,
-                        "ArtistName": release_dict['artist_name'],
-                        "AlbumTitle": release_dict['title'],
-                        "AlbumASIN": release_dict['asin'],
-                        "ReleaseDate": release_dict['date'],
-                        "DateAdded": helpers.today(),
-                        "Type": release_dict['rg_type'],
-                        "Status": "Snatched"
-                        }
+        newValueDict = {
+            "ArtistID": release_dict["artist_id"],
+            "ReleaseID": albumid,
+            "ArtistName": release_dict["artist_name"],
+            "AlbumTitle": release_dict["title"],
+            "AlbumASIN": release_dict["asin"],
+            "ReleaseDate": release_dict["date"],
+            "DateAdded": helpers.today(),
+            "Type": release_dict["rg_type"],
+            "Status": "Snatched",
+        }
 
         myDB.upsert("albums", newValueDict, controlValueDict)
 
         # Delete existing tracks associated with this AlbumID since we're going to replace them and don't want any extras
-        myDB.action('DELETE from tracks WHERE AlbumID=?', [albumid])
-        for track in release_dict['tracks']:
-            controlValueDict = {"TrackID": track['id'],
-                                "AlbumID": albumid}
+        myDB.action("DELETE from tracks WHERE AlbumID=?", [albumid])
+        for track in release_dict["tracks"]:
+            controlValueDict = {"TrackID": track["id"], "AlbumID": albumid}
 
             clean_name = helpers.clean_name(
-                release_dict['artist_name'] + ' ' + release_dict['title'] + ' ' + track['title'])
+                release_dict["artist_name"]
+                + " "
+                + release_dict["title"]
+                + " "
+                + track["title"]
+            )
 
-            newValueDict = {"ArtistID": release_dict['artist_id'],
-                            "ArtistName": release_dict['artist_name'],
-                            "AlbumTitle": release_dict['title'],
-                            "AlbumASIN": release_dict['asin'],
-                            "TrackTitle": track['title'],
-                            "TrackDuration": track['duration'],
-                            "TrackNumber": track['number'],
-                            "CleanName": clean_name
-                            }
+            newValueDict = {
+                "ArtistID": release_dict["artist_id"],
+                "ArtistName": release_dict["artist_name"],
+                "AlbumTitle": release_dict["title"],
+                "AlbumASIN": release_dict["asin"],
+                "TrackTitle": track["title"],
+                "TrackDuration": track["duration"],
+                "TrackNumber": track["number"],
+                "CleanName": clean_name,
+            }
 
             myDB.upsert("tracks", newValueDict, controlValueDict)
 
-        controlValueDict = {"ArtistID": release_dict['artist_id']}
+        controlValueDict = {"ArtistID": release_dict["artist_id"]}
         newValueDict = {"Status": "Paused"}
 
         myDB.upsert("artists", newValueDict, controlValueDict)
-        logger.info("Addition complete for: " + release_dict['title'] + " - " + release_dict[
-            'artist_name'])
+        logger.info(
+            "Addition complete for: "
+            + release_dict["title"]
+            + " - "
+            + release_dict["artist_name"]
+        )
 
-        release = myDB.action('SELECT * from albums WHERE AlbumID=?', [albumid]).fetchone()
-        tracks = myDB.select('SELECT * from tracks WHERE AlbumID=?', [albumid])
+        release = myDB.action(
+            "SELECT * from albums WHERE AlbumID=?", [albumid]
+        ).fetchone()
+        tracks = myDB.select("SELECT * from tracks WHERE AlbumID=?", [albumid])
 
     downloaded_track_list = []
     downloaded_cuecount = 0
 
-    media_extensions = tuple(map(lambda x: '.' + x, headphones.MEDIA_FORMATS))
+    media_extensions = tuple(map(lambda x: "." + x, headphones.MEDIA_FORMATS))
 
     for root, dirs, files in os.walk(albumpath):
         for file in files:
             if file.endswith(media_extensions):
                 downloaded_track_list.append(os.path.join(root, file))
-            elif file.endswith('.cue'):
+            elif file.endswith(".cue"):
                 downloaded_cuecount += 1
             # if any of the files end in *.part, we know the torrent isn't done yet. Process if forced, though
-            elif file.endswith(('.part', '.utpart')) and not forced:
+            elif file.endswith((".part", ".utpart")) and not forced:
                 logger.info(
-                    "Looks like " + os.path.basename(albumpath) + " isn't complete yet. Will try again on the next run")
+                    "Looks like "
+                    + os.path.basename(albumpath)
+                    + " isn't complete yet. Will try again on the next run"
+                )
                 return
 
     # Force single file through
@@ -229,16 +300,23 @@ def verify(albumid, albumpath, Kind=None, forced=False, keep_original_folder=Fal
         downloaded_track_list.append(albumpath)
 
     # Check to see if we're preserving the torrent dir
-    if (headphones.CONFIG.KEEP_TORRENT_FILES and Kind == "torrent") or headphones.CONFIG.KEEP_ORIGINAL_FOLDER:
+    if (
+        headphones.CONFIG.KEEP_TORRENT_FILES and Kind == "torrent"
+    ) or headphones.CONFIG.KEEP_ORIGINAL_FOLDER:
         keep_original_folder = True
 
     # Split cue before metadata check
-    if headphones.CONFIG.CUE_SPLIT and downloaded_cuecount and downloaded_cuecount >= len(
-            downloaded_track_list):
+    if (
+        headphones.CONFIG.CUE_SPLIT
+        and downloaded_cuecount
+        and downloaded_cuecount >= len(downloaded_track_list)
+    ):
         new_folder = None
         new_albumpath = albumpath
         if keep_original_folder:
-            temp_path = helpers.preserve_torrent_directory(new_albumpath, forced)
+            temp_path = helpers.preserve_torrent_directory(
+                new_albumpath, forced
+            )
             if not temp_path:
                 markAsUnprocessed(albumid, new_albumpath, keep_original_folder)
                 return
@@ -254,17 +332,21 @@ def verify(albumid, albumpath, Kind=None, forced=False, keep_original_folder=Fal
             return
         else:
             albumpath = cuepath
-            downloaded_track_list = helpers.get_downloaded_track_list(albumpath)
+            downloaded_track_list = helpers.get_downloaded_track_list(
+                albumpath
+            )
             keep_original_folder = False
 
     # test #1: metadata - usually works
-    logger.debug('Verifying metadata...')
+    logger.debug("Verifying metadata...")
 
     for downloaded_track in downloaded_track_list:
         try:
             f = MediaFile(downloaded_track)
         except Exception as e:
-            logger.info(f"Exception from MediaFile for {downloaded_track}: {e}")
+            logger.info(
+                f"Exception from MediaFile for {downloaded_track}: {e}"
+            )
             continue
 
         if not f.artist:
@@ -273,49 +355,80 @@ def verify(albumid, albumpath, Kind=None, forced=False, keep_original_folder=Fal
             continue
 
         metaartist = helpers.latinToAscii(f.artist.lower())
-        dbartist = helpers.latinToAscii(release['ArtistName'].lower())
+        dbartist = helpers.latinToAscii(release["ArtistName"].lower())
         metaalbum = helpers.latinToAscii(f.album.lower())
-        dbalbum = helpers.latinToAscii(release['AlbumTitle'].lower())
+        dbalbum = helpers.latinToAscii(release["AlbumTitle"].lower())
 
-        logger.debug('Matching metadata artist: %s with artist name: %s' % (metaartist, dbartist))
-        logger.debug('Matching metadata album: %s with album name: %s' % (metaalbum, dbalbum))
+        logger.debug(
+            "Matching metadata artist: %s with artist name: %s"
+            % (metaartist, dbartist)
+        )
+        logger.debug(
+            "Matching metadata album: %s with album name: %s"
+            % (metaalbum, dbalbum)
+        )
 
         if metaartist == dbartist and metaalbum == dbalbum:
-            doPostProcessing(albumid, albumpath, release, tracks, downloaded_track_list, Kind,
-                             keep_original_folder, forced, single)
+            doPostProcessing(
+                albumid,
+                albumpath,
+                release,
+                tracks,
+                downloaded_track_list,
+                Kind,
+                keep_original_folder,
+                forced,
+                single,
+            )
             return
 
     # test #2: filenames
-    logger.debug('Metadata check failed. Verifying filenames...')
+    logger.debug("Metadata check failed. Verifying filenames...")
     for downloaded_track in downloaded_track_list:
         track_name = os.path.splitext(downloaded_track)[0]
-        split_track_name = re.sub('[\.\-\_]', ' ', track_name).lower()
+        split_track_name = re.sub("[\.\-\_]", " ", track_name).lower()
         for track in tracks:
 
-            if not track['TrackTitle']:
+            if not track["TrackTitle"]:
                 continue
 
-            dbtrack = helpers.latinToAscii(track['TrackTitle'].lower())
+            dbtrack = helpers.latinToAscii(track["TrackTitle"].lower())
             filetrack = helpers.latinToAscii(split_track_name)
-            logger.debug('Checking if track title: %s is in file name: %s' % (dbtrack, filetrack))
+            logger.debug(
+                "Checking if track title: %s is in file name: %s"
+                % (dbtrack, filetrack)
+            )
 
             if dbtrack in filetrack:
-                doPostProcessing(albumid, albumpath, release, tracks, downloaded_track_list, Kind,
-                                 keep_original_folder, forced, single)
+                doPostProcessing(
+                    albumid,
+                    albumpath,
+                    release,
+                    tracks,
+                    downloaded_track_list,
+                    Kind,
+                    keep_original_folder,
+                    forced,
+                    single,
+                )
                 return
 
     # test #3: number of songs and duration
-    logger.debug('Filename check failed. Verifying album length...')
+    logger.debug("Filename check failed. Verifying album length...")
     db_track_duration = 0
     downloaded_track_duration = 0
 
-    logger.debug('Total music files in %s: %i' % (albumpath, len(downloaded_track_list)))
-    logger.debug('Total tracks for this album in the database: %i' % len(tracks))
+    logger.debug(
+        "Total music files in %s: %i" % (albumpath, len(downloaded_track_list))
+    )
+    logger.debug(
+        "Total tracks for this album in the database: %i" % len(tracks)
+    )
     if len(tracks) == len(downloaded_track_list):
 
         for track in tracks:
             try:
-                db_track_duration += track['TrackDuration'] / 1000
+                db_track_duration += track["TrackDuration"] / 1000
             except:
                 downloaded_track_duration = False
                 break
@@ -329,22 +442,38 @@ def verify(albumid, albumpath, Kind=None, forced=False, keep_original_folder=Fal
                 break
 
         if downloaded_track_duration and db_track_duration:
-            logger.debug('Downloaded album duration: %i' % downloaded_track_duration)
-            logger.debug('Database track duration: %i' % db_track_duration)
+            logger.debug(
+                "Downloaded album duration: %i" % downloaded_track_duration
+            )
+            logger.debug("Database track duration: %i" % db_track_duration)
             delta = abs(downloaded_track_duration - db_track_duration)
             if delta < 240:
-                doPostProcessing(albumid, albumpath, release, tracks, downloaded_track_list, Kind,
-                                 keep_original_folder, forced, single)
+                doPostProcessing(
+                    albumid,
+                    albumpath,
+                    release,
+                    tracks,
+                    downloaded_track_list,
+                    Kind,
+                    keep_original_folder,
+                    forced,
+                    single,
+                )
                 return
 
-    logger.warn(f"Could not identify {albumpath}. It may not be the intended album")
+    logger.warn(
+        f"Could not identify {albumpath}. It may not be the intended album"
+    )
     markAsUnprocessed(albumid, albumpath, keep_original_folder)
+
 
 def markAsUnprocessed(albumid, albumpath, keep_original_folder=False):
     myDB = db.DBConnection()
     myDB.action(
-        'UPDATE snatched SET status = "Unprocessed" WHERE status NOT LIKE "Seed%" and AlbumID=?', [albumid])
-    processed = re.search(r' \(Unprocessed\)(?:\[\d+\])?', albumpath)
+        'UPDATE snatched SET status = "Unprocessed" WHERE status NOT LIKE "Seed%" and AlbumID=?',
+        [albumid],
+    )
+    processed = re.search(r" \(Unprocessed\)(?:\[\d+\])?", albumpath)
     if not processed:
         if headphones.CONFIG.RENAME_UNPROCESSED and not keep_original_folder:
             renameUnprocessedFolder(albumpath, tag="Unprocessed")
@@ -356,8 +485,17 @@ def markAsUnprocessed(albumid, albumpath, keep_original_folder=False):
             return
 
 
-def doPostProcessing(albumid, albumpath, release, tracks, downloaded_track_list, Kind=None,
-                     keep_original_folder=False, forced=False, single=False):
+def doPostProcessing(
+    albumid,
+    albumpath,
+    release,
+    tracks,
+    downloaded_track_list,
+    Kind=None,
+    keep_original_folder=False,
+    forced=False,
+    single=False,
+):
     logger.info(
         f"Starting post-processing for: {release['ArtistName']} - "
         f"{release['AlbumTitle']}"
@@ -366,7 +504,9 @@ def doPostProcessing(albumid, albumpath, release, tracks, downloaded_track_list,
 
     # Preserve the torrent dir
     if keep_original_folder or single:
-        temp_path = helpers.preserve_torrent_directory(albumpath, forced, single)
+        temp_path = helpers.preserve_torrent_directory(
+            albumpath, forced, single
+        )
         if not temp_path:
             markAsUnprocessed(albumid, albumpath, keep_original_folder)
             return
@@ -383,7 +523,10 @@ def doPostProcessing(albumid, albumpath, release, tracks, downloaded_track_list,
         downloaded_track_list = []
         for r, d, f in os.walk(albumpath):
             for files in f:
-                if any(files.lower().endswith('.' + x.lower()) for x in headphones.MEDIA_FORMATS):
+                if any(
+                    files.lower().endswith("." + x.lower())
+                    for x in headphones.MEDIA_FORMATS
+                ):
                     downloaded_track_list.append(os.path.join(r, files))
 
     builder = metadata.AlbumMetadataBuilder()
@@ -394,10 +537,14 @@ def doPostProcessing(albumid, albumpath, release, tracks, downloaded_track_list,
             f = MediaFile(downloaded_track)
             builder.add_media_file(f)
         except (FileTypeError, UnreadableFileError):
-            logger.error(f"`{downloaded_track}` is not a valid media file. Not continuing.")
+            logger.error(
+                f"`{downloaded_track}` is not a valid media file. Not continuing."
+            )
             return
         except IOError:
-            logger.error(f"Unable to find `{downloaded_track}`. Not continuing.")
+            logger.error(
+                f"Unable to find `{downloaded_track}`. Not continuing."
+            )
             if new_folder:
                 shutil.rmtree(new_folder)
             return
@@ -405,10 +552,15 @@ def doPostProcessing(albumid, albumpath, release, tracks, downloaded_track_list,
         # If one of the options below is set, it will access/touch/modify the
         # files, which requires write permissions. This step just check this, so
         # it will not try and fail lateron, with strange exceptions.
-        if headphones.CONFIG.EMBED_ALBUM_ART or headphones.CONFIG.CLEANUP_FILES or \
-                headphones.CONFIG.ADD_ALBUM_ART or headphones.CONFIG.CORRECT_METADATA or \
-                headphones.CONFIG.EMBED_LYRICS or headphones.CONFIG.RENAME_FILES or \
-                headphones.CONFIG.MOVE_FILES:
+        if (
+            headphones.CONFIG.EMBED_ALBUM_ART
+            or headphones.CONFIG.CLEANUP_FILES
+            or headphones.CONFIG.ADD_ALBUM_ART
+            or headphones.CONFIG.CORRECT_METADATA
+            or headphones.CONFIG.EMBED_LYRICS
+            or headphones.CONFIG.RENAME_FILES
+            or headphones.CONFIG.MOVE_FILES
+        ):
 
             try:
                 with open(downloaded_track, "a+b") as fp:
@@ -417,7 +569,7 @@ def doPostProcessing(albumid, albumpath, release, tracks, downloaded_track_list,
                 logger.debug("Write check exact error: %s", e)
                 logger.error(
                     f"`{downloaded_track}` is not writable. This is required "
-                     "for some post processing steps. Not continuing."
+                    "for some post processing steps. Not continuing."
                 )
                 if new_folder:
                     shutil.rmtree(new_folder)
@@ -436,9 +588,12 @@ def doPostProcessing(albumid, albumpath, release, tracks, downloaded_track_list,
     # get artwork and path
     album_art_path = None
     artwork = None
-    if headphones.CONFIG.EMBED_ALBUM_ART or headphones.CONFIG.ADD_ALBUM_ART or \
-            (headphones.CONFIG.PLEX_ENABLED and headphones.CONFIG.PLEX_NOTIFY) or \
-            (headphones.CONFIG.XBMC_ENABLED and headphones.CONFIG.XBMC_NOTIFY):
+    if (
+        headphones.CONFIG.EMBED_ALBUM_ART
+        or headphones.CONFIG.ADD_ALBUM_ART
+        or (headphones.CONFIG.PLEX_ENABLED and headphones.CONFIG.PLEX_NOTIFY)
+        or (headphones.CONFIG.XBMC_ENABLED and headphones.CONFIG.XBMC_NOTIFY)
+    ):
         album_art_path, artwork = albumart.getAlbumArt(albumid)
 
     if headphones.CONFIG.EMBED_ALBUM_ART and artwork:
@@ -454,8 +609,13 @@ def doPostProcessing(albumid, albumpath, release, tracks, downloaded_track_list,
         addAlbumArt(artwork, albumpath, release, metadata_dict)
 
     if headphones.CONFIG.CORRECT_METADATA:
-        correctedMetadata = correctMetadata(albumid, release, downloaded_track_list)
-        if not correctedMetadata and headphones.CONFIG.DO_NOT_PROCESS_UNMATCHED:
+        correctedMetadata = correctMetadata(
+            albumid, release, downloaded_track_list
+        )
+        if (
+            not correctedMetadata
+            and headphones.CONFIG.DO_NOT_PROCESS_UNMATCHED
+        ):
             if new_folder:
                 shutil.rmtree(new_folder)
             return
@@ -468,7 +628,8 @@ def doPostProcessing(albumid, albumpath, release, tracks, downloaded_track_list,
 
     if headphones.CONFIG.MOVE_FILES and not headphones.CONFIG.DESTINATION_DIR:
         logger.error(
-            'No DESTINATION_DIR has been set. Set "Destination Directory" to the parent directory you want to move the files to')
+            'No DESTINATION_DIR has been set. Set "Destination Directory" to the parent directory you want to move the files to'
+        )
         albumpaths = [albumpath]
     elif headphones.CONFIG.MOVE_FILES and headphones.CONFIG.DESTINATION_DIR:
         albumpaths = moveFiles(albumpath, release, metadata_dict)
@@ -479,21 +640,27 @@ def doPostProcessing(albumid, albumpath, release, tracks, downloaded_track_list,
         updateFilePermissions(albumpaths)
 
     myDB = db.DBConnection()
-    myDB.action('UPDATE albums SET status = "Downloaded" WHERE AlbumID=?', [albumid])
+    myDB.action(
+        'UPDATE albums SET status = "Downloaded" WHERE AlbumID=?', [albumid]
+    )
     myDB.action(
         'UPDATE snatched SET status = "Processed" WHERE Status NOT LIKE "Seed%" and AlbumID=?',
-        [albumid])
+        [albumid],
+    )
 
     # Check if torrent has finished seeding
     if headphones.CONFIG.TORRENT_DOWNLOADER != 0:
         seed_snatched = myDB.action(
             'SELECT * from snatched WHERE Status="Seed_Snatched" and AlbumID=?',
-            [albumid]).fetchone()
+            [albumid],
+        ).fetchone()
         if seed_snatched:
-            hash = seed_snatched['TorrentHash']
+            hash = seed_snatched["TorrentHash"]
             torrent_removed = False
-            logger.info('%s - %s. Checking if torrent has finished seeding and can be removed' % (
-                release['ArtistName'], release['AlbumTitle']))
+            logger.info(
+                "%s - %s. Checking if torrent has finished seeding and can be removed"
+                % (release["ArtistName"], release["AlbumTitle"])
+            )
             if headphones.CONFIG.TORRENT_DOWNLOADER == 1:
                 torrent_removed = transmission.removeTorrent(hash, True)
             elif headphones.CONFIG.TORRENT_DOWNLOADER == 3:  # Deluge
@@ -505,22 +672,31 @@ def doPostProcessing(albumid, albumpath, release, tracks, downloaded_track_list,
 
             # Torrent removed, delete the snatched record, else update Status for scheduled job to check
             if torrent_removed:
-                myDB.action('DELETE from snatched WHERE status = "Seed_Snatched" and AlbumID=?',
-                            [albumid])
+                myDB.action(
+                    'DELETE from snatched WHERE status = "Seed_Snatched" and AlbumID=?',
+                    [albumid],
+                )
             else:
                 myDB.action(
                     'UPDATE snatched SET status = "Seed_Processed" WHERE status = "Seed_Snatched" and AlbumID=?',
-                    [albumid])
+                    [albumid],
+                )
 
     # Update the have tracks for all created dirs:
     for albumpath in albumpaths:
-        librarysync.libraryScan(dir=albumpath, append=True, ArtistID=release['ArtistID'],
-                                ArtistName=release['ArtistName'])
+        librarysync.libraryScan(
+            dir=albumpath,
+            append=True,
+            ArtistID=release["ArtistID"],
+            ArtistName=release["ArtistName"],
+        )
 
     logger.info(
-        'Post-processing for %s - %s complete' % (release['ArtistName'], release['AlbumTitle']))
+        "Post-processing for %s - %s complete"
+        % (release["ArtistName"], release["AlbumTitle"])
+    )
 
-    pushmessage = release['ArtistName'] + ' - ' + release['AlbumTitle']
+    pushmessage = release["ArtistName"] + " - " + release["AlbumTitle"]
     statusmessage = "Download and Postprocessing completed"
 
     if headphones.CONFIG.GROWL_ENABLED:
@@ -538,9 +714,9 @@ def doPostProcessing(albumid, albumpath, release, tracks, downloaded_track_list,
         if headphones.CONFIG.XBMC_UPDATE:
             xbmc.update()
         if headphones.CONFIG.XBMC_NOTIFY:
-            xbmc.notify(release['ArtistName'],
-                        release['AlbumTitle'],
-                        album_art_path)
+            xbmc.notify(
+                release["ArtistName"], release["AlbumTitle"], album_art_path
+            )
 
     if headphones.CONFIG.LMS_ENABLED:
         lms = notifiers.LMS()
@@ -551,13 +727,13 @@ def doPostProcessing(albumid, albumpath, release, tracks, downloaded_track_list,
         if headphones.CONFIG.PLEX_UPDATE:
             plex.update()
         if headphones.CONFIG.PLEX_NOTIFY:
-            plex.notify(release['ArtistName'],
-                        release['AlbumTitle'],
-                        album_art_path)
+            plex.notify(
+                release["ArtistName"], release["AlbumTitle"], album_art_path
+            )
 
     if headphones.CONFIG.NMA_ENABLED:
         nma = notifiers.NMA()
-        nma.notify(release['ArtistName'], release['AlbumTitle'])
+        nma.notify(release["ArtistName"], release["AlbumTitle"])
 
     if headphones.CONFIG.PUSHALOT_ENABLED:
         logger.info("Pushalot request")
@@ -591,26 +767,32 @@ def doPostProcessing(albumid, albumpath, release, tracks, downloaded_track_list,
 
     if headphones.CONFIG.TWITTER_ENABLED:
         logger.info("Twitter notifications temporarily disabled")
-        #logger.info("Sending Twitter notification")
-        #twitter = notifiers.TwitterNotifier()
-        #twitter.notify_download(pushmessage)
+        # logger.info("Sending Twitter notification")
+        # twitter = notifiers.TwitterNotifier()
+        # twitter.notify_download(pushmessage)
 
     if headphones.CONFIG.OSX_NOTIFY_ENABLED:
         from headphones import cache
+
         c = cache.Cache()
-        album_art = c.get_artwork_from_cache(None, release['AlbumID'])
+        album_art = c.get_artwork_from_cache(None, release["AlbumID"])
         logger.info("Sending OS X notification")
         osx_notify = notifiers.OSX_NOTIFY()
-        osx_notify.notify(release['ArtistName'],
-                          release['AlbumTitle'],
-                          statusmessage,
-                          image=album_art)
+        osx_notify.notify(
+            release["ArtistName"],
+            release["AlbumTitle"],
+            statusmessage,
+            image=album_art,
+        )
 
     if headphones.CONFIG.BOXCAR_ENABLED:
         logger.info("Sending Boxcar2 notification")
         boxcar = notifiers.BOXCAR()
-        boxcar.notify('Headphones processed: ' + pushmessage,
-                      statusmessage, release['AlbumID'])
+        boxcar.notify(
+            "Headphones processed: " + pushmessage,
+            statusmessage,
+            release["AlbumID"],
+        )
 
     if headphones.CONFIG.SUBSONIC_ENABLED:
         logger.info("Sending Subsonic update")
@@ -624,7 +806,7 @@ def doPostProcessing(albumid, albumpath, release, tracks, downloaded_track_list,
     if headphones.CONFIG.EMAIL_ENABLED:
         logger.info("Sending Email notification")
         email = notifiers.Email()
-        subject = release['ArtistName'] + ' - ' + release['AlbumTitle']
+        subject = release["ArtistName"] + " - " + release["AlbumTitle"]
         email.notify(subject, "Download and Postprocessing completed")
 
     if new_folder:
@@ -632,13 +814,15 @@ def doPostProcessing(albumid, albumpath, release, tracks, downloaded_track_list,
 
 
 def embedAlbumArt(artwork, downloaded_track_list):
-    logger.info('Embedding album art')
+    logger.info("Embedding album art")
 
     for downloaded_track in downloaded_track_list:
         try:
             f = MediaFile(downloaded_track)
         except:
-            logger.error(f"Could not read {downloaded_track}. Not adding album art")
+            logger.error(
+                f"Could not read {downloaded_track}. Not adding album art"
+            )
             continue
 
         logger.debug(f"Adding album art to `{downloaded_track}`")
@@ -647,7 +831,9 @@ def embedAlbumArt(artwork, downloaded_track_list):
             f.art = artwork
             f.save()
         except Exception as e:
-            logger.error(f"Error embedding album art to `{downloaded_track}`: {e}")
+            logger.error(
+                f"Error embedding album art to `{downloaded_track}`: {e}"
+            )
             continue
 
 
@@ -657,50 +843,59 @@ def addAlbumArt(artwork, albumpath, release, metadata_dict):
 
     ext = ".jpg"
     # PNGs are possibe here too
-    if artwork[:4] == '\x89PNG':
+    if artwork[:4] == "\x89PNG":
         ext = ".png"
 
-    album_art_name = helpers.pattern_substitute(
-        headphones.CONFIG.ALBUM_ART_FORMAT.strip(), md) + ext
+    album_art_name = (
+        helpers.pattern_substitute(
+            headphones.CONFIG.ALBUM_ART_FORMAT.strip(), md
+        )
+        + ext
+    )
 
     album_art_name = helpers.replace_illegal_chars(album_art_name)
 
     if headphones.CONFIG.FILE_UNDERSCORES:
-        album_art_name = album_art_name.replace(' ', '_')
+        album_art_name = album_art_name.replace(" ", "_")
 
-    if album_art_name.startswith('.'):
+    if album_art_name.startswith("."):
         album_art_name = album_art_name.replace(".", "_", 1)
 
     try:
-        with open(os.path.join(albumpath, album_art_name), 'wb') as f:
+        with open(os.path.join(albumpath, album_art_name), "wb") as f:
             f.write(artwork)
     except IOError as e:
-        logger.error('Error saving album art: %s', e)
+        logger.error("Error saving album art: %s", e)
         return
 
 
 def cleanupFiles(albumpath):
-    logger.info('Cleaning up files')
+    logger.info("Cleaning up files")
 
     for r, d, f in os.walk(albumpath):
         for file in f:
-            if not any(file.lower().endswith('.' + x.lower()) for x in headphones.MEDIA_FORMATS):
-                logger.debug('Removing: %s' % file)
+            if not any(
+                file.lower().endswith("." + x.lower())
+                for x in headphones.MEDIA_FORMATS
+            ):
+                logger.debug("Removing: %s" % file)
                 try:
                     os.remove(os.path.join(r, file))
                 except Exception as e:
-                    logger.error('Could not remove file: %s. Error: %s' % (file, e))
+                    logger.error(
+                        "Could not remove file: %s. Error: %s" % (file, e)
+                    )
 
 
 def renameNFO(albumpath):
-    logger.info('Renaming NFO')
+    logger.info("Renaming NFO")
 
     for r, d, f in os.walk(albumpath):
         for file in f:
-            if file.lower().endswith('.nfo'):
-                if not file.lower().endswith('.orig.nfo'):
+            if file.lower().endswith(".nfo"):
+                if not file.lower().endswith(".orig.nfo"):
                     try:
-                        new_file_name = os.path.join(r, file)[:-3] + 'orig.nfo'
+                        new_file_name = os.path.join(r, file)[:-3] + "orig.nfo"
                         logger.debug(f"Renaming `{file}` to `{new_file_name}`")
                         os.rename(os.path.join(r, file), new_file_name)
                     except Exception as e:
@@ -712,19 +907,20 @@ def moveFiles(albumpath, release, metadata_dict):
 
     md = metadata.album_metadata(albumpath, release, metadata_dict)
     folder = helpers.pattern_substitute(
-        headphones.CONFIG.FOLDER_FORMAT.strip(), md, normalize=True)
+        headphones.CONFIG.FOLDER_FORMAT.strip(), md, normalize=True
+    )
 
     if headphones.CONFIG.FILE_UNDERSCORES:
-        folder = folder.replace(' ', '_')
+        folder = folder.replace(" ", "_")
 
     folder = helpers.replace_illegal_chars(folder, type="folder")
-    folder = folder.replace('./', '_/').replace('/.', '/_')
+    folder = folder.replace("./", "_/").replace("/.", "/_")
 
-    if folder.endswith('.'):
-        folder = folder[:-1] + '_'
+    if folder.endswith("."):
+        folder = folder[:-1] + "_"
 
-    if folder.startswith('.'):
-        folder = '_' + folder[1:]
+    if folder.startswith("."):
+        folder = "_" + folder[1:]
 
     # Grab our list of files early on so we can determine if we need to create
     # the lossy_dest_dir, lossless_dest_dir, or both
@@ -735,18 +931,27 @@ def moveFiles(albumpath, release, metadata_dict):
     for r, d, f in os.walk(albumpath):
         for files in f:
             files_to_move.append(os.path.join(r, files))
-            if any(files.lower().endswith('.' + x.lower()) for x in headphones.LOSSY_MEDIA_FORMATS):
+            if any(
+                files.lower().endswith("." + x.lower())
+                for x in headphones.LOSSY_MEDIA_FORMATS
+            ):
                 lossy_media = True
-            if any(files.lower().endswith('.' + x.lower()) for x in
-                   headphones.LOSSLESS_MEDIA_FORMATS):
+            if any(
+                files.lower().endswith("." + x.lower())
+                for x in headphones.LOSSLESS_MEDIA_FORMATS
+            ):
                 lossless_media = True
 
     # Do some sanity checking to see what directories we need to create:
     make_lossy_folder = False
     make_lossless_folder = False
 
-    lossy_destination_path = os.path.join(headphones.CONFIG.DESTINATION_DIR, folder)
-    lossless_destination_path = os.path.join(headphones.CONFIG.LOSSLESS_DESTINATION_DIR, folder)
+    lossy_destination_path = os.path.join(
+        headphones.CONFIG.DESTINATION_DIR, folder
+    )
+    lossless_destination_path = os.path.join(
+        headphones.CONFIG.LOSSLESS_DESTINATION_DIR, folder
+    )
 
     # If they set a destination dir for lossless media, only create the lossy folder if there is lossy media
     if headphones.CONFIG.LOSSLESS_DESTINATION_DIR:
@@ -758,11 +963,14 @@ def moveFiles(albumpath, release, metadata_dict):
     else:
         make_lossy_folder = True
 
-    last_folder = headphones.CONFIG.FOLDER_FORMAT.strip().split('/')[-1]
+    last_folder = headphones.CONFIG.FOLDER_FORMAT.strip().split("/")[-1]
 
     if make_lossless_folder:
         # Only rename the folder if they use the album name, otherwise merge into existing folder
-        if os.path.exists(lossless_destination_path) and 'album' in last_folder.lower():
+        if (
+            os.path.exists(lossless_destination_path)
+            and "album" in last_folder.lower()
+        ):
 
             create_duplicate_folder = False
 
@@ -776,16 +984,19 @@ def moveFiles(albumpath, release, metadata_dict):
                     )
                     create_duplicate_folder = True
 
-            if not headphones.CONFIG.REPLACE_EXISTING_FOLDERS or create_duplicate_folder:
+            if (
+                not headphones.CONFIG.REPLACE_EXISTING_FOLDERS
+                or create_duplicate_folder
+            ):
                 temp_folder = folder
 
                 i = 1
                 while True:
-                    newfolder = temp_folder + '[%i]' % i
+                    newfolder = temp_folder + "[%i]" % i
                     lossless_destination_path = os.path.normpath(
                         os.path.join(
-                            headphones.CONFIG.LOSSLESS_DESTINATION_DIR, 
-                            newfolder
+                            headphones.CONFIG.LOSSLESS_DESTINATION_DIR,
+                            newfolder,
                         )
                     )
                     if os.path.exists(lossless_destination_path):
@@ -798,13 +1009,18 @@ def moveFiles(albumpath, release, metadata_dict):
             try:
                 os.makedirs(lossless_destination_path)
             except Exception as e:
-                logger.error('Could not create lossless folder for %s. (Error: %s)' % (
-                    release['AlbumTitle'], e))
+                logger.error(
+                    "Could not create lossless folder for %s. (Error: %s)"
+                    % (release["AlbumTitle"], e)
+                )
                 if not make_lossy_folder:
                     return [albumpath]
 
     if make_lossy_folder:
-        if os.path.exists(lossy_destination_path) and 'album' in last_folder.lower():
+        if (
+            os.path.exists(lossy_destination_path)
+            and "album" in last_folder.lower()
+        ):
 
             create_duplicate_folder = False
 
@@ -818,16 +1034,18 @@ def moveFiles(albumpath, release, metadata_dict):
                     )
                     create_duplicate_folder = True
 
-            if not headphones.CONFIG.REPLACE_EXISTING_FOLDERS or create_duplicate_folder:
+            if (
+                not headphones.CONFIG.REPLACE_EXISTING_FOLDERS
+                or create_duplicate_folder
+            ):
                 temp_folder = folder
 
                 i = 1
                 while True:
-                    newfolder = temp_folder + '[%i]' % i
+                    newfolder = temp_folder + "[%i]" % i
                     lossy_destination_path = os.path.normpath(
                         os.path.join(
-                            headphones.CONFIG.DESTINATION_DIR, 
-                            newfolder
+                            headphones.CONFIG.DESTINATION_DIR, newfolder
                         )
                     )
                     if os.path.exists(lossy_destination_path):
@@ -841,10 +1059,12 @@ def moveFiles(albumpath, release, metadata_dict):
                 os.makedirs(lossy_destination_path)
             except Exception as e:
                 logger.error(
-                    'Could not create folder for %s. Not moving: %s' % (release['AlbumTitle'], e))
+                    "Could not create folder for %s. Not moving: %s"
+                    % (release["AlbumTitle"], e)
+                )
                 return [albumpath]
 
-    logger.info('Checking which files we need to move.....')
+    logger.info("Checking which files we need to move.....")
 
     # Move files to the destination folder, renaming them if they already exist
     # If we have two desination_dirs, move non-music files to both
@@ -852,34 +1072,41 @@ def moveFiles(albumpath, release, metadata_dict):
 
         for file_to_move in files_to_move:
 
-            if any(file_to_move.lower().endswith('.' + x.lower()) for x in
-                   headphones.LOSSY_MEDIA_FORMATS):
+            if any(
+                file_to_move.lower().endswith("." + x.lower())
+                for x in headphones.LOSSY_MEDIA_FORMATS
+            ):
                 helpers.smartMove(file_to_move, lossy_destination_path)
 
-            elif any(file_to_move.lower().endswith('.' + x.lower()) for x in
-                     headphones.LOSSLESS_MEDIA_FORMATS):
+            elif any(
+                file_to_move.lower().endswith("." + x.lower())
+                for x in headphones.LOSSLESS_MEDIA_FORMATS
+            ):
                 helpers.smartMove(file_to_move, lossless_destination_path)
 
             # If it's a non-music file, move it to both dirs
             # TODO: Move specific-to-lossless files to the lossless dir only
             else:
 
-                moved_to_lossy_folder = helpers.smartMove(file_to_move, lossy_destination_path,
-                                                          delete=False)
-                moved_to_lossless_folder = helpers.smartMove(file_to_move,
-                                                             lossless_destination_path,
-                                                             delete=False)
+                moved_to_lossy_folder = helpers.smartMove(
+                    file_to_move, lossy_destination_path, delete=False
+                )
+                moved_to_lossless_folder = helpers.smartMove(
+                    file_to_move, lossless_destination_path, delete=False
+                )
 
                 if moved_to_lossy_folder or moved_to_lossless_folder:
                     try:
                         os.remove(file_to_move)
                     except Exception as e:
                         logger.error(
-                            f"Error deleting `{file_to_move}` from source directory") 
+                            f"Error deleting `{file_to_move}` from source directory"
+                        )
                 else:
                     logger.error(
                         f"Error copying `{file_to_move}`. "
-                        f"Not deleting from download directory")
+                        f"Not deleting from download directory"
+                    )
     elif make_lossless_folder and not make_lossy_folder:
 
         for file_to_move in files_to_move:
@@ -891,7 +1118,7 @@ def moveFiles(albumpath, release, metadata_dict):
             helpers.smartMove(file_to_move, lossy_destination_path)
 
     # Chmod the directories using the folder_format (script courtesy of premiso!)
-    folder_list = folder.split('/')
+    folder_list = folder.split("/")
     temp_fs = []
 
     if make_lossless_folder:
@@ -908,14 +1135,19 @@ def moveFiles(albumpath, release, metadata_dict):
 
             if headphones.CONFIG.FOLDER_PERMISSIONS_ENABLED:
                 try:
-                    os.chmod(os.path.normpath(temp_f),
-                             int(headphones.CONFIG.FOLDER_PERMISSIONS, 8))
+                    os.chmod(
+                        os.path.normpath(temp_f),
+                        int(headphones.CONFIG.FOLDER_PERMISSIONS, 8),
+                    )
                 except Exception as e:
-                    logger.error(f"Error trying to change permissions on `{temp_f}`: {e}")
+                    logger.error(
+                        f"Error trying to change permissions on `{temp_f}`: {e}"
+                    )
             else:
                 logger.debug(
                     f"Not changing permissions on `{temp_f}`, "
-                    "since it is disabled")
+                    "since it is disabled"
+                )
 
     # If we failed to move all the files out of the directory, this will fail too
     try:
@@ -934,7 +1166,7 @@ def moveFiles(albumpath, release, metadata_dict):
 
 
 def correctMetadata(albumid, release, downloaded_track_list):
-    logger.info('Preparing to write metadata to tracks....')
+    logger.info("Preparing to write metadata to tracks....")
     lossy_items = []
     lossless_items = []
 
@@ -943,12 +1175,20 @@ def correctMetadata(albumid, release, downloaded_track_list):
 
         try:
 
-            if any(downloaded_track.lower().endswith('.' + x.lower()) for x in
-                   headphones.LOSSLESS_MEDIA_FORMATS):
-                lossless_items.append(beets.library.Item.from_path(downloaded_track))
-            elif any(downloaded_track.lower().endswith('.' + x.lower()) for x in
-                     headphones.LOSSY_MEDIA_FORMATS):
-                lossy_items.append(beets.library.Item.from_path(downloaded_track))
+            if any(
+                downloaded_track.lower().endswith("." + x.lower())
+                for x in headphones.LOSSLESS_MEDIA_FORMATS
+            ):
+                lossless_items.append(
+                    beets.library.Item.from_path(downloaded_track)
+                )
+            elif any(
+                downloaded_track.lower().endswith("." + x.lower())
+                for x in headphones.LOSSY_MEDIA_FORMATS
+            ):
+                lossy_items.append(
+                    beets.library.Item.from_path(downloaded_track)
+                )
             else:
                 logger.warn(
                     f"Skipping `{downloaded_track}` because it is "
@@ -957,7 +1197,8 @@ def correctMetadata(albumid, release, downloaded_track_list):
                 continue
         except Exception as e:
             logger.error(
-                f"Beets couldn't create an Item from `{downloaded_track}`: {e}")
+                f"Beets couldn't create an Item from `{downloaded_track}`: {e}"
+            )
             continue
 
     for items in [lossy_items, lossless_items]:
@@ -966,44 +1207,64 @@ def correctMetadata(albumid, release, downloaded_track_list):
             continue
 
         search_ids = []
-        logger.debug('Getting recommendation from beets. Artist: %s. Album: %s. Tracks: %s', release['ArtistName'],
-                     release['AlbumTitle'], len(items))
+        logger.debug(
+            "Getting recommendation from beets. Artist: %s. Album: %s. Tracks: %s",
+            release["ArtistName"],
+            release["AlbumTitle"],
+            len(items),
+        )
 
         # Try with specific release, e.g. alternate release selected from albumPage
-        if release['ReleaseID'] != release['AlbumID']:
-            logger.debug('trying beets with specific Release ID: %s', release['ReleaseID'])
-            search_ids = [release['ReleaseID']]
+        if release["ReleaseID"] != release["AlbumID"]:
+            logger.debug(
+                "trying beets with specific Release ID: %s",
+                release["ReleaseID"],
+            )
+            search_ids = [release["ReleaseID"]]
 
         try:
-            beetslog = beetslogging.getLogger('beets')
-            beetslog.set_global_level(beetslogging.DEBUG) if headphones.VERBOSE else beetslog.set_global_level(
-                beetslogging.CRITICAL)
+            beetslog = beetslogging.getLogger("beets")
+            beetslog.set_global_level(
+                beetslogging.DEBUG
+            ) if headphones.VERBOSE else beetslog.set_global_level(
+                beetslogging.CRITICAL
+            )
             with helpers.capture_beets_log() as logs:
-                cur_artist, cur_album, prop = autotag.tag_album(items,
-                                                                search_artist=release['ArtistName'],
-                                                                search_album=release['AlbumTitle'],
-                                                                search_ids=search_ids)
+                cur_artist, cur_album, prop = autotag.tag_album(
+                    items,
+                    search_artist=release["ArtistName"],
+                    search_album=release["AlbumTitle"],
+                    search_ids=search_ids,
+                )
                 candidates = prop.candidates
                 rec = prop.recommendation
                 for log in logs:
-                    logger.debug('Beets: %s', log)
+                    logger.debug("Beets: %s", log)
             beetslog.set_global_level(beetslogging.NOTSET)
         except Exception as e:
-            logger.error('Error getting recommendation: %s. Not writing metadata', e)
+            logger.error(
+                "Error getting recommendation: %s. Not writing metadata", e
+            )
             return False
-        if str(rec) == 'Recommendation.none':
-            logger.warn('No accurate album match found for %s, %s -  not writing metadata',
-                        release['ArtistName'], release['AlbumTitle'])
+        if str(rec) == "Recommendation.none":
+            logger.warn(
+                "No accurate album match found for %s, %s -  not writing metadata",
+                release["ArtistName"],
+                release["AlbumTitle"],
+            )
             return False
 
         if candidates:
             dist, info, mapping, extra_items, extra_tracks = candidates[0]
         else:
-            logger.warn('No accurate album match found for %s, %s -  not writing metadata',
-                        release['ArtistName'], release['AlbumTitle'])
+            logger.warn(
+                "No accurate album match found for %s, %s -  not writing metadata",
+                release["ArtistName"],
+                release["AlbumTitle"],
+            )
             return False
 
-        logger.info('Beets recommendation for tagging items: %s' % rec)
+        logger.info("Beets recommendation for tagging items: %s" % rec)
 
         # TODO: Handle extra_items & extra_tracks
 
@@ -1011,10 +1272,10 @@ def correctMetadata(albumid, release, downloaded_track_list):
 
         # Set ID3 tag version
         if headphones.CONFIG.IDTAG:
-            beetsconfig['id3v23'] = True
+            beetsconfig["id3v23"] = True
             logger.debug("Using ID3v2.3")
         else:
-            beetsconfig['id3v23'] = False
+            beetsconfig["id3v23"] = False
             logger.debug("Using ID3v2.4")
 
         for item in items:
@@ -1029,7 +1290,7 @@ def correctMetadata(albumid, release, downloaded_track_list):
 
 
 def embedLyrics(downloaded_track_list):
-    logger.info('Adding lyrics')
+    logger.info("Adding lyrics")
 
     # TODO: If adding lyrics for flac & lossy, only fetch the lyrics once and apply it to both files
     # TODO: Get beets to add automatically by enabling the plugin
@@ -1041,18 +1302,29 @@ def embedLyrics(downloaded_track_list):
     for downloaded_track in downloaded_track_list:
 
         try:
-            if any(downloaded_track.lower().endswith('.' + x.lower()) for x in
-                   headphones.LOSSLESS_MEDIA_FORMATS):
-                lossless_items.append(beets.library.Item.from_path(downloaded_track))
-            elif any(downloaded_track.lower().endswith('.' + x.lower()) for x in
-                     headphones.LOSSY_MEDIA_FORMATS):
-                lossy_items.append(beets.library.Item.from_path(downloaded_track))
+            if any(
+                downloaded_track.lower().endswith("." + x.lower())
+                for x in headphones.LOSSLESS_MEDIA_FORMATS
+            ):
+                lossless_items.append(
+                    beets.library.Item.from_path(downloaded_track)
+                )
+            elif any(
+                downloaded_track.lower().endswith("." + x.lower())
+                for x in headphones.LOSSY_MEDIA_FORMATS
+            ):
+                lossy_items.append(
+                    beets.library.Item.from_path(downloaded_track)
+                )
             else:
                 logger.warn(
                     f"Skipping `{downloaded_track}` because it is "
-                    f"not a mutagen friendly file format")
+                    f"not a mutagen friendly file format"
+                )
         except Exception as e:
-            logger.error(f"Beets couldn't create an Item from `{downloaded_track}`: {e}")
+            logger.error(
+                f"Beets couldn't create an Item from `{downloaded_track}`: {e}"
+            )
 
     for items in [lossy_items, lossless_items]:
 
@@ -1070,25 +1342,27 @@ def embedLyrics(downloaded_track_list):
             lyrics = "\n\n---\n\n".join([l for l in lyrics if l])
 
             if lyrics:
-                logger.debug('Adding lyrics to: %s', item.title)
+                logger.debug("Adding lyrics to: %s", item.title)
                 item.lyrics = lyrics
                 try:
                     item.write()
                 except Exception as e:
-                    logger.error('Cannot save lyrics to: %s. Skipping', item.title)
+                    logger.error(
+                        "Cannot save lyrics to: %s. Skipping", item.title
+                    )
             else:
-                logger.debug('No lyrics found for track: %s', item.title)
+                logger.debug("No lyrics found for track: %s", item.title)
 
 
 def renameFiles(albumpath, downloaded_track_list, release):
-    logger.info('Renaming files')
+    logger.info("Renaming files")
     # Until tagging works better I'm going to rely on the already provided metadata
 
     for downloaded_track in downloaded_track_list:
         md, from_metadata = metadata.file_metadata(
             downloaded_track,
             release,
-            headphones.CONFIG.RENAME_SINGLE_DISC_IGNORE
+            headphones.CONFIG.RENAME_SINGLE_DISC_IGNORE,
         )
         if md is None:
             # unable to parse media file, skip file
@@ -1099,16 +1373,19 @@ def renameFiles(albumpath, downloaded_track_list, release):
             title = md[metadata.Vars.TITLE]
             new_file_name = helpers.cleanTitle(title) + ext
         else:
-            new_file_name = helpers.pattern_substitute(
-                headphones.CONFIG.FILE_FORMAT.strip(), md
-            ).replace('/', '_') + ext
+            new_file_name = (
+                helpers.pattern_substitute(
+                    headphones.CONFIG.FILE_FORMAT.strip(), md
+                ).replace("/", "_")
+                + ext
+            )
 
         new_file_name = helpers.replace_illegal_chars(new_file_name)
 
         if headphones.CONFIG.FILE_UNDERSCORES:
-            new_file_name = new_file_name.replace(' ', '_')
+            new_file_name = new_file_name.replace(" ", "_")
 
-        if new_file_name.startswith('.'):
+        if new_file_name.startswith("."):
             new_file_name = new_file_name.replace(".", "_", 1)
 
         new_file = os.path.join(albumpath, new_file_name)
@@ -1132,10 +1409,15 @@ def updateFilePermissions(albumpaths):
             for files in f:
                 full_path = os.path.join(r, files)
                 try:
-                    os.chmod(full_path, int(headphones.CONFIG.FILE_PERMISSIONS, 8))
+                    os.chmod(
+                        full_path, int(headphones.CONFIG.FILE_PERMISSIONS, 8)
+                    )
                 except:
-                    logger.error(f"Could not change permissions for `{full_path}`")
+                    logger.error(
+                        f"Could not change permissions for `{full_path}`"
+                    )
                     continue
+
 
 def renameUnprocessedFolder(path, tag):
     """
@@ -1156,8 +1438,13 @@ def renameUnprocessedFolder(path, tag):
             return
 
 
-def forcePostProcess(dir=None, expand_subfolders=True, album_dir=None, keep_original_folder=False):
-    logger.info('Force checking download folder for completed downloads')
+def forcePostProcess(
+    dir=None,
+    expand_subfolders=True,
+    album_dir=None,
+    keep_original_folder=False,
+):
+    logger.info("Force checking download folder for completed downloads")
 
     ignored = 0
 
@@ -1175,21 +1462,25 @@ def forcePostProcess(dir=None, expand_subfolders=True, album_dir=None, keep_orig
 
         # If DOWNLOAD_DIR and DOWNLOAD_TORRENT_DIR are the same, remove the duplicate to prevent us from trying to process the same folder twice.
         download_dirs = list(set(download_dirs))
-        logger.debug('Post processing folders: %s', download_dirs)
+        logger.debug("Post processing folders: %s", download_dirs)
 
         # Get a list of folders in the download_dir
         folders = []
 
         for download_dir in download_dirs:
             if not os.path.isdir(download_dir):
-                logger.warn('Directory %s does not exist. Skipping', download_dir)
+                logger.warn(
+                    "Directory %s does not exist. Skipping", download_dir
+                )
                 continue
 
             # Scan for subfolders
             subfolders = os.listdir(download_dir)
-            ignored += helpers.path_filter_patterns(subfolders,
-                                                    headphones.CONFIG.IGNORED_FOLDERS,
-                                                    root=download_dir)
+            ignored += helpers.path_filter_patterns(
+                subfolders,
+                headphones.CONFIG.IGNORED_FOLDERS,
+                root=download_dir,
+            )
 
             for folder in subfolders:
                 path_to_folder = os.path.join(download_dir, folder)
@@ -1204,11 +1495,12 @@ def forcePostProcess(dir=None, expand_subfolders=True, album_dir=None, keep_orig
 
     # Log number of folders
     if folders:
-        logger.debug('Expanded post processing folders: %s', folders)
-        logger.info('Found %d folders to process (%d ignored).',
-                    len(folders), ignored)
+        logger.debug("Expanded post processing folders: %s", folders)
+        logger.info(
+            "Found %d folders to process (%d ignored).", len(folders), ignored
+        )
     else:
-        logger.info('Found no folders to process. Aborting.')
+        logger.info("Found no folders to process. Aborting.")
         return
 
     # Parse the folder names to get artist album info
@@ -1216,35 +1508,46 @@ def forcePostProcess(dir=None, expand_subfolders=True, album_dir=None, keep_orig
 
     for folder in folders:
         folder_basename = os.path.basename(folder)
-        logger.info('Processing: %s', folder_basename)
+        logger.info("Processing: %s", folder_basename)
 
         # Attempt 1: First try to see if there's a match in the snatched table,
         # then we'll try to parse the foldername.
         # TODO: Iterate through underscores -> spaces, spaces -> dots,
         # underscores -> dots (this might be hit or miss since it assumes all
         # spaces/underscores came from sab replacing values
-        logger.debug('Attempting to find album in the snatched table')
+        logger.debug("Attempting to find album in the snatched table")
         snatched = myDB.action(
-            'SELECT AlbumID, Title, Kind, Status from snatched WHERE FolderName LIKE ?',
-            [folder_basename]).fetchone()
+            "SELECT AlbumID, Title, Kind, Status from snatched WHERE FolderName LIKE ?",
+            [folder_basename],
+        ).fetchone()
 
         if snatched:
-            if headphones.CONFIG.KEEP_TORRENT_FILES and snatched['Kind'] == 'torrent' and snatched[
-                    'Status'] == 'Processed':
+            if (
+                headphones.CONFIG.KEEP_TORRENT_FILES
+                and snatched["Kind"] == "torrent"
+                and snatched["Status"] == "Processed"
+            ):
                 logger.info(
-                    '%s is a torrent folder being preserved for seeding and has already been processed. Skipping.',
-                    folder_basename)
+                    "%s is a torrent folder being preserved for seeding and has already been processed. Skipping.",
+                    folder_basename,
+                )
                 continue
             else:
                 logger.info(
-                    'Found a match in the database: %s. Verifying to make sure it is the correct album',
-                    snatched['Title'])
-                verify(snatched['AlbumID'], folder, snatched['Kind'],
-                       forced=True, keep_original_folder=keep_original_folder)
+                    "Found a match in the database: %s. Verifying to make sure it is the correct album",
+                    snatched["Title"],
+                )
+                verify(
+                    snatched["AlbumID"],
+                    folder,
+                    snatched["Kind"],
+                    forced=True,
+                    keep_original_folder=keep_original_folder,
+                )
                 continue
 
         # Attempt 2: strip release group id from filename
-        logger.debug('Attempting to extract release group from folder name')
+        logger.debug("Attempting to extract release group from folder name")
 
         try:
             possible_rgid = folder_basename[-36:]
@@ -1255,24 +1558,38 @@ def forcePostProcess(dir=None, expand_subfolders=True, album_dir=None, keep_orig
         if rgid:
             rgid = possible_rgid
             release = myDB.action(
-                'SELECT ArtistName, AlbumTitle, AlbumID from albums WHERE AlbumID=?',
-                [rgid]).fetchone()
+                "SELECT ArtistName, AlbumTitle, AlbumID from albums WHERE AlbumID=?",
+                [rgid],
+            ).fetchone()
             if release:
                 logger.info(
-                    'Found a match in the database: %s - %s. Verifying to make sure it is the correct album',
-                    release['ArtistName'], release['AlbumTitle'])
-                verify(release['AlbumID'], folder, forced=True,
-                       keep_original_folder=keep_original_folder)
+                    "Found a match in the database: %s - %s. Verifying to make sure it is the correct album",
+                    release["ArtistName"],
+                    release["AlbumTitle"],
+                )
+                verify(
+                    release["AlbumID"],
+                    folder,
+                    forced=True,
+                    keep_original_folder=keep_original_folder,
+                )
                 continue
             else:
                 logger.info(
-                    'Found a (possibly) valid Musicbrainz release group id in album folder name.')
-                verify(rgid, folder, forced=True,
-                       keep_original_folder=keep_original_folder)
+                    "Found a (possibly) valid Musicbrainz release group id in album folder name."
+                )
+                verify(
+                    rgid,
+                    folder,
+                    forced=True,
+                    keep_original_folder=keep_original_folder,
+                )
                 continue
 
         # Attempt 3a: parse the folder name into a valid format
-        logger.debug('Attempting to extract name, album and year from folder name')
+        logger.debug(
+            "Attempting to extract name, album and year from folder name"
+        )
 
         try:
             name, album, year = helpers.extract_data(folder_basename)
@@ -1281,31 +1598,57 @@ def forcePostProcess(dir=None, expand_subfolders=True, album_dir=None, keep_orig
 
         if name and album:
             release = myDB.action(
-                'SELECT AlbumID, ArtistName, AlbumTitle from albums WHERE ArtistName LIKE ? and AlbumTitle LIKE ?',
-                [name, album]).fetchone()
+                "SELECT AlbumID, ArtistName, AlbumTitle from albums WHERE ArtistName LIKE ? and AlbumTitle LIKE ?",
+                [name, album],
+            ).fetchone()
             if release:
                 logger.info(
-                    'Found a match in the database: %s - %s. Verifying to make sure it is the correct album',
-                    release['ArtistName'], release['AlbumTitle'])
-                verify(release['AlbumID'], folder, forced=True, keep_original_folder=keep_original_folder)
+                    "Found a match in the database: %s - %s. Verifying to make sure it is the correct album",
+                    release["ArtistName"],
+                    release["AlbumTitle"],
+                )
+                verify(
+                    release["AlbumID"],
+                    folder,
+                    forced=True,
+                    keep_original_folder=keep_original_folder,
+                )
                 continue
             else:
-                logger.info('Querying MusicBrainz for the release group id for: %s - %s', name,
-                            album)
+                logger.info(
+                    "Querying MusicBrainz for the release group id for: %s - %s",
+                    name,
+                    album,
+                )
                 try:
-                    rgid = mb.findAlbumID(helpers.latinToAscii(name), helpers.latinToAscii(album))
+                    rgid = mb.findAlbumID(
+                        helpers.latinToAscii(name), helpers.latinToAscii(album)
+                    )
                 except:
-                    logger.error('Can not get release information for this album')
+                    logger.error(
+                        "Can not get release information for this album"
+                    )
                     rgid = None
 
                 if rgid:
-                    verify(rgid, folder, forced=True, keep_original_folder=keep_original_folder)
+                    verify(
+                        rgid,
+                        folder,
+                        forced=True,
+                        keep_original_folder=keep_original_folder,
+                    )
                     continue
                 else:
-                    logger.info('No match found on MusicBrainz for: %s - %s', name, album)
+                    logger.info(
+                        "No match found on MusicBrainz for: %s - %s",
+                        name,
+                        album,
+                    )
 
         # Attempt 3b: deduce meta data into a valid format
-        logger.debug('Attempting to extract name, album and year from metadata')
+        logger.debug(
+            "Attempting to extract name, album and year from metadata"
+        )
 
         try:
             name, album, year = helpers.extract_metadata(folder)
@@ -1315,7 +1658,9 @@ def forcePostProcess(dir=None, expand_subfolders=True, album_dir=None, keep_orig
         # Not found from meta data, check if there's a cue to split and try meta data again
         kind = None
         if headphones.CONFIG.CUE_SPLIT and not name and not album:
-            cue_folder = helpers.cue_split(folder, keep_original_folder=keep_original_folder)
+            cue_folder = helpers.cue_split(
+                folder, keep_original_folder=keep_original_folder
+            )
             if cue_folder:
                 try:
                     name, album, year = helpers.extract_metadata(cue_folder)
@@ -1332,60 +1677,113 @@ def forcePostProcess(dir=None, expand_subfolders=True, album_dir=None, keep_orig
 
         if name and album:
             release = myDB.action(
-                'SELECT AlbumID, ArtistName, AlbumTitle from albums WHERE ArtistName LIKE ? and AlbumTitle LIKE ?',
-                [name, album]).fetchone()
+                "SELECT AlbumID, ArtistName, AlbumTitle from albums WHERE ArtistName LIKE ? and AlbumTitle LIKE ?",
+                [name, album],
+            ).fetchone()
             if release:
                 logger.info(
-                    'Found a match in the database: %s - %s. Verifying to make sure it is the correct album',
-                    release['ArtistName'], release['AlbumTitle'])
-                verify(release['AlbumID'], folder, Kind=kind, forced=True, keep_original_folder=keep_original_folder)
+                    "Found a match in the database: %s - %s. Verifying to make sure it is the correct album",
+                    release["ArtistName"],
+                    release["AlbumTitle"],
+                )
+                verify(
+                    release["AlbumID"],
+                    folder,
+                    Kind=kind,
+                    forced=True,
+                    keep_original_folder=keep_original_folder,
+                )
                 continue
             else:
-                logger.info('Querying MusicBrainz for the release group id for: %s - %s', name,
-                            album)
+                logger.info(
+                    "Querying MusicBrainz for the release group id for: %s - %s",
+                    name,
+                    album,
+                )
                 try:
-                    rgid = mb.findAlbumID(helpers.latinToAscii(name), helpers.latinToAscii(album))
+                    rgid = mb.findAlbumID(
+                        helpers.latinToAscii(name), helpers.latinToAscii(album)
+                    )
                 except:
-                    logger.error('Can not get release information for this album')
+                    logger.error(
+                        "Can not get release information for this album"
+                    )
                     rgid = None
 
                 if rgid:
-                    verify(rgid, folder, Kind=kind, forced=True, keep_original_folder=keep_original_folder)
+                    verify(
+                        rgid,
+                        folder,
+                        Kind=kind,
+                        forced=True,
+                        keep_original_folder=keep_original_folder,
+                    )
                     continue
                 else:
-                    logger.info('No match found on MusicBrainz for: %s - %s', name, album)
+                    logger.info(
+                        "No match found on MusicBrainz for: %s - %s",
+                        name,
+                        album,
+                    )
 
         # Attempt 4: Hail mary. Just assume the folder name is the album name
         # if it doesn't have a separator in it
-        logger.debug('Attempt to extract album name by assuming it is the folder name')
+        logger.debug(
+            "Attempt to extract album name by assuming it is the folder name"
+        )
 
-        if '-' not in folder_basename:
+        if "-" not in folder_basename:
             release = myDB.action(
-                'SELECT AlbumID, ArtistName, AlbumTitle from albums WHERE AlbumTitle LIKE ?',
-                [folder_basename]).fetchone()
+                "SELECT AlbumID, ArtistName, AlbumTitle from albums WHERE AlbumTitle LIKE ?",
+                [folder_basename],
+            ).fetchone()
             if release:
                 logger.info(
-                    'Found a match in the database: %s - %s. Verifying to make sure it is the correct album',
-                    release['ArtistName'], release['AlbumTitle'])
-                verify(release['AlbumID'], folder, forced=True, keep_original_folder=keep_original_folder)
+                    "Found a match in the database: %s - %s. Verifying to make sure it is the correct album",
+                    release["ArtistName"],
+                    release["AlbumTitle"],
+                )
+                verify(
+                    release["AlbumID"],
+                    folder,
+                    forced=True,
+                    keep_original_folder=keep_original_folder,
+                )
                 continue
             else:
-                logger.info('Querying MusicBrainz for the release group id for: %s',
-                            folder_basename)
+                logger.info(
+                    "Querying MusicBrainz for the release group id for: %s",
+                    folder_basename,
+                )
                 try:
-                    rgid = mb.findAlbumID(album=helpers.latinToAscii(folder_basename))
+                    rgid = mb.findAlbumID(
+                        album=helpers.latinToAscii(folder_basename)
+                    )
                 except:
-                    logger.error('Can not get release information for this album')
+                    logger.error(
+                        "Can not get release information for this album"
+                    )
                     rgid = None
 
                 if rgid:
-                    verify(rgid, folder, forced=True, keep_original_folder=keep_original_folder)
+                    verify(
+                        rgid,
+                        folder,
+                        forced=True,
+                        keep_original_folder=keep_original_folder,
+                    )
                     continue
                 else:
-                    logger.info('No match found on MusicBrainz for: %s - %s', name, album)
+                    logger.info(
+                        "No match found on MusicBrainz for: %s - %s",
+                        name,
+                        album,
+                    )
 
         # Fail here
-        logger.info("Couldn't parse '%s' into any valid format. If adding "
-                    "albums from another source, they must be in an 'Artist - Album "
-                    "[Year]' format, or end with the musicbrainz release group id.",
-                    folder_basename)
+        logger.info(
+            "Couldn't parse '%s' into any valid format. If adding "
+            "albums from another source, they must be in an 'Artist - Album "
+            "[Year]' format, or end with the musicbrainz release group id.",
+            folder_basename,
+        )

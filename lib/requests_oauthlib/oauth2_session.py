@@ -46,7 +46,7 @@ class OAuth2Session(requests.Session):
         token=None,
         state=None,
         token_updater=None,
-        **kwargs
+        **kwargs,
     ):
         """Construct a new OAuth 2 client session.
 
@@ -167,7 +167,7 @@ class OAuth2Session(requests.Session):
                 redirect_uri=self.redirect_uri,
                 scope=self.scope,
                 state=state,
-                **kwargs
+                **kwargs,
             ),
             state,
         )
@@ -189,7 +189,7 @@ class OAuth2Session(requests.Session):
         proxies=None,
         include_client_id=None,
         client_secret=None,
-        **kwargs
+        **kwargs,
     ):
         """Generic method for fetching an access token from the token endpoint.
 
@@ -244,7 +244,8 @@ class OAuth2Session(requests.Session):
             code = self._client.code
             if not code:
                 raise ValueError(
-                    "Please supply either code or " "authorization_response parameters."
+                    "Please supply either code or "
+                    "authorization_response parameters."
                 )
 
         # Earlier versions of this library build an HTTPBasicAuth header out of
@@ -301,8 +302,12 @@ class OAuth2Session(requests.Session):
                         "as Basic auth credentials.",
                         client_id,
                     )
-                    client_secret = client_secret if client_secret is not None else ""
-                    auth = requests.auth.HTTPBasicAuth(client_id, client_secret)
+                    client_secret = (
+                        client_secret if client_secret is not None else ""
+                    )
+                    auth = requests.auth.HTTPBasicAuth(
+                        client_id, client_secret
+                    )
 
         if include_client_id:
             # this was pulled out of the params
@@ -315,7 +320,7 @@ class OAuth2Session(requests.Session):
             body=body,
             redirect_uri=self.redirect_uri,
             include_client_id=include_client_id,
-            **kwargs
+            **kwargs,
         )
 
         headers = headers or {
@@ -341,14 +346,18 @@ class OAuth2Session(requests.Session):
             auth=auth,
             verify=verify,
             proxies=proxies,
-            **request_kwargs
+            **request_kwargs,
         )
 
-        log.debug("Request to fetch token completed with status %s.", r.status_code)
+        log.debug(
+            "Request to fetch token completed with status %s.", r.status_code
+        )
         log.debug("Request url was %s", r.request.url)
         log.debug("Request headers were %s", r.request.headers)
         log.debug("Request body was %s", r.request.body)
-        log.debug("Response headers were %s and content %s.", r.headers, r.text)
+        log.debug(
+            "Response headers were %s and content %s.", r.headers, r.text
+        )
         log.debug(
             "Invoking %d token response hooks.",
             len(self.compliance_hook["access_token_response"]),
@@ -384,7 +393,7 @@ class OAuth2Session(requests.Session):
         headers=None,
         verify=True,
         proxies=None,
-        **kwargs
+        **kwargs,
     ):
         """Fetch a new access token using a refresh token.
 
@@ -409,7 +418,8 @@ class OAuth2Session(requests.Session):
         refresh_token = refresh_token or self.token.get("refresh_token")
 
         log.debug(
-            "Adding auto refresh key word arguments %s.", self.auto_refresh_kwargs
+            "Adding auto refresh key word arguments %s.",
+            self.auto_refresh_kwargs,
         )
         kwargs.update(self.auto_refresh_kwargs)
         body = self._client.prepare_refresh_body(
@@ -420,7 +430,9 @@ class OAuth2Session(requests.Session):
         if headers is None:
             headers = {
                 "Accept": "application/json",
-                "Content-Type": ("application/x-www-form-urlencoded;charset=UTF-8"),
+                "Content-Type": (
+                    "application/x-www-form-urlencoded;charset=UTF-8"
+                ),
             }
 
         r = self.post(
@@ -433,8 +445,12 @@ class OAuth2Session(requests.Session):
             withhold_token=True,
             proxies=proxies,
         )
-        log.debug("Request to refresh token completed with status %s.", r.status_code)
-        log.debug("Response headers were %s and content %s.", r.headers, r.text)
+        log.debug(
+            "Request to refresh token completed with status %s.", r.status_code
+        )
+        log.debug(
+            "Response headers were %s and content %s.", r.headers, r.text
+        )
         log.debug(
             "Invoking %d token response hooks.",
             len(self.compliance_hook["refresh_token_response"]),
@@ -443,7 +459,9 @@ class OAuth2Session(requests.Session):
             log.debug("Invoking hook %s.", hook)
             r = hook(r)
 
-        self.token = self._client.parse_request_body_response(r.text, scope=self.scope)
+        self.token = self._client.parse_request_body_response(
+            r.text, scope=self.scope
+        )
         if not "refresh_token" in self.token:
             log.debug("No new refresh token given. Re-using old.")
             self.token["refresh_token"] = refresh_token
@@ -458,7 +476,7 @@ class OAuth2Session(requests.Session):
         withhold_token=False,
         client_id=None,
         client_secret=None,
-        **kwargs
+        **kwargs,
     ):
         """Intercept all requests and add the OAuth 2 token if present."""
         if not is_secure_transport(url):
@@ -492,13 +510,17 @@ class OAuth2Session(requests.Session):
                             'Encoding client_id "%s" with client_secret as Basic auth credentials.',
                             client_id,
                         )
-                        auth = requests.auth.HTTPBasicAuth(client_id, client_secret)
+                        auth = requests.auth.HTTPBasicAuth(
+                            client_id, client_secret
+                        )
                     token = self.refresh_token(
                         self.auto_refresh_url, auth=auth, **kwargs
                     )
                     if self.token_updater:
                         log.debug(
-                            "Updating token to %s using %s.", token, self.token_updater
+                            "Updating token to %s using %s.",
+                            token,
+                            self.token_updater,
                         )
                         self.token_updater(token)
                         url, headers, data = self._client.add_token(

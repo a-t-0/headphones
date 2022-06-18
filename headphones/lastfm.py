@@ -47,7 +47,9 @@ def request_lastfm(method, **kwargs):
     logger.debug("Calling Last.FM method: %s", method)
     logger.debug("Last.FM call parameters: %s", kwargs)
 
-    data = request.request_json(ENTRY_POINT, timeout=TIMEOUT, params=kwargs, lock=lastfm_lock)
+    data = request.request_json(
+        ENTRY_POINT, timeout=TIMEOUT, params=kwargs, lock=lastfm_lock
+    )
 
     # Parse response and check for errors.
     if not data:
@@ -63,7 +65,9 @@ def request_lastfm(method, **kwargs):
 
 def getSimilar():
     myDB = db.DBConnection()
-    results = myDB.select("SELECT ArtistID from artists ORDER BY HaveTracks DESC LIMIT 10")
+    results = myDB.select(
+        "SELECT ArtistID from artists ORDER BY HaveTracks DESC LIMIT 10"
+    )
 
     logger.info("Fetching similar artists from Last.FM for tag cloud")
     artistlist = []
@@ -101,7 +105,10 @@ def getSimilar():
         artist_name, artist_mbid = item[0]
         count = item[1]
 
-        myDB.action("INSERT INTO lastfmcloud VALUES( ?, ?, ?)", [artist_name, artist_mbid, count])
+        myDB.action(
+            "INSERT INTO lastfmcloud VALUES( ?, ?, ?)",
+            [artist_name, artist_mbid, count],
+        )
 
     logger.debug("Inserted %d artists into Last.FM tag cloud", len(top_list))
 
@@ -114,8 +121,15 @@ def getArtists():
         logger.warn("Last.FM username not set, not importing artists.")
         return
 
-    logger.info("Fetching artists from Last.FM for username: %s", headphones.CONFIG.LASTFM_USERNAME)
-    data = request_lastfm("library.getartists", limit=1000, user=headphones.CONFIG.LASTFM_USERNAME)
+    logger.info(
+        "Fetching artists from Last.FM for username: %s",
+        headphones.CONFIG.LASTFM_USERNAME,
+    )
+    data = request_lastfm(
+        "library.getartists",
+        limit=1000,
+        user=headphones.CONFIG.LASTFM_USERNAME,
+    )
 
     if data and "artists" in data:
         artistlist = []

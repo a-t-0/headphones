@@ -47,7 +47,7 @@ POSSIBLE_EXTRAS = [
     "mixtape/street",
     "broadcast",
     "interview",
-    "demo"
+    "demo",
 ]
 
 PROG_DIR = None
@@ -114,16 +114,17 @@ def initialize(config_file):
 
         if CONFIG.HTTP_PORT < 21 or CONFIG.HTTP_PORT > 65535:
             headphones.logger.warn(
-                'HTTP_PORT out of bounds: 21 < %s < 65535', CONFIG.HTTP_PORT)
+                "HTTP_PORT out of bounds: 21 < %s < 65535", CONFIG.HTTP_PORT
+            )
             CONFIG.HTTP_PORT = 8181
 
-        if CONFIG.HTTPS_CERT == '':
-            CONFIG.HTTPS_CERT = os.path.join(DATA_DIR, 'server.crt')
-        if CONFIG.HTTPS_KEY == '':
-            CONFIG.HTTPS_KEY = os.path.join(DATA_DIR, 'server.key')
+        if CONFIG.HTTPS_CERT == "":
+            CONFIG.HTTPS_CERT = os.path.join(DATA_DIR, "server.crt")
+        if CONFIG.HTTPS_KEY == "":
+            CONFIG.HTTPS_KEY = os.path.join(DATA_DIR, "server.key")
 
         if not CONFIG.LOG_DIR:
-            CONFIG.LOG_DIR = os.path.join(DATA_DIR, 'logs')
+            CONFIG.LOG_DIR = os.path.join(DATA_DIR, "logs")
 
         if not os.path.exists(CONFIG.LOG_DIR):
             try:
@@ -132,37 +133,46 @@ def initialize(config_file):
                 CONFIG.LOG_DIR = None
 
                 if not QUIET:
-                    sys.stderr.write("Unable to create the log directory. "
-                                     "Logging to screen only.\n")
+                    sys.stderr.write(
+                        "Unable to create the log directory. "
+                        "Logging to screen only.\n"
+                    )
 
         # Start the logger, disable console if needed
-        logger.initLogger(console=not QUIET, log_dir=CONFIG.LOG_DIR,
-                          verbose=VERBOSE)
+        logger.initLogger(
+            console=not QUIET, log_dir=CONFIG.LOG_DIR, verbose=VERBOSE
+        )
 
         try:
             SOFT_CHROOT = SoftChroot(str(CONFIG.SOFT_CHROOT))
             if SOFT_CHROOT.isEnabled():
-                logger.info("Soft-chroot enabled for dir: %s", str(CONFIG.SOFT_CHROOT))
+                logger.info(
+                    "Soft-chroot enabled for dir: %s", str(CONFIG.SOFT_CHROOT)
+                )
         except headphones.exceptions.SoftChrootError as e:
             logger.error("SoftChroot error: %s", e)
             raise e
 
         if not CONFIG.CACHE_DIR:
             # Put the cache dir in the data dir for now
-            CONFIG.CACHE_DIR = os.path.join(DATA_DIR, 'cache')
+            CONFIG.CACHE_DIR = os.path.join(DATA_DIR, "cache")
         if not os.path.exists(CONFIG.CACHE_DIR):
             try:
                 os.makedirs(CONFIG.CACHE_DIR)
             except OSError as e:
-                logger.error("Could not create cache dir '%s': %s", DATA_DIR, e)
+                logger.error(
+                    "Could not create cache dir '%s': %s", DATA_DIR, e
+                )
 
         # Sanity check for search interval. Set it to at least 6 hours
         if CONFIG.SEARCH_INTERVAL and CONFIG.SEARCH_INTERVAL < 360:
-            logger.info("Search interval too low. Resetting to 6 hour minimum.")
+            logger.info(
+                "Search interval too low. Resetting to 6 hour minimum."
+            )
             CONFIG.SEARCH_INTERVAL = 360
 
         # Initialize the database
-        logger.info('Checking to see if the database has all tables....')
+        logger.info("Checking to see if the database has all tables....")
         try:
             dbcheck()
         except Exception as e:
@@ -182,8 +192,11 @@ def initialize(config_file):
                 with open(version_lock_file, "w") as fp:
                     fp.write(CURRENT_VERSION)
             except IOError as e:
-                logger.error("Unable to write current version to file '%s': %s",
-                             version_lock_file, e)
+                logger.error(
+                    "Unable to write current version to file '%s': %s",
+                    version_lock_file,
+                    e,
+                )
 
         # Check for new versions
         if CONFIG.CHECK_GITHUB and CONFIG.CHECK_GITHUB_ON_STARTUP:
@@ -206,9 +219,10 @@ def initialize(config_file):
 def daemonize():
     if threading.activeCount() != 1:
         logger.warn(
-            'There are %r active threads. Daemonizing may cause'
-            ' strange behavior.',
-            threading.enumerate())
+            "There are %r active threads. Daemonizing may cause"
+            " strange behavior.",
+            threading.enumerate(),
+        )
 
     sys.stdout.flush()
     sys.stderr.flush()
@@ -225,7 +239,7 @@ def daemonize():
 
     # Make sure I can read my own files and shut out others
     prev = os.umask(0)  # @UndefinedVariable - only available in UNIX
-    os.umask(prev and int('077', 8))
+    os.umask(prev and int("077", 8))
 
     # Make the child a session-leader by detaching from the terminal
     try:
@@ -235,39 +249,39 @@ def daemonize():
     except OSError as e:
         raise RuntimeError("2nd fork failed: %s [%d]", e.strerror, e.errno)
 
-    dev_null = open('/dev/null', 'r')
+    dev_null = open("/dev/null", "r")
     os.dup2(dev_null.fileno(), sys.stdin.fileno())
 
-    si = open('/dev/null', "r")
-    so = open('/dev/null', "a+")
-    se = open('/dev/null', "a+")
+    si = open("/dev/null", "r")
+    so = open("/dev/null", "a+")
+    se = open("/dev/null", "a+")
 
     os.dup2(si.fileno(), sys.stdin.fileno())
     os.dup2(so.fileno(), sys.stdout.fileno())
     os.dup2(se.fileno(), sys.stderr.fileno())
 
     pid = os.getpid()
-    logger.info('Daemonized to PID: %d', pid)
+    logger.info("Daemonized to PID: %d", pid)
 
     if CREATEPID:
         logger.info("Writing PID %d to %s", pid, PIDFILE)
-        with open(PIDFILE, 'w') as fp:
+        with open(PIDFILE, "w") as fp:
             fp.write("%s\n" % pid)
 
 
 def launch_browser(host, port, root):
-    if host == '0.0.0.0':
-        host = 'localhost'
+    if host == "0.0.0.0":
+        host = "localhost"
 
     if CONFIG.ENABLE_HTTPS:
-        protocol = 'https'
+        protocol = "https"
     else:
-        protocol = 'http'
+        protocol = "http"
 
     try:
-        webbrowser.open('%s://%s:%i%s' % (protocol, host, port, root))
+        webbrowser.open("%s://%s:%i%s" % (protocol, host, port, root))
     except Exception as e:
-        logger.error('Could not launch browser: %s', e)
+        logger.error("Could not launch browser: %s", e)
 
 
 def initialize_scheduler():
@@ -275,8 +289,13 @@ def initialize_scheduler():
     Start the scheduled background tasks. Re-schedule if interval settings changed.
     """
 
-    from headphones import updater, searcher, librarysync, postprocessor, \
-        torrentfinished
+    from headphones import (
+        updater,
+        searcher,
+        librarysync,
+        postprocessor,
+        torrentfinished,
+    )
 
     with SCHED_LOCK:
 
@@ -285,16 +304,30 @@ def initialize_scheduler():
 
         # Regular jobs
         minutes = CONFIG.SEARCH_INTERVAL
-        schedule_job(searcher.searchforalbum, 'Search for Wanted', hours=0, minutes=minutes)
+        schedule_job(
+            searcher.searchforalbum,
+            "Search for Wanted",
+            hours=0,
+            minutes=minutes,
+        )
 
         minutes = CONFIG.DOWNLOAD_SCAN_INTERVAL
-        schedule_job(postprocessor.checkFolder, 'Download Scan', hours=0, minutes=minutes)
+        schedule_job(
+            postprocessor.checkFolder,
+            "Download Scan",
+            hours=0,
+            minutes=minutes,
+        )
 
         hours = CONFIG.LIBRARYSCAN_INTERVAL
-        schedule_job(librarysync.libraryScan, 'Library Scan', hours=hours, minutes=0)
+        schedule_job(
+            librarysync.libraryScan, "Library Scan", hours=hours, minutes=0
+        )
 
         hours = CONFIG.UPDATE_DB_INTERVAL
-        schedule_job(updater.dbUpdate, 'MusicBrainz Update', hours=hours, minutes=0)
+        schedule_job(
+            updater.dbUpdate, "MusicBrainz Update", hours=hours, minutes=0
+        )
 
         # Update check
         if CONFIG.CHECK_GITHUB:
@@ -302,14 +335,22 @@ def initialize_scheduler():
                 minutes = CONFIG.CHECK_GITHUB_INTERVAL
             else:
                 minutes = 0
-            schedule_job(versioncheck.checkGithub, 'Check GitHub for updates', hours=0,
-                         minutes=minutes)
+            schedule_job(
+                versioncheck.checkGithub,
+                "Check GitHub for updates",
+                hours=0,
+                minutes=minutes,
+            )
 
         # Remove Torrent + data if Post Processed and finished Seeding
         if headphones.CONFIG.TORRENT_DOWNLOADER != 0:
             minutes = CONFIG.TORRENT_REMOVAL_INTERVAL
-            schedule_job(torrentfinished.checkTorrentFinished, 'Torrent removal check', hours=0,
-                         minutes=minutes)
+            schedule_job(
+                torrentfinished.checkTorrentFinished,
+                "Torrent removal check",
+                hours=0,
+                minutes=minutes,
+            )
 
         # Start scheduler
         if start_jobs and len(SCHED.get_jobs()):
@@ -335,13 +376,19 @@ def schedule_job(function, name, hours=0, minutes=0):
         if hours == 0 and minutes == 0:
             SCHED.remove_job(name)
             logger.info("Removed background task: %s", name)
-        elif job.trigger.interval != datetime.timedelta(hours=hours, minutes=minutes):
-            SCHED.reschedule_job(name, trigger=IntervalTrigger(
-                hours=hours, minutes=minutes))
+        elif job.trigger.interval != datetime.timedelta(
+            hours=hours, minutes=minutes
+        ):
+            SCHED.reschedule_job(
+                name, trigger=IntervalTrigger(hours=hours, minutes=minutes)
+            )
             logger.info("Re-scheduled background task: %s", name)
     elif hours > 0 or minutes > 0:
-        SCHED.add_job(function, id=name, trigger=IntervalTrigger(
-            hours=hours, minutes=minutes))
+        SCHED.add_job(
+            function,
+            id=name,
+            trigger=IntervalTrigger(hours=hours, minutes=minutes),
+        )
         logger.info("Scheduled background task: %s", name)
 
 
@@ -365,297 +412,369 @@ def dbcheck():
     conn = sqlite3.connect(DB_FILE)
     c = conn.cursor()
     c.execute(
-        'CREATE TABLE IF NOT EXISTS artists (ArtistID TEXT UNIQUE, ArtistName TEXT, ArtistSortName TEXT, DateAdded TEXT, Status TEXT, IncludeExtras INTEGER, LatestAlbum TEXT, ReleaseDate TEXT, AlbumID TEXT, HaveTracks INTEGER, TotalTracks INTEGER, LastUpdated TEXT, ArtworkURL TEXT, ThumbURL TEXT, Extras TEXT, Type TEXT, MetaCritic TEXT)')
+        "CREATE TABLE IF NOT EXISTS artists (ArtistID TEXT UNIQUE, ArtistName TEXT, ArtistSortName TEXT, DateAdded TEXT, Status TEXT, IncludeExtras INTEGER, LatestAlbum TEXT, ReleaseDate TEXT, AlbumID TEXT, HaveTracks INTEGER, TotalTracks INTEGER, LastUpdated TEXT, ArtworkURL TEXT, ThumbURL TEXT, Extras TEXT, Type TEXT, MetaCritic TEXT)"
+    )
     # ReleaseFormat here means CD,Digital,Vinyl, etc. If using the default
     # Headphones hybrid release, ReleaseID will equal AlbumID (AlbumID is
     # releasegroup id)
     c.execute(
-        'CREATE TABLE IF NOT EXISTS albums (ArtistID TEXT, ArtistName TEXT, AlbumTitle TEXT, AlbumASIN TEXT, ReleaseDate TEXT, DateAdded TEXT, AlbumID TEXT UNIQUE, Status TEXT, Type TEXT, ArtworkURL TEXT, ThumbURL TEXT, ReleaseID TEXT, ReleaseCountry TEXT, ReleaseFormat TEXT, SearchTerm TEXT, CriticScore TEXT, UserScore TEXT)')
+        "CREATE TABLE IF NOT EXISTS albums (ArtistID TEXT, ArtistName TEXT, AlbumTitle TEXT, AlbumASIN TEXT, ReleaseDate TEXT, DateAdded TEXT, AlbumID TEXT UNIQUE, Status TEXT, Type TEXT, ArtworkURL TEXT, ThumbURL TEXT, ReleaseID TEXT, ReleaseCountry TEXT, ReleaseFormat TEXT, SearchTerm TEXT, CriticScore TEXT, UserScore TEXT)"
+    )
     # Format here means mp3, flac, etc.
     c.execute(
-        'CREATE TABLE IF NOT EXISTS tracks (ArtistID TEXT, ArtistName TEXT, AlbumTitle TEXT, AlbumASIN TEXT, AlbumID TEXT, TrackTitle TEXT, TrackDuration, TrackID TEXT, TrackNumber INTEGER, Location TEXT, BitRate INTEGER, CleanName TEXT, Format TEXT, ReleaseID TEXT)')
+        "CREATE TABLE IF NOT EXISTS tracks (ArtistID TEXT, ArtistName TEXT, AlbumTitle TEXT, AlbumASIN TEXT, AlbumID TEXT, TrackTitle TEXT, TrackDuration, TrackID TEXT, TrackNumber INTEGER, Location TEXT, BitRate INTEGER, CleanName TEXT, Format TEXT, ReleaseID TEXT)"
+    )
     c.execute(
-        'CREATE TABLE IF NOT EXISTS allalbums (ArtistID TEXT, ArtistName TEXT, AlbumTitle TEXT, AlbumASIN TEXT, ReleaseDate TEXT, AlbumID TEXT, Type TEXT, ReleaseID TEXT, ReleaseCountry TEXT, ReleaseFormat TEXT)')
+        "CREATE TABLE IF NOT EXISTS allalbums (ArtistID TEXT, ArtistName TEXT, AlbumTitle TEXT, AlbumASIN TEXT, ReleaseDate TEXT, AlbumID TEXT, Type TEXT, ReleaseID TEXT, ReleaseCountry TEXT, ReleaseFormat TEXT)"
+    )
     c.execute(
-        'CREATE TABLE IF NOT EXISTS alltracks (ArtistID TEXT, ArtistName TEXT, AlbumTitle TEXT, AlbumASIN TEXT, AlbumID TEXT, TrackTitle TEXT, TrackDuration, TrackID TEXT, TrackNumber INTEGER, Location TEXT, BitRate INTEGER, CleanName TEXT, Format TEXT, ReleaseID TEXT)')
+        "CREATE TABLE IF NOT EXISTS alltracks (ArtistID TEXT, ArtistName TEXT, AlbumTitle TEXT, AlbumASIN TEXT, AlbumID TEXT, TrackTitle TEXT, TrackDuration, TrackID TEXT, TrackNumber INTEGER, Location TEXT, BitRate INTEGER, CleanName TEXT, Format TEXT, ReleaseID TEXT)"
+    )
     c.execute(
-        'CREATE TABLE IF NOT EXISTS snatched (AlbumID TEXT, Title TEXT, Size INTEGER, URL TEXT, DateAdded TEXT, Status TEXT, FolderName TEXT, Kind TEXT, TorrentHash TEXT)')
+        "CREATE TABLE IF NOT EXISTS snatched (AlbumID TEXT, Title TEXT, Size INTEGER, URL TEXT, DateAdded TEXT, Status TEXT, FolderName TEXT, Kind TEXT, TorrentHash TEXT)"
+    )
     # Matched is a temporary value used to see if there was a match found in
     # alltracks
     c.execute(
-        'CREATE TABLE IF NOT EXISTS have (ArtistName TEXT, AlbumTitle TEXT, TrackNumber TEXT, TrackTitle TEXT, TrackLength TEXT, BitRate TEXT, Genre TEXT, Date TEXT, TrackID TEXT, Location TEXT, CleanName TEXT, Format TEXT, Matched TEXT)')
+        "CREATE TABLE IF NOT EXISTS have (ArtistName TEXT, AlbumTitle TEXT, TrackNumber TEXT, TrackTitle TEXT, TrackLength TEXT, BitRate TEXT, Genre TEXT, Date TEXT, TrackID TEXT, Location TEXT, CleanName TEXT, Format TEXT, Matched TEXT)"
+    )
     c.execute(
-        'CREATE TABLE IF NOT EXISTS lastfmcloud (ArtistName TEXT, ArtistID TEXT, Count INTEGER)')
+        "CREATE TABLE IF NOT EXISTS lastfmcloud (ArtistName TEXT, ArtistID TEXT, Count INTEGER)"
+    )
     c.execute(
-        'CREATE TABLE IF NOT EXISTS descriptions (ArtistID TEXT, ReleaseGroupID TEXT, ReleaseID TEXT, Summary TEXT, Content TEXT, LastUpdated TEXT)')
-    c.execute('CREATE TABLE IF NOT EXISTS blacklist (ArtistID TEXT UNIQUE)')
-    c.execute('CREATE TABLE IF NOT EXISTS newartists (ArtistName TEXT UNIQUE)')
+        "CREATE TABLE IF NOT EXISTS descriptions (ArtistID TEXT, ReleaseGroupID TEXT, ReleaseID TEXT, Summary TEXT, Content TEXT, LastUpdated TEXT)"
+    )
+    c.execute("CREATE TABLE IF NOT EXISTS blacklist (ArtistID TEXT UNIQUE)")
+    c.execute("CREATE TABLE IF NOT EXISTS newartists (ArtistName TEXT UNIQUE)")
     c.execute(
-        'CREATE TABLE IF NOT EXISTS releases (ReleaseID TEXT, ReleaseGroupID TEXT, UNIQUE(ReleaseID, ReleaseGroupID))')
+        "CREATE TABLE IF NOT EXISTS releases (ReleaseID TEXT, ReleaseGroupID TEXT, UNIQUE(ReleaseID, ReleaseGroupID))"
+    )
     c.execute(
-        'CREATE INDEX IF NOT EXISTS tracks_albumid ON tracks(AlbumID ASC)')
+        "CREATE INDEX IF NOT EXISTS tracks_albumid ON tracks(AlbumID ASC)"
+    )
     c.execute(
-        'CREATE INDEX IF NOT EXISTS album_artistid_reldate ON albums(ArtistID ASC, ReleaseDate DESC)')
+        "CREATE INDEX IF NOT EXISTS album_artistid_reldate ON albums(ArtistID ASC, ReleaseDate DESC)"
+    )
     # Below creates indices to speed up Active Artist updating
     c.execute(
-        'CREATE INDEX IF NOT EXISTS alltracks_relid ON alltracks(ReleaseID ASC, TrackID ASC)')
+        "CREATE INDEX IF NOT EXISTS alltracks_relid ON alltracks(ReleaseID ASC, TrackID ASC)"
+    )
     c.execute(
-        'CREATE INDEX IF NOT EXISTS allalbums_relid ON allalbums(ReleaseID ASC)')
-    c.execute('CREATE INDEX IF NOT EXISTS have_location ON have(Location ASC)')
+        "CREATE INDEX IF NOT EXISTS allalbums_relid ON allalbums(ReleaseID ASC)"
+    )
+    c.execute("CREATE INDEX IF NOT EXISTS have_location ON have(Location ASC)")
     # Below creates indices to speed up library scanning & matching
     c.execute(
-        'CREATE INDEX IF NOT EXISTS have_Metadata ON have(ArtistName ASC, AlbumTitle ASC, TrackTitle ASC)')
+        "CREATE INDEX IF NOT EXISTS have_Metadata ON have(ArtistName ASC, AlbumTitle ASC, TrackTitle ASC)"
+    )
     c.execute(
-        'CREATE INDEX IF NOT EXISTS have_CleanName ON have(CleanName ASC)')
+        "CREATE INDEX IF NOT EXISTS have_CleanName ON have(CleanName ASC)"
+    )
     c.execute(
-        'CREATE INDEX IF NOT EXISTS tracks_Metadata ON tracks(ArtistName ASC, AlbumTitle ASC, TrackTitle ASC)')
+        "CREATE INDEX IF NOT EXISTS tracks_Metadata ON tracks(ArtistName ASC, AlbumTitle ASC, TrackTitle ASC)"
+    )
     c.execute(
-        'CREATE INDEX IF NOT EXISTS tracks_CleanName ON tracks(CleanName ASC)')
+        "CREATE INDEX IF NOT EXISTS tracks_CleanName ON tracks(CleanName ASC)"
+    )
     c.execute(
-        'CREATE INDEX IF NOT EXISTS alltracks_Metadata ON alltracks(ArtistName ASC, AlbumTitle ASC, TrackTitle ASC)')
+        "CREATE INDEX IF NOT EXISTS alltracks_Metadata ON alltracks(ArtistName ASC, AlbumTitle ASC, TrackTitle ASC)"
+    )
     c.execute(
-        'CREATE INDEX IF NOT EXISTS alltracks_CleanName ON alltracks(CleanName ASC)')
+        "CREATE INDEX IF NOT EXISTS alltracks_CleanName ON alltracks(CleanName ASC)"
+    )
     c.execute(
-        'CREATE INDEX IF NOT EXISTS tracks_Location ON tracks(Location ASC)')
+        "CREATE INDEX IF NOT EXISTS tracks_Location ON tracks(Location ASC)"
+    )
     c.execute(
-        'CREATE INDEX IF NOT EXISTS alltracks_Location ON alltracks(Location ASC)')
+        "CREATE INDEX IF NOT EXISTS alltracks_Location ON alltracks(Location ASC)"
+    )
     c.execute(
-        'CREATE INDEX IF NOT EXISTS tracks_artistid ON tracks(ArtistID ASC)')
+        "CREATE INDEX IF NOT EXISTS tracks_artistid ON tracks(ArtistID ASC)"
+    )
 
     # Speed up album page
-    c.execute('CREATE INDEX IF NOT EXISTS allalbums_albumid ON allalbums(AlbumID ASC)')
-    c.execute('CREATE INDEX IF NOT EXISTS alltracks_albumid ON alltracks(AlbumID ASC)')
-    c.execute('CREATE INDEX IF NOT EXISTS releases_albumid ON releases(ReleaseGroupID ASC)')
-    c.execute('CREATE INDEX IF NOT EXISTS descriptions_albumid ON descriptions(ReleaseGroupID ASC)')
+    c.execute(
+        "CREATE INDEX IF NOT EXISTS allalbums_albumid ON allalbums(AlbumID ASC)"
+    )
+    c.execute(
+        "CREATE INDEX IF NOT EXISTS alltracks_albumid ON alltracks(AlbumID ASC)"
+    )
+    c.execute(
+        "CREATE INDEX IF NOT EXISTS releases_albumid ON releases(ReleaseGroupID ASC)"
+    )
+    c.execute(
+        "CREATE INDEX IF NOT EXISTS descriptions_albumid ON descriptions(ReleaseGroupID ASC)"
+    )
 
     # Speed up artist deletion
-    c.execute('CREATE INDEX IF NOT EXISTS allalbums_artistid ON allalbums(ArtistID ASC)')
-    c.execute('CREATE INDEX IF NOT EXISTS alltracks_artistid ON alltracks(ArtistID ASC)')
-    c.execute('CREATE INDEX IF NOT EXISTS descriptions_artistid ON descriptions(ArtistID ASC)')
+    c.execute(
+        "CREATE INDEX IF NOT EXISTS allalbums_artistid ON allalbums(ArtistID ASC)"
+    )
+    c.execute(
+        "CREATE INDEX IF NOT EXISTS alltracks_artistid ON alltracks(ArtistID ASC)"
+    )
+    c.execute(
+        "CREATE INDEX IF NOT EXISTS descriptions_artistid ON descriptions(ArtistID ASC)"
+    )
 
     # Speed up Artist refresh hybrid release
-    c.execute('CREATE INDEX IF NOT EXISTS albums_releaseid ON albums(ReleaseID ASC)')
-    c.execute('CREATE INDEX IF NOT EXISTS tracks_releaseid ON tracks(ReleaseID ASC)')
+    c.execute(
+        "CREATE INDEX IF NOT EXISTS albums_releaseid ON albums(ReleaseID ASC)"
+    )
+    c.execute(
+        "CREATE INDEX IF NOT EXISTS tracks_releaseid ON tracks(ReleaseID ASC)"
+    )
 
     # Speed up scanning and track matching
-    c.execute('CREATE INDEX IF NOT EXISTS artist_artistname ON artists(ArtistName COLLATE NOCASE ASC)')
+    c.execute(
+        "CREATE INDEX IF NOT EXISTS artist_artistname ON artists(ArtistName COLLATE NOCASE ASC)"
+    )
 
     # General speed up
-    c.execute('CREATE INDEX IF NOT EXISTS artist_artistsortname ON artists(ArtistSortName COLLATE NOCASE ASC)')
+    c.execute(
+        "CREATE INDEX IF NOT EXISTS artist_artistsortname ON artists(ArtistSortName COLLATE NOCASE ASC)"
+    )
 
     c.execute(
-        """CREATE INDEX IF NOT EXISTS have_matched_artist_album ON have(Matched ASC, ArtistName COLLATE NOCASE ASC, AlbumTitle COLLATE NOCASE ASC)""")
-    c.execute('DROP INDEX IF EXISTS have_matched')
+        """CREATE INDEX IF NOT EXISTS have_matched_artist_album ON have(Matched ASC, ArtistName COLLATE NOCASE ASC, AlbumTitle COLLATE NOCASE ASC)"""
+    )
+    c.execute("DROP INDEX IF EXISTS have_matched")
 
     try:
-        c.execute('SELECT IncludeExtras from artists')
+        c.execute("SELECT IncludeExtras from artists")
     except sqlite3.OperationalError:
         c.execute(
-            'ALTER TABLE artists ADD COLUMN IncludeExtras INTEGER DEFAULT 0')
+            "ALTER TABLE artists ADD COLUMN IncludeExtras INTEGER DEFAULT 0"
+        )
 
     try:
-        c.execute('SELECT LatestAlbum from artists')
+        c.execute("SELECT LatestAlbum from artists")
     except sqlite3.OperationalError:
-        c.execute('ALTER TABLE artists ADD COLUMN LatestAlbum TEXT')
+        c.execute("ALTER TABLE artists ADD COLUMN LatestAlbum TEXT")
 
     try:
-        c.execute('SELECT ReleaseDate from artists')
+        c.execute("SELECT ReleaseDate from artists")
     except sqlite3.OperationalError:
-        c.execute('ALTER TABLE artists ADD COLUMN ReleaseDate TEXT')
+        c.execute("ALTER TABLE artists ADD COLUMN ReleaseDate TEXT")
 
     try:
-        c.execute('SELECT AlbumID from artists')
+        c.execute("SELECT AlbumID from artists")
     except sqlite3.OperationalError:
-        c.execute('ALTER TABLE artists ADD COLUMN AlbumID TEXT')
+        c.execute("ALTER TABLE artists ADD COLUMN AlbumID TEXT")
 
     try:
-        c.execute('SELECT HaveTracks from artists')
-    except sqlite3.OperationalError:
-        c.execute(
-            'ALTER TABLE artists ADD COLUMN HaveTracks INTEGER DEFAULT 0')
-
-    try:
-        c.execute('SELECT TotalTracks from artists')
+        c.execute("SELECT HaveTracks from artists")
     except sqlite3.OperationalError:
         c.execute(
-            'ALTER TABLE artists ADD COLUMN TotalTracks INTEGER DEFAULT 0')
+            "ALTER TABLE artists ADD COLUMN HaveTracks INTEGER DEFAULT 0"
+        )
 
     try:
-        c.execute('SELECT Type from albums')
+        c.execute("SELECT TotalTracks from artists")
+    except sqlite3.OperationalError:
+        c.execute(
+            "ALTER TABLE artists ADD COLUMN TotalTracks INTEGER DEFAULT 0"
+        )
+
+    try:
+        c.execute("SELECT Type from albums")
     except sqlite3.OperationalError:
         c.execute('ALTER TABLE albums ADD COLUMN Type TEXT DEFAULT "Album"')
 
     try:
-        c.execute('SELECT TrackNumber from tracks')
+        c.execute("SELECT TrackNumber from tracks")
     except sqlite3.OperationalError:
-        c.execute('ALTER TABLE tracks ADD COLUMN TrackNumber INTEGER')
+        c.execute("ALTER TABLE tracks ADD COLUMN TrackNumber INTEGER")
 
     try:
-        c.execute('SELECT FolderName from snatched')
+        c.execute("SELECT FolderName from snatched")
     except sqlite3.OperationalError:
-        c.execute('ALTER TABLE snatched ADD COLUMN FolderName TEXT')
+        c.execute("ALTER TABLE snatched ADD COLUMN FolderName TEXT")
 
     try:
-        c.execute('SELECT Location from tracks')
+        c.execute("SELECT Location from tracks")
     except sqlite3.OperationalError:
-        c.execute('ALTER TABLE tracks ADD COLUMN Location TEXT')
+        c.execute("ALTER TABLE tracks ADD COLUMN Location TEXT")
 
     try:
-        c.execute('SELECT Location from have')
+        c.execute("SELECT Location from have")
     except sqlite3.OperationalError:
-        c.execute('ALTER TABLE have ADD COLUMN Location TEXT')
+        c.execute("ALTER TABLE have ADD COLUMN Location TEXT")
 
     try:
-        c.execute('SELECT BitRate from tracks')
+        c.execute("SELECT BitRate from tracks")
     except sqlite3.OperationalError:
-        c.execute('ALTER TABLE tracks ADD COLUMN BitRate INTEGER')
+        c.execute("ALTER TABLE tracks ADD COLUMN BitRate INTEGER")
 
     try:
-        c.execute('SELECT CleanName from tracks')
+        c.execute("SELECT CleanName from tracks")
     except sqlite3.OperationalError:
-        c.execute('ALTER TABLE tracks ADD COLUMN CleanName TEXT')
+        c.execute("ALTER TABLE tracks ADD COLUMN CleanName TEXT")
 
     try:
-        c.execute('SELECT CleanName from have')
+        c.execute("SELECT CleanName from have")
     except sqlite3.OperationalError:
-        c.execute('ALTER TABLE have ADD COLUMN CleanName TEXT')
+        c.execute("ALTER TABLE have ADD COLUMN CleanName TEXT")
 
     # Add the Format column
     try:
-        c.execute('SELECT Format from have')
+        c.execute("SELECT Format from have")
     except sqlite3.OperationalError:
-        c.execute('ALTER TABLE have ADD COLUMN Format TEXT DEFAULT NULL')
+        c.execute("ALTER TABLE have ADD COLUMN Format TEXT DEFAULT NULL")
 
     try:
-        c.execute('SELECT Format from tracks')
+        c.execute("SELECT Format from tracks")
     except sqlite3.OperationalError:
-        c.execute('ALTER TABLE tracks ADD COLUMN Format TEXT DEFAULT NULL')
+        c.execute("ALTER TABLE tracks ADD COLUMN Format TEXT DEFAULT NULL")
 
     try:
-        c.execute('SELECT LastUpdated from artists')
+        c.execute("SELECT LastUpdated from artists")
     except sqlite3.OperationalError:
         c.execute(
-            'ALTER TABLE artists ADD COLUMN LastUpdated TEXT DEFAULT NULL')
+            "ALTER TABLE artists ADD COLUMN LastUpdated TEXT DEFAULT NULL"
+        )
 
     try:
-        c.execute('SELECT ArtworkURL from artists')
+        c.execute("SELECT ArtworkURL from artists")
     except sqlite3.OperationalError:
         c.execute(
-            'ALTER TABLE artists ADD COLUMN ArtworkURL TEXT DEFAULT NULL')
+            "ALTER TABLE artists ADD COLUMN ArtworkURL TEXT DEFAULT NULL"
+        )
 
     try:
-        c.execute('SELECT ArtworkURL from albums')
+        c.execute("SELECT ArtworkURL from albums")
     except sqlite3.OperationalError:
-        c.execute('ALTER TABLE albums ADD COLUMN ArtworkURL TEXT DEFAULT NULL')
+        c.execute("ALTER TABLE albums ADD COLUMN ArtworkURL TEXT DEFAULT NULL")
 
     try:
-        c.execute('SELECT ThumbURL from artists')
+        c.execute("SELECT ThumbURL from artists")
     except sqlite3.OperationalError:
-        c.execute('ALTER TABLE artists ADD COLUMN ThumbURL TEXT DEFAULT NULL')
+        c.execute("ALTER TABLE artists ADD COLUMN ThumbURL TEXT DEFAULT NULL")
 
     try:
-        c.execute('SELECT ThumbURL from albums')
+        c.execute("SELECT ThumbURL from albums")
     except sqlite3.OperationalError:
-        c.execute('ALTER TABLE albums ADD COLUMN ThumbURL TEXT DEFAULT NULL')
+        c.execute("ALTER TABLE albums ADD COLUMN ThumbURL TEXT DEFAULT NULL")
 
     try:
-        c.execute('SELECT ArtistID from descriptions')
-    except sqlite3.OperationalError:
-        c.execute(
-            'ALTER TABLE descriptions ADD COLUMN ArtistID TEXT DEFAULT NULL')
-
-    try:
-        c.execute('SELECT LastUpdated from descriptions')
+        c.execute("SELECT ArtistID from descriptions")
     except sqlite3.OperationalError:
         c.execute(
-            'ALTER TABLE descriptions ADD COLUMN LastUpdated TEXT DEFAULT NULL')
+            "ALTER TABLE descriptions ADD COLUMN ArtistID TEXT DEFAULT NULL"
+        )
 
     try:
-        c.execute('SELECT ReleaseID from albums')
-    except sqlite3.OperationalError:
-        c.execute('ALTER TABLE albums ADD COLUMN ReleaseID TEXT DEFAULT NULL')
-
-    try:
-        c.execute('SELECT ReleaseFormat from albums')
+        c.execute("SELECT LastUpdated from descriptions")
     except sqlite3.OperationalError:
         c.execute(
-            'ALTER TABLE albums ADD COLUMN ReleaseFormat TEXT DEFAULT NULL')
+            "ALTER TABLE descriptions ADD COLUMN LastUpdated TEXT DEFAULT NULL"
+        )
 
     try:
-        c.execute('SELECT ReleaseCountry from albums')
+        c.execute("SELECT ReleaseID from albums")
+    except sqlite3.OperationalError:
+        c.execute("ALTER TABLE albums ADD COLUMN ReleaseID TEXT DEFAULT NULL")
+
+    try:
+        c.execute("SELECT ReleaseFormat from albums")
     except sqlite3.OperationalError:
         c.execute(
-            'ALTER TABLE albums ADD COLUMN ReleaseCountry TEXT DEFAULT NULL')
+            "ALTER TABLE albums ADD COLUMN ReleaseFormat TEXT DEFAULT NULL"
+        )
 
     try:
-        c.execute('SELECT ReleaseID from tracks')
+        c.execute("SELECT ReleaseCountry from albums")
     except sqlite3.OperationalError:
-        c.execute('ALTER TABLE tracks ADD COLUMN ReleaseID TEXT DEFAULT NULL')
+        c.execute(
+            "ALTER TABLE albums ADD COLUMN ReleaseCountry TEXT DEFAULT NULL"
+        )
 
     try:
-        c.execute('SELECT Matched from have')
+        c.execute("SELECT ReleaseID from tracks")
     except sqlite3.OperationalError:
-        c.execute('ALTER TABLE have ADD COLUMN Matched TEXT DEFAULT NULL')
+        c.execute("ALTER TABLE tracks ADD COLUMN ReleaseID TEXT DEFAULT NULL")
 
     try:
-        c.execute('SELECT Extras from artists')
+        c.execute("SELECT Matched from have")
     except sqlite3.OperationalError:
-        c.execute('ALTER TABLE artists ADD COLUMN Extras TEXT DEFAULT NULL')
+        c.execute("ALTER TABLE have ADD COLUMN Matched TEXT DEFAULT NULL")
+
+    try:
+        c.execute("SELECT Extras from artists")
+    except sqlite3.OperationalError:
+        c.execute("ALTER TABLE artists ADD COLUMN Extras TEXT DEFAULT NULL")
         # Need to update some stuff when people are upgrading and have 'include
         # extras' set globally/for an artist
         if CONFIG.INCLUDE_EXTRAS:
             CONFIG.EXTRAS = "1,2,3,4,5,6,7,8"
         logger.info("Copying over current artist IncludeExtras information")
         artists = c.execute(
-            'SELECT ArtistID, IncludeExtras from artists').fetchall()
+            "SELECT ArtistID, IncludeExtras from artists"
+        ).fetchall()
         for artist in artists:
             if artist[1]:
                 c.execute(
-                    'UPDATE artists SET Extras=? WHERE ArtistID=?', ("1,2,3,4,5,6,7,8", artist[0]))
+                    "UPDATE artists SET Extras=? WHERE ArtistID=?",
+                    ("1,2,3,4,5,6,7,8", artist[0]),
+                )
 
     try:
-        c.execute('SELECT Kind from snatched')
+        c.execute("SELECT Kind from snatched")
     except sqlite3.OperationalError:
-        c.execute('ALTER TABLE snatched ADD COLUMN Kind TEXT DEFAULT NULL')
+        c.execute("ALTER TABLE snatched ADD COLUMN Kind TEXT DEFAULT NULL")
 
     try:
-        c.execute('SELECT SearchTerm from albums')
+        c.execute("SELECT SearchTerm from albums")
     except sqlite3.OperationalError:
-        c.execute('ALTER TABLE albums ADD COLUMN SearchTerm TEXT DEFAULT NULL')
+        c.execute("ALTER TABLE albums ADD COLUMN SearchTerm TEXT DEFAULT NULL")
 
     try:
-        c.execute('SELECT CriticScore from albums')
+        c.execute("SELECT CriticScore from albums")
     except sqlite3.OperationalError:
-        c.execute('ALTER TABLE albums ADD COLUMN CriticScore TEXT DEFAULT NULL')
+        c.execute(
+            "ALTER TABLE albums ADD COLUMN CriticScore TEXT DEFAULT NULL"
+        )
 
     try:
-        c.execute('SELECT UserScore from albums')
+        c.execute("SELECT UserScore from albums")
     except sqlite3.OperationalError:
-        c.execute('ALTER TABLE albums ADD COLUMN UserScore TEXT DEFAULT NULL')
+        c.execute("ALTER TABLE albums ADD COLUMN UserScore TEXT DEFAULT NULL")
 
     try:
-        c.execute('SELECT Type from artists')
+        c.execute("SELECT Type from artists")
     except sqlite3.OperationalError:
-        c.execute('ALTER TABLE artists ADD COLUMN Type TEXT DEFAULT NULL')
+        c.execute("ALTER TABLE artists ADD COLUMN Type TEXT DEFAULT NULL")
 
     try:
-        c.execute('SELECT MetaCritic from artists')
+        c.execute("SELECT MetaCritic from artists")
     except sqlite3.OperationalError:
-        c.execute('ALTER TABLE artists ADD COLUMN MetaCritic TEXT DEFAULT NULL')
+        c.execute(
+            "ALTER TABLE artists ADD COLUMN MetaCritic TEXT DEFAULT NULL"
+        )
 
     try:
-        c.execute('SELECT TorrentHash from snatched')
+        c.execute("SELECT TorrentHash from snatched")
     except sqlite3.OperationalError:
-        c.execute('ALTER TABLE snatched ADD COLUMN TorrentHash TEXT')
-        c.execute('UPDATE snatched SET TorrentHash = FolderName WHERE Status LIKE "Seed_%"')
+        c.execute("ALTER TABLE snatched ADD COLUMN TorrentHash TEXT")
+        c.execute(
+            'UPDATE snatched SET TorrentHash = FolderName WHERE Status LIKE "Seed_%"'
+        )
 
     # One off script to set CleanName to lower case
-    clean_name_mixed = c.execute('SELECT CleanName FROM have ORDER BY Date Desc').fetchone()
+    clean_name_mixed = c.execute(
+        "SELECT CleanName FROM have ORDER BY Date Desc"
+    ).fetchone()
     if clean_name_mixed and clean_name_mixed[0] != clean_name_mixed[0].lower():
         logger.info("Updating track clean name, this could take some time...")
-        c.execute('UPDATE tracks SET CleanName = LOWER(CleanName) WHERE LOWER(CleanName) != CleanName')
-        c.execute('UPDATE alltracks SET CleanName = LOWER(CleanName) WHERE LOWER(CleanName) != CleanName')
-        c.execute('UPDATE have SET CleanName = LOWER(CleanName) WHERE LOWER(CleanName) != CleanName')
+        c.execute(
+            "UPDATE tracks SET CleanName = LOWER(CleanName) WHERE LOWER(CleanName) != CleanName"
+        )
+        c.execute(
+            "UPDATE alltracks SET CleanName = LOWER(CleanName) WHERE LOWER(CleanName) != CleanName"
+        )
+        c.execute(
+            "UPDATE have SET CleanName = LOWER(CleanName) WHERE LOWER(CleanName) != CleanName"
+        )
 
     conn.commit()
     c.close()
@@ -668,26 +787,26 @@ def shutdown(restart=False, update=False):
     CONFIG.write()
 
     if not restart and not update:
-        logger.info('Headphones is shutting down...')
+        logger.info("Headphones is shutting down...")
 
     if update:
-        logger.info('Headphones is updating...')
+        logger.info("Headphones is updating...")
         try:
             versioncheck.update()
         except Exception as e:
-            logger.warn('Headphones failed to update: %s. Restarting.', e)
+            logger.warn("Headphones failed to update: %s. Restarting.", e)
 
     if CREATEPID:
-        logger.info('Removing pidfile %s', PIDFILE)
+        logger.info("Removing pidfile %s", PIDFILE)
         os.remove(PIDFILE)
 
     if restart:
-        logger.info('Headphones is restarting...')
+        logger.info("Headphones is restarting...")
         popen_list = [sys.executable, FULL_PATH]
         popen_list += ARGS
-        if '--nolaunch' not in popen_list:
-            popen_list += ['--nolaunch']
-        logger.info('Restarting Headphones with %s', popen_list)
+        if "--nolaunch" not in popen_list:
+            popen_list += ["--nolaunch"]
+        logger.info("Restarting Headphones with %s", popen_list)
         subprocess.Popen(popen_list, cwd=os.getcwd())
 
     os._exit(0)

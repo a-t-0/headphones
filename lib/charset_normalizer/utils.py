@@ -194,10 +194,14 @@ def is_thai(character: str) -> bool:
 
 @lru_cache(maxsize=len(UNICODE_RANGES_COMBINED))
 def is_unicode_range_secondary(range_name: str) -> bool:
-    return any(keyword in range_name for keyword in UNICODE_SECONDARY_RANGE_KEYWORD)
+    return any(
+        keyword in range_name for keyword in UNICODE_SECONDARY_RANGE_KEYWORD
+    )
 
 
-def any_specified_encoding(sequence: bytes, search_zone: int = 4096) -> Optional[str]:
+def any_specified_encoding(
+    sequence: bytes, search_zone: int = 4096
+) -> Optional[str]:
     """
     Extract using ASCII-only decoder any specified encoding in the first n-bytes.
     """
@@ -253,7 +257,9 @@ def identify_sig_or_bom(sequence: bytes) -> Tuple[Optional[str], bytes]:
     """
 
     for iana_encoding in ENCODING_MARKS:
-        marks = ENCODING_MARKS[iana_encoding]  # type: Union[bytes, List[bytes]]
+        marks = ENCODING_MARKS[
+            iana_encoding
+        ]  # type: Union[bytes, List[bytes]]
 
         if isinstance(marks, bytes):
             marks = [marks]
@@ -298,7 +304,9 @@ def range_scan(decoded_sequence: str) -> List[str]:
 
 def cp_similarity(iana_name_a: str, iana_name_b: str) -> float:
 
-    if is_multi_byte_encoding(iana_name_a) or is_multi_byte_encoding(iana_name_b):
+    if is_multi_byte_encoding(iana_name_a) or is_multi_byte_encoding(
+        iana_name_b
+    ):
         return 0.0
 
     decoder_a = importlib.import_module("encodings.{}".format(iana_name_a)).IncrementalDecoder  # type: ignore

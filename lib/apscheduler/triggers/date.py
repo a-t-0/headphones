@@ -14,17 +14,22 @@ class DateTrigger(BaseTrigger):
     :param datetime.tzinfo|str timezone: time zone for ``run_date`` if it doesn't have one already
     """
 
-    __slots__ = 'timezone', 'run_date'
+    __slots__ = "timezone", "run_date"
 
     def __init__(self, run_date=None, timezone=None):
         timezone = astimezone(timezone) or get_localzone()
-        self.run_date = convert_to_datetime(run_date or datetime.now(), timezone, 'run_date')
+        self.run_date = convert_to_datetime(
+            run_date or datetime.now(), timezone, "run_date"
+        )
 
     def get_next_fire_time(self, previous_fire_time, now):
         return self.run_date if previous_fire_time is None else None
 
     def __str__(self):
-        return 'date[%s]' % datetime_repr(self.run_date)
+        return "date[%s]" % datetime_repr(self.run_date)
 
     def __repr__(self):
-        return "<%s (run_date='%s')>" % (self.__class__.__name__, datetime_repr(self.run_date))
+        return "<%s (run_date='%s')>" % (
+            self.__class__.__name__,
+            datetime_repr(self.run_date),
+        )

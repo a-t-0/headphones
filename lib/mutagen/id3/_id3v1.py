@@ -89,7 +89,7 @@ def ParseID3v1(data, v2_version=4, known_frames=None):
         raise ValueError("Only 3 and 4 possible for v2_version")
 
     try:
-        data = data[data.index(b"TAG"):]
+        data = data[data.index(b"TAG") :]
     except ValueError:
         return None
     if 128 < len(data) or len(data) < 124:
@@ -104,7 +104,8 @@ def ParseID3v1(data, v2_version=4, known_frames=None):
 
     try:
         tag, title, artist, album, year, comment, track, genre = unpack(
-            unpack_fmt, data)
+            unpack_fmt, data
+        )
     except StructError:
         return None
 
@@ -112,10 +113,11 @@ def ParseID3v1(data, v2_version=4, known_frames=None):
         return None
 
     def fix(data):
-        return data.split(b"\x00")[0].strip().decode('latin1')
+        return data.split(b"\x00")[0].strip().decode("latin1")
 
     title, artist, album, year, comment = map(
-        fix, [title, artist, album, year, comment])
+        fix, [title, artist, album, year, comment]
+    )
 
     frame_class = {
         "TIT2": TIT2,
@@ -148,12 +150,16 @@ def ParseID3v1(data, v2_version=4, known_frames=None):
             frames["TDRC"] = frame_class["TDRC"](encoding=0, text=year)
     if comment and frame_class["COMM"]:
         frames["COMM"] = frame_class["COMM"](
-            encoding=0, lang="eng", desc="ID3v1 Comment", text=comment)
+            encoding=0, lang="eng", desc="ID3v1 Comment", text=comment
+        )
 
     # Don't read a track number if it looks like the comment was
     # padded with spaces instead of nulls (thanks, WinAmp).
-    if (track and frame_class["TRCK"] and
-            ((track != 32) or (data[-3] == b'\x00'[0]))):
+    if (
+        track
+        and frame_class["TRCK"]
+        and ((track != 32) or (data[-3] == b"\x00"[0]))
+    ):
         frames["TRCK"] = TRCK(encoding=0, text=str(track))
     if genre != 255 and frame_class["TCON"]:
         frames["TCON"] = TCON(encoding=0, text=str(genre))
@@ -165,16 +171,19 @@ def MakeID3v1(id3):
 
     v1 = {}
 
-    for v2id, name in {"TIT2": "title", "TPE1": "artist",
-                       "TALB": "album"}.items():
+    for v2id, name in {
+        "TIT2": "title",
+        "TPE1": "artist",
+        "TALB": "album",
+    }.items():
         if v2id in id3:
-            text = id3[v2id].text[0].encode('latin1', 'replace')[:30]
+            text = id3[v2id].text[0].encode("latin1", "replace")[:30]
         else:
             text = b""
         v1[name] = text + (b"\x00" * (30 - len(text)))
 
     if "COMM" in id3:
-        cmnt = id3["COMM"].text[0].encode('latin1', 'replace')[:28]
+        cmnt = id3["COMM"].text[0].encode("latin1", "replace")[:28]
     else:
         cmnt = b""
     v1["comment"] = cmnt + (b"\x00" * (29 - len(cmnt)))
@@ -199,20 +208,20 @@ def MakeID3v1(id3):
         v1["genre"] = b"\xff"
 
     if "TDRC" in id3:
-        year = str(id3["TDRC"]).encode('ascii')
+        year = str(id3["TDRC"]).encode("ascii")
     elif "TYER" in id3:
-        year = str(id3["TYER"]).encode('ascii')
+        year = str(id3["TYER"]).encode("ascii")
     else:
         year = b""
     v1["year"] = (year + b"\x00\x00\x00\x00")[:4]
 
     return (
-        b"TAG" +
-        v1["title"] +
-        v1["artist"] +
-        v1["album"] +
-        v1["year"] +
-        v1["comment"] +
-        v1["track"] +
-        v1["genre"]
+        b"TAG"
+        + v1["title"]
+        + v1["artist"]
+        + v1["album"]
+        + v1["year"]
+        + v1["comment"]
+        + v1["track"]
+        + v1["genre"]
     )

@@ -14,8 +14,14 @@ import struct
 from io import BytesIO
 
 from mutagen import FileType, StreamInfo
-from mutagen._util import cdata, MutagenError, loadfile, \
-    convert_error, reraise, endswith
+from mutagen._util import (
+    cdata,
+    MutagenError,
+    loadfile,
+    convert_error,
+    reraise,
+    endswith,
+)
 from mutagen.id3 import ID3
 from mutagen.id3._util import ID3NoHeaderError, error as ID3Error
 
@@ -90,9 +96,11 @@ class DSDChunk(DSFChunk):
         self.fileobj.write(f.getvalue())
 
     def pprint(self):
-        return (u"DSD Chunk (Total file size = %d, "
-                u"Pointer to Metadata chunk = %d)" % (
-                    self.total_size, self.offset_metdata_chunk))
+        return (
+            "DSD Chunk (Total file size = %d, "
+            "Pointer to Metadata chunk = %d)"
+            % (self.total_size, self.offset_metdata_chunk)
+        )
 
 
 class FormatChunk(DSFChunk):
@@ -148,10 +156,16 @@ class FormatChunk(DSFChunk):
         self.sample_count = cdata.ulonglong_le(data[36:44])
 
     def pprint(self):
-        return u"fmt Chunk (Channel Type = %d, Channel Num = %d, " \
-               u"Sampling Frequency = %d, %.2f seconds)" % \
-               (self.channel_type, self.channel_num, self.sampling_frequency,
-                self.length)
+        return (
+            "fmt Chunk (Channel Type = %d, Channel Num = %d, "
+            "Sampling Frequency = %d, %.2f seconds)"
+            % (
+                self.channel_type,
+                self.channel_num,
+                self.sampling_frequency,
+                self.length,
+            )
+        )
 
 
 class DataChunk(DSFChunk):
@@ -181,8 +195,10 @@ class DataChunk(DSFChunk):
             raise error("DSF data header size mismatch")
 
     def pprint(self):
-        return u"data Chunk (Chunk Offset = %d, Chunk Size = %d)" % (
-            self.chunk_offset, self.chunk_size)
+        return "data Chunk (Chunk Offset = %d, Chunk Size = %d)" % (
+            self.chunk_offset,
+            self.chunk_size,
+        )
 
 
 class _DSFID3(ID3):
@@ -199,7 +215,7 @@ class _DSFID3(ID3):
 
     @convert_error(IOError, error)
     @loadfile(writable=True)
-    def save(self, filething=None, v2_version=4, v23_sep='/', padding=None):
+    def save(self, filething=None, v2_version=4, v23_sep="/", padding=None):
         """Save ID3v2 data to the DSF file"""
 
         fileobj = filething.fileobj
@@ -216,8 +232,13 @@ class _DSFID3(ID3):
 
         try:
             data = self._prepare_data(
-                fileobj, dsd_header.offset_metdata_chunk, self.size,
-                v2_version, v23_sep, padding)
+                fileobj,
+                dsd_header.offset_metdata_chunk,
+                self.size,
+                v2_version,
+                v23_sep,
+                padding,
+            )
         except ID3Error as e:
             reraise(error, e, sys.exc_info()[2])
 
@@ -269,8 +290,12 @@ class DSFInfo(StreamInfo):
         return self.sample_rate * self.bits_per_sample * self.channels
 
     def pprint(self):
-        return u"%d channel DSF @ %d bits, %s Hz, %.2f seconds" % (
-            self.channels, self.bits_per_sample, self.sample_rate, self.length)
+        return "%d channel DSF @ %d bits, %s Hz, %.2f seconds" % (
+            self.channels,
+            self.bits_per_sample,
+            self.sample_rate,
+            self.length,
+        )
 
 
 class DSFFile(object):
@@ -300,8 +325,9 @@ class DSF(FileType):
 
     @staticmethod
     def score(filename, fileobj, header):
-        return header.startswith(b"DSD ") * 2 + \
-            endswith(filename.lower(), ".dsf")
+        return header.startswith(b"DSD ") * 2 + endswith(
+            filename.lower(), ".dsf"
+        )
 
     def add_tags(self):
         """Add a DSF tag block to the file."""

@@ -34,20 +34,21 @@ class PathRenderTest(TestCase):
         """pathrender: pattern parsing"""
         pattern = Pattern("{$Disc.}$Track - $Artist - $Title{ [$Year]}")
         expected = [
-            _pr._OptionalBlock([
-                _pr._Replacement("$Disc"),
-                _pr._LiteralText(".")
-            ]),
+            _pr._OptionalBlock(
+                [_pr._Replacement("$Disc"), _pr._LiteralText(".")]
+            ),
             _pr._Replacement("$Track"),
             _pr._LiteralText(" - "),
             _pr._Replacement("$Artist"),
             _pr._LiteralText(" - "),
             _pr._Replacement("$Title"),
-            _pr._OptionalBlock([
-                _pr._LiteralText(" ["),
-                _pr._Replacement("$Year"),
-                _pr._LiteralText("]")
-            ])
+            _pr._OptionalBlock(
+                [
+                    _pr._LiteralText(" ["),
+                    _pr._Replacement("$Year"),
+                    _pr._LiteralText("]"),
+                ]
+            ),
         ]
         self.assertEqual(expected, pattern._pattern)
         self.assertItemsEqual([], pattern.warnings)
@@ -57,40 +58,42 @@ class PathRenderTest(TestCase):
         pattern = Pattern("{$Disc.}$Track - $Artist - $Title{ [$Year]")
         self.assertEqual(set([Warnings.UNCLOSED_OPTIONAL]), pattern.warnings)
         pattern = Pattern("{$Disc.}$Track - $Artist - $Title{ [$Year]'}")
-        self.assertEqual(set([Warnings.UNCLOSED_ESCAPE, Warnings.UNCLOSED_OPTIONAL]), pattern.warnings)
+        self.assertEqual(
+            set([Warnings.UNCLOSED_ESCAPE, Warnings.UNCLOSED_OPTIONAL]),
+            pattern.warnings,
+        )
 
     def test_replacement(self):
         """pathrender: _Replacement variable substitution"""
         r = _pr._Replacement("$Title")
-        subst = {'$Title': 'foo', '$Track': 'bar'}
+        subst = {"$Title": "foo", "$Track": "bar"}
         res = r.render(subst)
-        self.assertEqual(res, 'foo', 'check valid replacement')
+        self.assertEqual(res, "foo", "check valid replacement")
         subst = {}
         res = r.render(subst)
-        self.assertEqual(res, '$Title', 'check missing replacement')
-        subst = {'$Title': None}
+        self.assertEqual(res, "$Title", "check missing replacement")
+        subst = {"$Title": None}
         res = r.render(subst)
-        self.assertEqual(res, '', 'check render() works with None')
+        self.assertEqual(res, "", "check render() works with None")
 
     def test_literal(self):
         """pathrender: _Literal text rendering"""
         l = _pr._LiteralText("foo")
-        subst = {'$foo': 'bar'}
+        subst = {"$foo": "bar"}
         res = l.render(subst)
-        self.assertEqual(res, 'foo')
+        self.assertEqual(res, "foo")
 
     def test_optional(self):
         """pathrender: _OptionalBlock element processing"""
-        o = _pr._OptionalBlock([
-            _pr._Replacement("$Title"),
-            _pr._LiteralText(".foobar")
-        ])
-        subst = {'$Title': 'foo', '$Track': 'bar'}
+        o = _pr._OptionalBlock(
+            [_pr._Replacement("$Title"), _pr._LiteralText(".foobar")]
+        )
+        subst = {"$Title": "foo", "$Track": "bar"}
         res = o.render(subst)
-        self.assertEqual(res, 'foo.foobar', 'check non-empty replacement')
-        subst = {'$Title': ''}
+        self.assertEqual(res, "foo.foobar", "check non-empty replacement")
+        subst = {"$Title": ""}
         res = o.render(subst)
-        self.assertEqual(res, '', 'check empty replacement')
-        subst = {'$Title': None}
+        self.assertEqual(res, "", "check empty replacement")
+        subst = {"$Title": None}
         res = o.render(subst)
-        self.assertEqual(res, '', 'check render() works with None')
+        self.assertEqual(res, "", "check render() works with None")

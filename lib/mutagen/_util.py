@@ -25,7 +25,7 @@ from functools import wraps
 from fnmatch import fnmatchcase
 
 
-_DEFAULT_BUFFER_SIZE = 2 ** 18
+_DEFAULT_BUFFER_SIZE = 2**18
 
 
 def endswith(text, end):
@@ -56,18 +56,22 @@ def intround(value):
     both Py2/3
     """
 
-    return int(decimal.Decimal.from_float(
-        value).to_integral_value(decimal.ROUND_HALF_EVEN))
+    return int(
+        decimal.Decimal.from_float(value).to_integral_value(
+            decimal.ROUND_HALF_EVEN
+        )
+    )
 
 
 def is_fileobj(fileobj):
     """Returns:
-        bool: if an argument passed ot mutagen should be treated as a
-            file object
+    bool: if an argument passed ot mutagen should be treated as a
+        file object
     """
 
-    return not (isinstance(fileobj, (str, bytes)) or
-                hasattr(fileobj, "__fspath__"))
+    return not (
+        isinstance(fileobj, (str, bytes)) or hasattr(fileobj, "__fspath__")
+    )
 
 
 def verify_fileobj(fileobj, writable=False):
@@ -90,8 +94,7 @@ def verify_fileobj(fileobj, writable=False):
         raise ValueError("Can't read from file object %r" % fileobj)
 
     if not isinstance(data, bytes):
-        raise ValueError(
-            "file object %r not opened in binary mode" % fileobj)
+        raise ValueError("file object %r not opened in binary mode" % fileobj)
 
     if writable:
         try:
@@ -120,7 +123,7 @@ def fileobj_name(fileobj):
             path type, but might be empty or non-existent.
     """
 
-    value = getattr(fileobj, "name", u"")
+    value = getattr(fileobj, "name", "")
     if not isinstance(value, (str, bytes)):
         value = str(value)
     return value
@@ -146,21 +149,24 @@ def loadfile(method=True, writable=False, create=False):
         return filething, filename, fileobj, args[1:], kwargs
 
     def wrap(func):
-
         @wraps(func)
         def wrapper(self, *args, **kwargs):
-            filething, filename, fileobj, args, kwargs = \
-                convert_file_args(args, kwargs)
-            with _openfile(self, filething, filename, fileobj,
-                           writable, create) as h:
+            filething, filename, fileobj, args, kwargs = convert_file_args(
+                args, kwargs
+            )
+            with _openfile(
+                self, filething, filename, fileobj, writable, create
+            ) as h:
                 return func(self, h, *args, **kwargs)
 
         @wraps(func)
         def wrapper_func(*args, **kwargs):
-            filething, filename, fileobj, args, kwargs = \
-                convert_file_args(args, kwargs)
-            with _openfile(None, filething, filename, fileobj,
-                           writable, create) as h:
+            filething, filename, fileobj, args, kwargs = convert_file_args(
+                args, kwargs
+            )
+            with _openfile(
+                None, filething, filename, fileobj, writable, create
+            ) as h:
                 return func(h, *args, **kwargs)
 
         return wrapper if method else wrapper_func
@@ -178,7 +184,6 @@ def convert_error(exc_src, exc_dest):
     """
 
     def wrap(func):
-
         @wraps(func)
         def wrapper(*args, **kwargs):
             try:
@@ -478,7 +483,7 @@ class DictMixin(object):
                 return args[0]
             else:
                 raise
-        del(self[key])
+        del self[key]
         return value
 
     def popitem(self):
@@ -540,7 +545,7 @@ class DictProxy(DictMixin):
         self.__dict[key] = value
 
     def __delitem__(self, key):
-        del(self.__dict[key])
+        del self.__dict[key]
 
     def keys(self):
         return self.__dict.keys()
@@ -550,8 +555,12 @@ def _fill_cdata(cls):
     """Add struct pack/unpack functions"""
 
     funcs = {}
-    for key, name in [("b", "char"), ("h", "short"),
-                      ("i", "int"), ("q", "longlong")]:
+    for key, name in [
+        ("b", "char"),
+        ("h", "short"),
+        ("i", "int"),
+        ("q", "longlong"),
+    ]:
         for echar, esuffix in [("<", "le"), (">", "be")]:
             esuffix = "_" + esuffix
             for unsigned in [True, False]:
@@ -563,6 +572,7 @@ def _fill_cdata(cls):
                 def get_unpack_from(s):
                     def unpack_from(data, offset=0):
                         return s.unpack_from(data, offset)[0], offset + s.size
+
                     return unpack_from
 
                 unpack_from = get_unpack_from(s)
@@ -578,7 +588,7 @@ def _fill_cdata(cls):
                     min_ = 0
                 else:
                     max_ = 2 ** (s.size * 8 - 1) - 1
-                    min_ = - 2 ** (s.size * 8 - 1)
+                    min_ = -(2 ** (s.size * 8 - 1))
 
                 funcs["%s%s_min" % (prefix, name)] = min_
                 funcs["%s%s_max" % (prefix, name)] = max_
@@ -605,9 +615,10 @@ class cdata(object):
 
     error = struct.error
 
-    bitswap = b''.join(
+    bitswap = b"".join(
         bchr(sum(((val >> i) & 1) << (7 - i) for i in range(8)))
-        for val in range(256))
+        for val in range(256)
+    )
 
     test_bit = staticmethod(lambda value, n: bool((value >> n) & 1))
 
@@ -933,22 +944,22 @@ def decode_terminated(data, encoding, strict=True):
                 raise ValueError("not null terminated")
             else:
                 return res
-        return data[:index].decode(encoding), data[index + 1:]
+        return data[:index].decode(encoding), data[index + 1 :]
 
     # slow path
     decoder = codec_info.incrementaldecoder()
     r = []
     for i, b in enumerate(iterbytes(data)):
         c = decoder.decode(b)
-        if c == u"\x00":
-            return u"".join(r), data[i + 1:]
+        if c == "\x00":
+            return "".join(r), data[i + 1 :]
         r.append(c)
     else:
         # make sure the decoder is finished
         r.append(decoder.decode(b"", True))
         if strict:
             raise ValueError("not null terminated")
-        return u"".join(r), b""
+        return "".join(r), b""
 
 
 class BitReaderError(Exception):
@@ -956,7 +967,6 @@ class BitReaderError(Exception):
 
 
 class BitReader(object):
-
     def __init__(self, fileobj):
         self._fileobj = fileobj
         self._buffer = 0

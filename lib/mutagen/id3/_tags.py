@@ -14,11 +14,32 @@ from itertools import zip_longest
 from mutagen._tags import Tags
 from mutagen._util import DictProxy, convert_error, read_full
 
-from ._util import BitPaddedInt, unsynch, ID3JunkFrameError, \
-    ID3EncryptionUnsupportedError, is_valid_frame_id, error, \
-    ID3NoHeaderError, ID3UnsupportedVersionError, ID3SaveConfig
-from ._frames import TDRC, APIC, TDOR, TIME, TIPL, TORY, TDAT, Frames_2_2, \
-    TextFrame, TYER, Frame, IPLS, Frames
+from ._util import (
+    BitPaddedInt,
+    unsynch,
+    ID3JunkFrameError,
+    ID3EncryptionUnsupportedError,
+    is_valid_frame_id,
+    error,
+    ID3NoHeaderError,
+    ID3UnsupportedVersionError,
+    ID3SaveConfig,
+)
+from ._frames import (
+    TDRC,
+    APIC,
+    TDOR,
+    TIME,
+    TIPL,
+    TORY,
+    TDAT,
+    Frames_2_2,
+    TextFrame,
+    TYER,
+    Frame,
+    IPLS,
+    Frames,
+)
 
 
 class ID3Header(object):
@@ -58,27 +79,26 @@ class ID3Header(object):
         if len(data) != 10:
             raise ID3NoHeaderError("%s: too small" % fn)
 
-        id3, vmaj, vrev, flags, size = struct.unpack('>3sBBB4s', data)
+        id3, vmaj, vrev, flags, size = struct.unpack(">3sBBB4s", data)
         self._flags = flags
         self.size = BitPaddedInt(size) + 10
         self.version = (2, vmaj, vrev)
 
-        if id3 != b'ID3':
+        if id3 != b"ID3":
             raise ID3NoHeaderError("%r doesn't start with an ID3 tag" % fn)
 
         if vmaj not in [2, 3, 4]:
-            raise ID3UnsupportedVersionError("%r ID3v2.%d not supported"
-                                             % (fn, vmaj))
+            raise ID3UnsupportedVersionError(
+                "%r ID3v2.%d not supported" % (fn, vmaj)
+            )
 
         if not BitPaddedInt.has_valid_padding(size):
             raise error("Header size not synchsafe")
 
-        if (self.version >= self._V24) and (flags & 0x0f):
-            raise error(
-                "%r has invalid flags %#02x" % (fn, flags))
-        elif (self._V23 <= self.version < self._V24) and (flags & 0x1f):
-            raise error(
-                "%r has invalid flags %#02x" % (fn, flags))
+        if (self.version >= self._V24) and (flags & 0x0F):
+            raise error("%r has invalid flags %#02x" % (fn, flags))
+        elif (self._V23 <= self.version < self._V24) and (flags & 0x1F):
+            raise error("%r has invalid flags %#02x" % (fn, flags))
 
         if self.f_extended:
             extsize_data = read_full(fileobj, 4)
@@ -102,12 +122,11 @@ class ID3Header(object):
                 # extended header, stored as a 32 bit synchsafe integer."
                 extsize = BitPaddedInt(extsize_data) - 4
                 if not BitPaddedInt.has_valid_padding(extsize_data):
-                    raise error(
-                        "Extended header size not synchsafe")
+                    raise error("Extended header size not synchsafe")
             else:
                 # "Where the 'Extended header size', currently 6 or 10 bytes,
                 # excludes itself."
-                extsize = struct.unpack('>L', extsize_data)[0]
+                extsize = struct.unpack(">L", extsize_data)[0]
 
             self._extdata = read_full(fileobj, extsize)
 
@@ -122,11 +141,11 @@ def determine_bpi(data, frames, EMPTY=b"\x00" * 10):
     o = 0
     asbpi = 0
     while o < len(data) - 10:
-        part = data[o:o + 10]
+        part = data[o : o + 10]
         if part == EMPTY:
             bpioff = -((len(data) - o) % 10)
             break
-        name, size, flags = struct.unpack('>4sLH', part)
+        name, size, flags = struct.unpack(">4sLH", part)
         size = BitPaddedInt(size)
         o += 10 + size
         try:
@@ -142,11 +161,11 @@ def determine_bpi(data, frames, EMPTY=b"\x00" * 10):
     o = 0
     asint = 0
     while o < len(data) - 10:
-        part = data[o:o + 10]
+        part = data[o : o + 10]
         if part == EMPTY:
             intoff = -((len(data) - o) % 10)
             break
-        name, size, flags = struct.unpack('>4sLH', part)
+        name, size, flags = struct.unpack(">4sLH", part)
         o += 10 + size
         try:
             name = name.decode("ascii")
@@ -174,7 +193,8 @@ class ID3Tags(DictProxy, Tags):
 
     def _read(self, header, data):
         frames, unknown_frames, data = read_frames(
-            header, data, header.known_frames)
+            header, data, header.known_frames
+        )
         for frame in frames:
             self._add(frame, False)
         self.unknown_frames = unknown_frames
@@ -186,8 +206,7 @@ class ID3Tags(DictProxy, Tags):
         # hash to get a stable result
         order = ["TIT2", "TPE1", "TRCK", "TALB", "TPOS", "TDRC", "TCON"]
 
-        framedata = [
-            (f, save_frame(f, config=config)) for f in self.values()]
+        framedata = [(f, save_frame(f, config=config)) for f in self.values()]
 
         def get_prio(frame):
             try:
@@ -206,8 +225,9 @@ class ID3Tags(DictProxy, Tags):
         # but some frames can be nested like CHAP, so there is a chance
         # we create a mixed frame mess.
         if self._unknown_v2_version == config.v2_version:
-            framedata.extend(data for data in self.unknown_frames
-                             if len(data) > 10)
+            framedata.extend(
+                data for data in self.unknown_frames if len(data) > 10
+            )
 
         return bytearray().join(framedata)
 
@@ -254,12 +274,12 @@ class ID3Tags(DictProxy, Tags):
         """
 
         if key in self:
-            del(self[key])
+            del self[key]
         else:
             key = key + ":"
             for k in list(self.keys()):
                 if k.startswith(key):
-                    del(self[k])
+                    del self[k]
 
     def pprint(self):
         """
@@ -297,7 +317,8 @@ class ID3Tags(DictProxy, Tags):
             if not strict:
                 return
             raise TypeError(
-                "Can't upgrade %r frame" % type(orig_frame).__name__)
+                "Can't upgrade %r frame" % type(orig_frame).__name__
+            )
 
         hash_key = frame.HashKey
         if strict or hash_key not in self:
@@ -350,8 +371,12 @@ class ID3Tags(DictProxy, Tags):
         for pic in self.getall("APIC"):
             if pic.mime in mimes:
                 newpic = APIC(
-                    encoding=pic.encoding, mime=mimes[pic.mime],
-                    type=pic.type, desc=pic.desc, data=pic.data)
+                    encoding=pic.encoding,
+                    mime=mimes[pic.mime],
+                    type=pic.type,
+                    desc=pic.desc,
+                    data=pic.data,
+                )
                 self.add(newpic)
 
     def update_to_v24(self):
@@ -367,17 +392,17 @@ class ID3Tags(DictProxy, Tags):
         # TDAT, TYER, and TIME have been turned into TDRC.
         timestamps = []
         old_frames = [self.pop(n, []) for n in ["TYER", "TDAT", "TIME"]]
-        for y, d, t in zip_longest(*old_frames, fillvalue=u""):
+        for y, d, t in zip_longest(*old_frames, fillvalue=""):
             ym = re.match(r"([0-9]+)\Z", y)
             dm = re.match(r"([0-9]{2})([0-9]{2})\Z", d)
             tm = re.match(r"([0-9]{2})([0-9]{2})\Z", t)
             timestamp = ""
             if ym:
-                timestamp += u"%s" % ym.groups()
+                timestamp += "%s" % ym.groups()
                 if dm:
-                    timestamp += u"-%s-%s" % dm.groups()[::-1]
+                    timestamp += "-%s-%s" % dm.groups()[::-1]
                     if tm:
-                        timestamp += u"T%s:%s:00" % tm.groups()
+                        timestamp += "T%s:%s:00" % tm.groups()
             if timestamp:
                 timestamps.append(timestamp)
         if timestamps and "TDRC" not in self:
@@ -402,7 +427,7 @@ class ID3Tags(DictProxy, Tags):
         # should have been removed already.
         for key in ["RVAD", "EQUA", "TRDA", "TSIZ", "TDAT", "TIME"]:
             if key in self:
-                del(self[key])
+                del self[key]
 
         # Recurse into chapters
         for f in self.getall("CHAP"):
@@ -451,22 +476,45 @@ class ID3Tags(DictProxy, Tags):
                 if d.year and "TYER" not in self:
                     self.add(TYER(encoding=f.encoding, text="%04d" % d.year))
                 if d.month and d.day and "TDAT" not in self:
-                    self.add(TDAT(encoding=f.encoding,
-                                  text="%02d%02d" % (d.day, d.month)))
+                    self.add(
+                        TDAT(
+                            encoding=f.encoding,
+                            text="%02d%02d" % (d.day, d.month),
+                        )
+                    )
                 if d.hour and d.minute and "TIME" not in self:
-                    self.add(TIME(encoding=f.encoding,
-                                  text="%02d%02d" % (d.hour, d.minute)))
+                    self.add(
+                        TIME(
+                            encoding=f.encoding,
+                            text="%02d%02d" % (d.hour, d.minute),
+                        )
+                    )
 
         # New frames added in v2.4
         v24_frames = [
-            'ASPI', 'EQU2', 'RVA2', 'SEEK', 'SIGN', 'TDEN', 'TDOR',
-            'TDRC', 'TDRL', 'TDTG', 'TIPL', 'TMCL', 'TMOO', 'TPRO',
-            'TSOA', 'TSOP', 'TSOT', 'TSST',
+            "ASPI",
+            "EQU2",
+            "RVA2",
+            "SEEK",
+            "SIGN",
+            "TDEN",
+            "TDOR",
+            "TDRC",
+            "TDRL",
+            "TDTG",
+            "TIPL",
+            "TMCL",
+            "TMOO",
+            "TPRO",
+            "TSOA",
+            "TSOP",
+            "TSOT",
+            "TSST",
         ]
 
         for key in v24_frames:
             if key in self:
-                del(self[key])
+                del self[key]
 
         # Recurse into chapters
         for f in self.getall("CHAP"):
@@ -479,7 +527,7 @@ class ID3Tags(DictProxy, Tags):
 
         items = self.items()
         subs = {}
-        for f in (self.getall("CHAP") + self.getall("CTOC")):
+        for f in self.getall("CHAP") + self.getall("CTOC"):
             subs[f.HashKey] = f.sub_frames._copy()
         return (items, subs)
 
@@ -501,7 +549,7 @@ def save_frame(frame, name=None, config=None):
     flags = 0
     if isinstance(frame, TextFrame):
         if len(str(frame)) == 0:
-            return b''
+            return b""
 
     framedata = frame._writeData(config)
 
@@ -530,7 +578,7 @@ def save_frame(frame, name=None, config=None):
         frame_name = type(frame).__name__
         frame_name = frame_name.encode("ascii")
 
-    header = struct.pack('>4s4sH', frame_name, datasize, flags)
+    header = struct.pack(">4s4sH", frame_name, datasize, flags)
     return header + framedata
 
 
@@ -557,20 +605,20 @@ def read_frames(id3, data, frames):
         while data:
             header = data[:10]
             try:
-                name, size, flags = struct.unpack('>4sLH', header)
+                name, size, flags = struct.unpack(">4sLH", header)
             except struct.error:
                 break  # not enough header
-            if name.strip(b'\x00') == b'':
+            if name.strip(b"\x00") == b"":
                 break
 
             size = bpi(size)
-            framedata = data[10:10 + size]
-            data = data[10 + size:]
+            framedata = data[10 : 10 + size]
+            data = data[10 + size :]
             if size == 0:
                 continue  # drop empty frames
 
             try:
-                name = name.decode('ascii')
+                name = name.decode("ascii")
             except UnicodeDecodeError:
                 continue
 
@@ -595,20 +643,20 @@ def read_frames(id3, data, frames):
         while data:
             header = data[0:6]
             try:
-                name, size = struct.unpack('>3s3s', header)
+                name, size = struct.unpack(">3s3s", header)
             except struct.error:
                 break  # not enough header
-            size, = struct.unpack('>L', b'\x00' + size)
-            if name.strip(b'\x00') == b'':
+            (size,) = struct.unpack(">L", b"\x00" + size)
+            if name.strip(b"\x00") == b"":
                 break
 
-            framedata = data[6:6 + size]
-            data = data[6 + size:]
+            framedata = data[6 : 6 + size]
+            data = data[6 + size :]
             if size == 0:
                 continue  # drop empty frames
 
             try:
-                name = name.decode('ascii')
+                name = name.decode("ascii")
             except UnicodeDecodeError:
                 continue
 
@@ -619,10 +667,8 @@ def read_frames(id3, data, frames):
                     unsupported_frames.append(header + framedata)
             else:
                 try:
-                    result.append(
-                        tag._fromData(id3, 0, framedata))
-                except (ID3EncryptionUnsupportedError,
-                        NotImplementedError):
+                    result.append(tag._fromData(id3, 0, framedata))
+                except (ID3EncryptionUnsupportedError, NotImplementedError):
                     unsupported_frames.append(header + framedata)
                 except ID3JunkFrameError:
                     pass

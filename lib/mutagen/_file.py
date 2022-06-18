@@ -42,8 +42,9 @@ class FileType(DictMixin):
 
     def __init__(self, *args, **kwargs):
         if not args and not kwargs:
-            warnings.warn("FileType constructor requires a filename",
-                          DeprecationWarning)
+            warnings.warn(
+                "FileType constructor requires a filename", DeprecationWarning
+            )
         else:
             self.load(*args, **kwargs)
 
@@ -82,7 +83,7 @@ class FileType(DictMixin):
         if self.tags is None:
             raise KeyError(key)
         else:
-            del(self.tags[key])
+            del self.tags[key]
 
     def keys(self):
         """Return a list of keys in the metadata tag.
@@ -161,7 +162,7 @@ class FileType(DictMixin):
 
         mimes = []
         for Kind in type(self).__mro__:
-            for mime in getattr(Kind, '_mimes', []):
+            for mime in getattr(Kind, "_mimes", []):
                 if mime not in mimes:
                     mimes.append(mime)
         return mimes
@@ -236,6 +237,7 @@ def File(filething, options=None, easy=False):
         from mutagen.asf import ASF
         from mutagen.apev2 import APEv2File
         from mutagen.flac import FLAC
+
         if easy:
             from mutagen.easyid3 import EasyID3FileType as ID3FileType
         else:
@@ -249,11 +251,13 @@ def File(filething, options=None, easy=False):
         from mutagen.oggtheora import OggTheora
         from mutagen.oggvorbis import OggVorbis
         from mutagen.oggopus import OggOpus
+
         if easy:
             from mutagen.trueaudio import EasyTrueAudio as TrueAudio
         else:
             from mutagen.trueaudio import TrueAudio
         from mutagen.wavpack import WavPack
+
         if easy:
             from mutagen.easymp4 import EasyMP4 as MP4
         else:
@@ -269,10 +273,33 @@ def File(filething, options=None, easy=False):
         from mutagen.dsf import DSF
         from mutagen.dsdiff import DSDIFF
         from mutagen.wave import WAVE
-        options = [MP3, TrueAudio, OggTheora, OggSpeex, OggVorbis, OggFLAC,
-                   FLAC, AIFF, APEv2File, MP4, ID3FileType, WavPack,
-                   Musepack, MonkeysAudio, OptimFROG, ASF, OggOpus, AAC, AC3,
-                   SMF, TAK, DSF, DSDIFF, WAVE]
+
+        options = [
+            MP3,
+            TrueAudio,
+            OggTheora,
+            OggSpeex,
+            OggVorbis,
+            OggFLAC,
+            FLAC,
+            AIFF,
+            APEv2File,
+            MP4,
+            ID3FileType,
+            WavPack,
+            Musepack,
+            MonkeysAudio,
+            OptimFROG,
+            ASF,
+            OggOpus,
+            AAC,
+            AC3,
+            SMF,
+            TAK,
+            DSF,
+            DSDIFF,
+            WAVE,
+        ]
 
     if not options:
         return None
@@ -287,8 +314,10 @@ def File(filething, options=None, easy=False):
     # Sort by name after score. Otherwise import order affects
     # Kind sort order, which affects treatment of things with
     # equals scores.
-    results = [(Kind.score(filething.name, fileobj, header), Kind.__name__)
-               for Kind in options]
+    results = [
+        (Kind.score(filething.name, fileobj, header), Kind.__name__)
+        for Kind in options
+    ]
 
     results = list(zip(results, options))
     results.sort()

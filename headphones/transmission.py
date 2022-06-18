@@ -32,28 +32,38 @@ _session_id = None
 
 
 def addTorrent(link, data=None):
-    method = 'torrent-add'
+    method = "torrent-add"
 
-    if link.endswith('.torrent') and not link.startswith(('http', 'magnet')) or data:
+    if (
+        link.endswith(".torrent")
+        and not link.startswith(("http", "magnet"))
+        or data
+    ):
         if data:
             metainfo = str(base64.b64encode(data))
         else:
-            with open(link, 'rb') as f:
+            with open(link, "rb") as f:
                 metainfo = str(base64.b64encode(f.read()))
-        arguments = {'metainfo': metainfo, 'download-dir': headphones.CONFIG.DOWNLOAD_TORRENT_DIR}
+        arguments = {
+            "metainfo": metainfo,
+            "download-dir": headphones.CONFIG.DOWNLOAD_TORRENT_DIR,
+        }
     else:
-        arguments = {'filename': link, 'download-dir': headphones.CONFIG.DOWNLOAD_TORRENT_DIR}
+        arguments = {
+            "filename": link,
+            "download-dir": headphones.CONFIG.DOWNLOAD_TORRENT_DIR,
+        }
 
     response = torrentAction(method, arguments)
 
     if not response:
         return False
 
-    if response['result'] == 'success':
-        if 'torrent-added' in response['arguments']:
-            retid = response['arguments']['torrent-added']['hashString']
-        elif 'torrent-duplicate' in response['arguments']:
-            retid = response['arguments']['torrent-duplicate']['hashString']
+    if response["result"] == "success":
+        if "torrent-added" in response["arguments"]:
+            retid = response["arguments"]["torrent-added"]["hashString"]
+        elif "torrent-duplicate" in response["arguments"]:
+            retid = response["arguments"]["torrent-duplicate"]["hashString"]
         else:
             retid = False
 
@@ -61,26 +71,26 @@ def addTorrent(link, data=None):
         return retid
 
     else:
-        logger.info('Transmission returned status %s' % response['result'])
+        logger.info("Transmission returned status %s" % response["result"])
         return False
 
 
 def getFolder(torrentid):
     torrent_folder = None
     single_file = False
-    method = 'torrent-get'
-    arguments = {'ids': torrentid, 'fields': ['files']}
+    method = "torrent-get"
+    arguments = {"ids": torrentid, "fields": ["files"]}
 
     response = torrentAction(method, arguments)
 
     try:
-        torrent_files = response['arguments']['torrents'][0]['files']
+        torrent_files = response["arguments"]["torrents"][0]["files"]
         if torrent_files:
             if len(torrent_files) == 1:
-                torrent_folder = torrent_files[0]['name']
+                torrent_folder = torrent_files[0]["name"]
                 single_file = True
             else:
-                torrent_folder = os.path.split(torrent_files[0]['name'])[0]
+                torrent_folder = os.path.split(torrent_files[0]["name"])[0]
                 torrent_folder = torrent_folder.split(os.sep)[0]
                 single_file = False
     except:
@@ -91,12 +101,12 @@ def getFolder(torrentid):
 
 
 def getName(torrentid):
-    method = 'torrent-get'
-    arguments = {'ids': torrentid, 'fields': ['name', 'percentDone']}
+    method = "torrent-get"
+    arguments = {"ids": torrentid, "fields": ["name", "percentDone"]}
 
     response = torrentAction(method, arguments)
-    percentdone = response['arguments']['torrents'][0]['percentDone']
-    torrent_folder_name = response['arguments']['torrents'][0]['name']
+    percentdone = response["arguments"]["torrents"][0]["percentDone"]
+    torrent_folder_name = response["arguments"]["torrents"][0]["name"]
 
     tries = 1
 
@@ -104,19 +114,23 @@ def getName(torrentid):
         tries += 1
         time.sleep(5)
         response = torrentAction(method, arguments)
-        percentdone = response['arguments']['torrents'][0]['percentDone']
+        percentdone = response["arguments"]["torrents"][0]["percentDone"]
 
-    torrent_folder_name = response['arguments']['torrents'][0]['name']
+    torrent_folder_name = response["arguments"]["torrents"][0]["name"]
 
     return torrent_folder_name
 
 
 def setSeedRatio(torrentid, ratio):
-    method = 'torrent-set'
+    method = "torrent-set"
     if ratio != 0:
-        arguments = {'seedRatioLimit': ratio, 'seedRatioMode': 1, 'ids': torrentid}
+        arguments = {
+            "seedRatioLimit": ratio,
+            "seedRatioMode": 1,
+            "ids": torrentid,
+        }
     else:
-        arguments = {'seedRatioMode': 2, 'ids': torrentid}
+        arguments = {"seedRatioMode": 2, "ids": torrentid}
 
     response = torrentAction(method, arguments)
     if not response:
@@ -124,29 +138,33 @@ def setSeedRatio(torrentid, ratio):
 
 
 def removeTorrent(torrentid, remove_data=False):
-    method = 'torrent-get'
-    arguments = {'ids': torrentid, 'fields': ['isFinished', 'name']}
+    method = "torrent-get"
+    arguments = {"ids": torrentid, "fields": ["isFinished", "name"]}
 
     response = torrentAction(method, arguments)
     if not response:
         return False
 
     try:
-        finished = response['arguments']['torrents'][0]['isFinished']
-        name = response['arguments']['torrents'][0]['name']
+        finished = response["arguments"]["torrents"][0]["isFinished"]
+        name = response["arguments"]["torrents"][0]["name"]
 
         if finished:
-            logger.info('%s has finished seeding, removing torrent and data' % name)
-            method = 'torrent-remove'
+            logger.info(
+                "%s has finished seeding, removing torrent and data" % name
+            )
+            method = "torrent-remove"
             if remove_data:
-                arguments = {'delete-local-data': True, 'ids': torrentid}
+                arguments = {"delete-local-data": True, "ids": torrentid}
             else:
-                arguments = {'ids': torrentid}
+                arguments = {"ids": torrentid}
             response = torrentAction(method, arguments)
             return True
         else:
             logger.info(
-                '%s has not finished seeding yet, torrent will not be removed, will try again on next run' % name)
+                "%s has not finished seeding yet, torrent will not be removed, will try again on next run"
+                % name
+            )
     except:
         return False
 
@@ -159,10 +177,10 @@ def torrentAction(method, arguments):
     username = headphones.CONFIG.TRANSMISSION_USERNAME
     password = headphones.CONFIG.TRANSMISSION_PASSWORD
 
-    if not host.startswith('http'):
-        host = 'http://' + host
+    if not host.startswith("http"):
+        host = "http://" + host
 
-    if host.endswith('/'):
+    if host.endswith("/"):
         host = host[:-1]
 
     # Fix the URL. We assume that the user does not point to the RPC endpoint,
@@ -176,29 +194,38 @@ def torrentAction(method, arguments):
         parts[2] += "/transmission/rpc"
 
     host = urllib.parse.urlunparse(parts)
-    data = {'method': method, 'arguments': arguments}
+    data = {"method": method, "arguments": arguments}
     data_json = json.dumps(data)
     auth = (username, password) if username and password else None
     for retry in range(2):
         if _session_id is not None:
-            headers = {'x-transmission-session-id': _session_id}
-            response = request.request_response(host, method="POST",
-                data=data_json, headers=headers, auth=auth,
-                whitelist_status_code=[200, 401, 409])
+            headers = {"x-transmission-session-id": _session_id}
+            response = request.request_response(
+                host,
+                method="POST",
+                data=data_json,
+                headers=headers,
+                auth=auth,
+                whitelist_status_code=[200, 401, 409],
+            )
         else:
-            response = request.request_response(host, auth=auth,
-                                            whitelist_status_code=[401, 409])
+            response = request.request_response(
+                host, auth=auth, whitelist_status_code=[401, 409]
+            )
         if response.status_code == 401:
             if auth:
-                logger.error("Username and/or password not accepted by "
-                            "Transmission")
+                logger.error(
+                    "Username and/or password not accepted by " "Transmission"
+                )
             else:
                 logger.error("Transmission authorization required")
             return
         elif response.status_code == 409:
-            _session_id = response.headers['x-transmission-session-id']
+            _session_id = response.headers["x-transmission-session-id"]
             if _session_id is None:
-                logger.error("Expected a Session ID from Transmission, got None")
+                logger.error(
+                    "Expected a Session ID from Transmission, got None"
+                )
                 return
             # retry request with new session id
             logger.debug("Retrying Transmission request with new session id")

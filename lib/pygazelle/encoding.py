@@ -10,4 +10,16 @@ LOSSLESS = "Lossless"
 LOSSLESS_24 = "24bit Lossless"
 V8 = "V8 (VBR)"
 
-ALL_ENCODINGS = [C192, APS, V2, V1, C256, APX, V0, C320, LOSSLESS, LOSSLESS_24, V8]
+ALL_ENCODINGS = [
+    C192,
+    APS,
+    V2,
+    V1,
+    C256,
+    APX,
+    V0,
+    C320,
+    LOSSLESS,
+    LOSSLESS_24,
+    V8,
+]

@@ -14,15 +14,30 @@
 
 from mutagen import StreamInfo
 from mutagen._file import FileType
-from mutagen._util import BitReader, BitReaderError, MutagenError, loadfile, \
-    convert_error, endswith
+from mutagen._util import (
+    BitReader,
+    BitReaderError,
+    MutagenError,
+    loadfile,
+    convert_error,
+    endswith,
+)
 from mutagen.id3._util import BitPaddedInt
 
 
 _FREQS = [
-    96000, 88200, 64000, 48000,
-    44100, 32000, 24000, 22050,
-    16000, 12000, 11025, 8000,
+    96000,
+    88200,
+    64000,
+    48000,
+    44100,
+    32000,
+    24000,
+    22050,
+    16000,
+    12000,
+    11025,
+    8000,
     7350,
 ]
 
@@ -63,7 +78,7 @@ class _ADTSStream(object):
             try:
                 b = r.bytes(1)
                 if b == b"\xff":
-                    if r.bits(4) == 0xf:
+                    if r.bits(4) == 0xF:
                         return True
                     r.align()
                     max_bytes -= 2
@@ -169,8 +184,15 @@ class _ADTSStream(object):
 
         # the fixed header has to be the same for every frame in the stream
         fixed_header_key = (
-            id_, layer, protection_absent, profile, sampling_frequency_index,
-            private_bit, channel_configuration, original_copy, home,
+            id_,
+            layer,
+            protection_absent,
+            profile,
+            sampling_frequency_index,
+            private_bit,
+            channel_configuration,
+            original_copy,
+            home,
         )
 
         if self._fixed_header_key is None:
@@ -239,8 +261,11 @@ class ProgramConfigElement(object):
         if matrix_mixdown_idx_present == 1:
             r.skip(3)
 
-        elms = num_front_channel_elements + num_side_channel_elements + \
-            num_back_channel_elements
+        elms = (
+            num_front_channel_elements
+            + num_side_channel_elements
+            + num_back_channel_elements
+        )
         channels = 0
         for i in range(elms):
             channels += 1
@@ -364,7 +389,8 @@ class AACInfo(StreamInfo):
                 break
         else:
             raise AACError(
-                "no valid stream found (only %d frames)" % s.parsed_frames)
+                "no valid stream found (only %d frames)" % s.parsed_frames
+            )
 
         self.sample_rate = s.frequency
         self.channels = s.channels
@@ -376,13 +402,18 @@ class AACInfo(StreamInfo):
         # approx
         self.length = 0.0
         if s.frequency != 0:
-            self.length = \
-                float(s.samples * stream_size) / (s.size * s.frequency)
+            self.length = float(s.samples * stream_size) / (
+                s.size * s.frequency
+            )
 
     def pprint(self):
-        return u"AAC (%s), %d Hz, %.2f seconds, %d channel(s), %d bps" % (
-            self._type, self.sample_rate, self.length, self.channels,
-            self.bitrate)
+        return "AAC (%s), %d Hz, %.2f seconds, %d channel(s), %d bps" % (
+            self._type,
+            self.sample_rate,
+            self.length,
+            self.channels,
+            self.bitrate,
+        )
 
 
 class AAC(FileType):
@@ -412,8 +443,11 @@ class AAC(FileType):
     @staticmethod
     def score(filename, fileobj, header):
         filename = filename.lower()
-        s = endswith(filename, ".aac") or endswith(filename, ".adts") or \
-            endswith(filename, ".adif")
+        s = (
+            endswith(filename, ".aac")
+            or endswith(filename, ".adts")
+            or endswith(filename, ".adif")
+        )
         s += b"ADIF" in header
         return s
 

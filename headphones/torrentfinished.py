@@ -23,14 +23,18 @@ def checkTorrentFinished():
     Remove Torrent + data if Post Processed and finished Seeding
     """
 
-    logger.info("Checking if any torrents have finished seeding and can be removed")
+    logger.info(
+        "Checking if any torrents have finished seeding and can be removed"
+    )
 
     myDB = db.DBConnection()
-    results = myDB.select('SELECT * from snatched WHERE Status="Seed_Processed"')
+    results = myDB.select(
+        'SELECT * from snatched WHERE Status="Seed_Processed"'
+    )
 
     for album in results:
-        hash = album['TorrentHash']
-        albumid = album['AlbumID']
+        hash = album["TorrentHash"]
+        albumid = album["AlbumID"]
         torrent_removed = False
 
         if headphones.CONFIG.TORRENT_DOWNLOADER == 1:
@@ -43,7 +47,9 @@ def checkTorrentFinished():
             torrent_removed = qbittorrent.removeTorrent(hash, True)
 
         if torrent_removed:
-            myDB.action('DELETE from snatched WHERE status = "Seed_Processed" and AlbumID=?',
-                        [albumid])
+            myDB.action(
+                'DELETE from snatched WHERE status = "Seed_Processed" and AlbumID=?',
+                [albumid],
+            )
 
     logger.info("Checking finished torrents completed")

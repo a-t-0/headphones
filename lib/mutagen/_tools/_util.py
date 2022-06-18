@@ -57,7 +57,6 @@ def split_escape(string, sep, maxsplit=None, escape_char="\\"):
 
 
 class SignalHandler(object):
-
     def __init__(self):
         self._interrupted = False
         self._nosig = False

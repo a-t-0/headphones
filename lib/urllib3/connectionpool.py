@@ -81,7 +81,11 @@ class ConnectionPool(object):
         self.port = port
 
     def __str__(self):
-        return "%s(host=%r, port=%r)" % (type(self).__name__, self.host, self.port)
+        return "%s(host=%r, port=%r)" % (
+            type(self).__name__,
+            self.host,
+            self.port,
+        )
 
     def __enter__(self):
         return self
@@ -179,7 +183,7 @@ class HTTPConnectionPool(ConnectionPool, RequestMethods):
         _proxy=None,
         _proxy_headers=None,
         _proxy_config=None,
-        **conn_kw
+        **conn_kw,
     ):
         ConnectionPool.__init__(self, host, port)
         RequestMethods.__init__(self, headers)
@@ -237,7 +241,7 @@ class HTTPConnectionPool(ConnectionPool, RequestMethods):
             port=self.port,
             timeout=self.timeout.connect_timeout,
             strict=self.strict,
-            **self.conn_kw
+            **self.conn_kw,
         )
         return conn
 
@@ -359,7 +363,13 @@ class HTTPConnectionPool(ConnectionPool, RequestMethods):
             )
 
     def _make_request(
-        self, conn, method, url, timeout=_Default, chunked=False, **httplib_request_kw
+        self,
+        conn,
+        method,
+        url,
+        timeout=_Default,
+        chunked=False,
+        **httplib_request_kw,
     ):
         """
         Perform a request on a given urllib connection object taken from our
@@ -426,7 +436,9 @@ class HTTPConnectionPool(ConnectionPool, RequestMethods):
             # timeouts, check for a zero timeout before making the request.
             if read_timeout == 0:
                 raise ReadTimeoutError(
-                    self, url, "Read timed out. (read timeout=%s)" % read_timeout
+                    self,
+                    url,
+                    "Read timed out. (read timeout=%s)" % read_timeout,
                 )
             if read_timeout is Timeout.DEFAULT_TIMEOUT:
                 conn.sock.settimeout(socket.getdefaulttimeout())
@@ -467,7 +479,10 @@ class HTTPConnectionPool(ConnectionPool, RequestMethods):
 
         try:
             assert_header_parsing(httplib_response.msg)
-        except (HeaderParsingError, TypeError) as hpe:  # Platform-specific: Python 3
+        except (
+            HeaderParsingError,
+            TypeError,
+        ) as hpe:  # Platform-specific: Python 3
             log.warning(
                 "Failed to parse headers (url=%s): %s",
                 self._absolute_url(url),
@@ -478,7 +493,9 @@ class HTTPConnectionPool(ConnectionPool, RequestMethods):
         return httplib_response
 
     def _absolute_url(self, path):
-        return Url(scheme=self.scheme, host=self.host, port=self.port, path=path).url
+        return Url(
+            scheme=self.scheme, host=self.host, port=self.port, path=path
+        ).url
 
     def close(self):
         """
@@ -533,7 +550,7 @@ class HTTPConnectionPool(ConnectionPool, RequestMethods):
         release_conn=None,
         chunked=False,
         body_pos=None,
-        **response_kw
+        **response_kw,
     ):
         """
         Get a connection from the pool and perform an HTTP request. This is the
@@ -635,7 +652,9 @@ class HTTPConnectionPool(ConnectionPool, RequestMethods):
             headers = self.headers
 
         if not isinstance(retries, Retry):
-            retries = Retry.from_int(retries, redirect=redirect, default=self.retries)
+            retries = Retry.from_int(
+                retries, redirect=redirect, default=self.retries
+            )
 
         if release_conn is None:
             release_conn = response_kw.get("preload_content", True)
@@ -725,7 +744,7 @@ class HTTPConnectionPool(ConnectionPool, RequestMethods):
                 pool=self,
                 connection=response_conn,
                 retries=retries,
-                **response_kw
+                **response_kw,
             )
 
             # Everything went great!
@@ -756,7 +775,8 @@ class HTTPConnectionPool(ConnectionPool, RequestMethods):
                 # so we try to cover our bases here!
                 message = " ".join(re.split("[^a-z]", str(ssl_error).lower()))
                 return (
-                    "wrong version number" in message or "unknown protocol" in message
+                    "wrong version number" in message
+                    or "unknown protocol" in message
                 )
 
             # Try to detect a common user error with proxies which is to
@@ -777,7 +797,9 @@ class HTTPConnectionPool(ConnectionPool, RequestMethods):
                 )
             elif isinstance(e, (BaseSSLError, CertificateError)):
                 e = SSLError(e)
-            elif isinstance(e, (SocketError, NewConnectionError)) and self.proxy:
+            elif (
+                isinstance(e, (SocketError, NewConnectionError)) and self.proxy
+            ):
                 e = ProxyError("Cannot connect to proxy.", e)
             elif isinstance(e, (SocketError, HTTPException)):
                 e = ProtocolError("Connection aborted.", e)
@@ -808,7 +830,10 @@ class HTTPConnectionPool(ConnectionPool, RequestMethods):
         if not conn:
             # Try again
             log.warning(
-                "Retrying (%r) after connection broken by '%r': %s", retries, err, url
+                "Retrying (%r) after connection broken by '%r': %s",
+                retries,
+                err,
+                url,
             )
             return self.urlopen(
                 method,
@@ -823,7 +848,7 @@ class HTTPConnectionPool(ConnectionPool, RequestMethods):
                 release_conn=release_conn,
                 chunked=chunked,
                 body_pos=body_pos,
-                **response_kw
+                **response_kw,
             )
 
         # Handle redirect?
@@ -833,7 +858,9 @@ class HTTPConnectionPool(ConnectionPool, RequestMethods):
                 method = "GET"
 
             try:
-                retries = retries.increment(method, url, response=response, _pool=self)
+                retries = retries.increment(
+                    method, url, response=response, _pool=self
+                )
             except MaxRetryError:
                 if retries.raise_on_redirect:
                     response.drain_conn()
@@ -856,14 +883,16 @@ class HTTPConnectionPool(ConnectionPool, RequestMethods):
                 release_conn=release_conn,
                 chunked=chunked,
                 body_pos=body_pos,
-                **response_kw
+                **response_kw,
             )
 
         # Check if we should retry the HTTP response.
         has_retry_after = bool(response.getheader("Retry-After"))
         if retries.is_retry(method, response.status, has_retry_after):
             try:
-                retries = retries.increment(method, url, response=response, _pool=self)
+                retries = retries.increment(
+                    method, url, response=response, _pool=self
+                )
             except MaxRetryError:
                 if retries.raise_on_status:
                     response.drain_conn()
@@ -886,7 +915,7 @@ class HTTPConnectionPool(ConnectionPool, RequestMethods):
                 release_conn=release_conn,
                 chunked=chunked,
                 body_pos=body_pos,
-                **response_kw
+                **response_kw,
             )
 
         return response
@@ -930,7 +959,7 @@ class HTTPSConnectionPool(HTTPConnectionPool):
         assert_hostname=None,
         assert_fingerprint=None,
         ca_cert_dir=None,
-        **conn_kw
+        **conn_kw,
     ):
 
         HTTPConnectionPool.__init__(
@@ -945,7 +974,7 @@ class HTTPSConnectionPool(HTTPConnectionPool):
             retries,
             _proxy,
             _proxy_headers,
-            **conn_kw
+            **conn_kw,
         )
 
         self.key_file = key_file
@@ -1024,7 +1053,7 @@ class HTTPSConnectionPool(HTTPConnectionPool):
             cert_file=self.cert_file,
             key_file=self.key_file,
             key_password=self.key_password,
-            **self.conn_kw
+            **self.conn_kw,
         )
 
         return self._prepare_conn(conn)
@@ -1036,7 +1065,9 @@ class HTTPSConnectionPool(HTTPConnectionPool):
         super(HTTPSConnectionPool, self)._validate_conn(conn)
 
         # Force connect early to allow us to validate the connection.
-        if not getattr(conn, "sock", None):  # AppEngine might not have  `.sock`
+        if not getattr(
+            conn, "sock", None
+        ):  # AppEngine might not have  `.sock`
             conn.connect()
 
         if not conn.is_verified:

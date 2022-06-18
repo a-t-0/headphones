@@ -33,5 +33,7 @@ def slack_compliance_fix(session):
             url = add_params_to_uri(url, token)
         return url, headers, data
 
-    session.register_compliance_hook("protected_request", _non_compliant_param_name)
+    session.register_compliance_hook(
+        "protected_request", _non_compliant_param_name
+    )
     return session

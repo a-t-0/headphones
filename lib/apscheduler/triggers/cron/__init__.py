@@ -4,8 +4,19 @@ from tzlocal import get_localzone
 import six
 
 from apscheduler.triggers.base import BaseTrigger
-from apscheduler.triggers.cron.fields import BaseField, WeekField, DayOfMonthField, DayOfWeekField, DEFAULT_VALUES
-from apscheduler.util import datetime_ceil, convert_to_datetime, datetime_repr, astimezone
+from apscheduler.triggers.cron.fields import (
+    BaseField,
+    WeekField,
+    DayOfMonthField,
+    DayOfWeekField,
+    DEFAULT_VALUES,
+)
+from apscheduler.util import (
+    datetime_ceil,
+    convert_to_datetime,
+    datetime_repr,
+    astimezone,
+)
 
 
 class CronTrigger(BaseTrigger):
@@ -28,22 +39,43 @@ class CronTrigger(BaseTrigger):
     .. note:: The first weekday is always **monday**.
     """
 
-    FIELD_NAMES = ('year', 'month', 'day', 'week', 'day_of_week', 'hour', 'minute', 'second')
+    FIELD_NAMES = (
+        "year",
+        "month",
+        "day",
+        "week",
+        "day_of_week",
+        "hour",
+        "minute",
+        "second",
+    )
     FIELDS_MAP = {
-        'year': BaseField,
-        'month': BaseField,
-        'week': WeekField,
-        'day': DayOfMonthField,
-        'day_of_week': DayOfWeekField,
-        'hour': BaseField,
-        'minute': BaseField,
-        'second': BaseField
+        "year": BaseField,
+        "month": BaseField,
+        "week": WeekField,
+        "day": DayOfMonthField,
+        "day_of_week": DayOfWeekField,
+        "hour": BaseField,
+        "minute": BaseField,
+        "second": BaseField,
     }
 
-    __slots__ = 'timezone', 'start_date', 'end_date', 'fields'
+    __slots__ = "timezone", "start_date", "end_date", "fields"
 
-    def __init__(self, year=None, month=None, day=None, week=None, day_of_week=None, hour=None, minute=None,
-                 second=None, start_date=None, end_date=None, timezone=None):
+    def __init__(
+        self,
+        year=None,
+        month=None,
+        day=None,
+        week=None,
+        day_of_week=None,
+        hour=None,
+        minute=None,
+        second=None,
+        start_date=None,
+        end_date=None,
+        timezone=None,
+    ):
         if timezone:
             self.timezone = astimezone(timezone)
         elif start_date and start_date.tzinfo:
@@ -53,11 +85,18 @@ class CronTrigger(BaseTrigger):
         else:
             self.timezone = get_localzone()
 
-        self.start_date = convert_to_datetime(start_date, self.timezone, 'start_date')
-        self.end_date = convert_to_datetime(end_date, self.timezone, 'end_date')
+        self.start_date = convert_to_datetime(
+            start_date, self.timezone, "start_date"
+        )
+        self.end_date = convert_to_datetime(
+            end_date, self.timezone, "end_date"
+        )
 
-        values = dict((key, value) for (key, value) in six.iteritems(locals())
-                      if key in self.FIELD_NAMES and value is not None)
+        values = dict(
+            (key, value)
+            for (key, value) in six.iteritems(locals())
+            if key in self.FIELD_NAMES and value is not None
+        )
         self.fields = []
         assign_defaults = False
         for field_name in self.FIELD_NAMES:
@@ -69,7 +108,7 @@ class CronTrigger(BaseTrigger):
                 exprs = DEFAULT_VALUES[field_name]
                 is_default = True
             else:
-                exprs = '*'
+                exprs = "*"
                 is_default = True
 
             field_class = self.FIELDS_MAP[field_name]
@@ -133,7 +172,9 @@ class CronTrigger(BaseTrigger):
 
     def get_next_fire_time(self, previous_fire_time, now):
         if previous_fire_time:
-            start_date = max(now, previous_fire_time + timedelta(microseconds=1))
+            start_date = max(
+                now, previous_fire_time + timedelta(microseconds=1)
+            )
         else:
             start_date = max(now, self.start_date) if self.start_date else now
 
@@ -146,14 +187,20 @@ class CronTrigger(BaseTrigger):
 
             if next_value is None:
                 # No valid value was found
-                next_date, fieldnum = self._increment_field_value(next_date, fieldnum - 1)
+                next_date, fieldnum = self._increment_field_value(
+                    next_date, fieldnum - 1
+                )
             elif next_value > curr_value:
                 # A valid, but higher than the starting value, was found
                 if field.REAL:
-                    next_date = self._set_field_value(next_date, fieldnum, next_value)
+                    next_date = self._set_field_value(
+                        next_date, fieldnum, next_value
+                    )
                     fieldnum += 1
                 else:
-                    next_date, fieldnum = self._increment_field_value(next_date, fieldnum)
+                    next_date, fieldnum = self._increment_field_value(
+                        next_date, fieldnum
+                    )
             else:
                 # A valid value was found, no changes necessary
                 fieldnum += 1
@@ -166,11 +213,15 @@ class CronTrigger(BaseTrigger):
             return next_date
 
     def __str__(self):
-        options = ["%s='%s'" % (f.name, f) for f in self.fields if not f.is_default]
-        return 'cron[%s]' % (', '.join(options))
+        options = [
+            "%s='%s'" % (f.name, f) for f in self.fields if not f.is_default
+        ]
+        return "cron[%s]" % (", ".join(options))
 
     def __repr__(self):
-        options = ["%s='%s'" % (f.name, f) for f in self.fields if not f.is_default]
+        options = [
+            "%s='%s'" % (f.name, f) for f in self.fields if not f.is_default
+        ]
         if self.start_date:
             options.append("start_date='%s'" % datetime_repr(self.start_date))
-        return '<%s (%s)>' % (self.__class__.__name__, ', '.join(options))
+        return "<%s (%s)>" % (self.__class__.__name__, ", ".join(options))

@@ -27,9 +27,9 @@ class LeafClassesMeta(type):
     """
 
     def __init__(cls, name, bases, attrs):
-        if not hasattr(cls, '_leaf_classes'):
+        if not hasattr(cls, "_leaf_classes"):
             cls._leaf_classes = set()
-        leaf_classes = getattr(cls, '_leaf_classes')
+        leaf_classes = getattr(cls, "_leaf_classes")
         leaf_classes.add(cls)
         # remove any base classes
         leaf_classes -= set(bases)
@@ -54,11 +54,11 @@ class TagRegistered(type):
     <class '....meta.Barobject'>
     """
 
-    attr_name = 'tag'
+    attr_name = "tag"
 
     def __init__(cls, name, bases, namespace):
         super(TagRegistered, cls).__init__(name, bases, namespace)
-        if not hasattr(cls, '_registry'):
+        if not hasattr(cls, "_registry"):
             cls._registry = {}
         meta = cls.__class__
         attr = getattr(cls, meta.attr_name, None)

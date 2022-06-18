@@ -71,7 +71,7 @@ class VComment(mutagen.Tags, list):
         vendor (text): the stream 'vendor' (i.e. writer); default 'Mutagen'
     """
 
-    vendor = u"Mutagen " + mutagen.version_string
+    vendor = "Mutagen " + mutagen.version_string
 
     def __init__(self, data=None, *args, **kwargs):
         self._size = 0
@@ -81,13 +81,13 @@ class VComment(mutagen.Tags, list):
         if data is not None:
             if isinstance(data, bytes):
                 data = BytesIO(data)
-            elif not hasattr(data, 'read'):
+            elif not hasattr(data, "read"):
                 raise TypeError("VComment requires bytes or a file-like")
             start = data.tell()
             self.load(data, *args, **kwargs)
             self._size = data.tell() - start
 
-    def load(self, fileobj, errors='replace', framing=True):
+    def load(self, fileobj, errors="replace", framing=True):
         """Parse a Vorbis comment from a file-like object.
 
         Arguments:
@@ -102,25 +102,25 @@ class VComment(mutagen.Tags, list):
 
         try:
             vendor_length = cdata.uint_le(fileobj.read(4))
-            self.vendor = fileobj.read(vendor_length).decode('utf-8', errors)
+            self.vendor = fileobj.read(vendor_length).decode("utf-8", errors)
             count = cdata.uint_le(fileobj.read(4))
             for i in range(count):
                 length = cdata.uint_le(fileobj.read(4))
                 try:
-                    string = fileobj.read(length).decode('utf-8', errors)
+                    string = fileobj.read(length).decode("utf-8", errors)
                 except (OverflowError, MemoryError):
                     raise error("cannot read %d bytes, too large" % length)
                 try:
-                    tag, value = string.split('=', 1)
+                    tag, value = string.split("=", 1)
                 except ValueError as err:
                     if errors == "ignore":
                         continue
                     elif errors == "replace":
-                        tag, value = u"unknown%d" % i, string
+                        tag, value = "unknown%d" % i, string
                     else:
                         reraise(VorbisEncodingError, err, sys.exc_info()[2])
                 try:
-                    tag = tag.encode('ascii', errors)
+                    tag = tag.encode("ascii", errors)
                 except UnicodeEncodeError:
                     raise VorbisEncodingError("invalid tag name %r" % tag)
                 else:
@@ -179,7 +179,7 @@ class VComment(mutagen.Tags, list):
 
         def _encode(value):
             if not isinstance(value, bytes):
-                return value.encode('utf-8')
+                return value.encode("utf-8")
             return value
 
         f = BytesIO()
@@ -198,14 +198,13 @@ class VComment(mutagen.Tags, list):
         return f.getvalue()
 
     def pprint(self):
-
         def _decode(value):
             if not isinstance(value, str):
-                return value.decode('utf-8', 'replace')
+                return value.decode("utf-8", "replace")
             return value
 
-        tags = [u"%s=%s" % (_decode(k), _decode(v)) for k, v in self]
-        return u"\n".join(tags)
+        tags = ["%s=%s" % (_decode(k), _decode(v)) for k, v in self]
+        return "\n".join(tags)
 
 
 class VCommentDict(VComment, DictMixin):
@@ -290,7 +289,7 @@ class VCommentDict(VComment, DictMixin):
         if not isinstance(values, list):
             values = [values]
         try:
-            del(self[key])
+            del self[key]
         except KeyError:
             pass
 

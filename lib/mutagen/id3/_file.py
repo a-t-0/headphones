@@ -11,12 +11,22 @@
 import struct
 
 import mutagen
-from mutagen._util import insert_bytes, delete_bytes, enum, \
-    loadfile, convert_error, read_full
+from mutagen._util import (
+    insert_bytes,
+    delete_bytes,
+    enum,
+    loadfile,
+    convert_error,
+    read_full,
+)
 from mutagen._tags import PaddingInfo
 
-from ._util import error, ID3NoHeaderError, ID3UnsupportedVersionError, \
-    BitPaddedInt
+from ._util import (
+    error,
+    ID3NoHeaderError,
+    ID3UnsupportedVersionError,
+    BitPaddedInt,
+)
 from ._tags import ID3Tags, ID3Header, ID3SaveConfig
 from ._id3v1 import MakeID3v1, find_id3v1
 
@@ -110,8 +120,14 @@ class ID3(ID3Tags, mutagen.Metadata):
 
     @convert_error(IOError, error)
     @loadfile()
-    def load(self, filething, known_frames=None, translate=True, v2_version=4,
-             load_v1=True):
+    def load(
+        self,
+        filething,
+        known_frames=None,
+        translate=True,
+        v2_version=4,
+        load_v1=True,
+    ):
         """Load tags from a filename.
 
         Args:
@@ -185,8 +201,9 @@ class ID3(ID3Tags, mutagen.Metadata):
             else:
                 self.update_to_v24()
 
-    def _prepare_data(self, fileobj, start, available, v2_version, v23_sep,
-                      pad_func):
+    def _prepare_data(
+        self, fileobj, start, available, v2_version, v23_sep, pad_func
+    ):
 
         if v2_version not in (3, 4):
             raise ValueError("Only 3 or 4 allowed for v2_version")
@@ -207,19 +224,21 @@ class ID3(ID3Tags, mutagen.Metadata):
 
         new_framesize = BitPaddedInt.to_str(new_size - 10, width=4)
         header = struct.pack(
-            '>3sBBB4s', b'ID3', v2_version, 0, 0, new_framesize)
+            ">3sBBB4s", b"ID3", v2_version, 0, 0, new_framesize
+        )
 
         data = header + framedata
         assert new_size >= len(data)
-        data += (new_size - len(data)) * b'\x00'
+        data += (new_size - len(data)) * b"\x00"
         assert new_size == len(data)
 
         return data
 
     @convert_error(IOError, error)
     @loadfile(writable=True, create=True)
-    def save(self, filething=None, v1=1, v2_version=4, v23_sep='/',
-             padding=None):
+    def save(
+        self, filething=None, v1=1, v2_version=4, v23_sep="/", padding=None
+    ):
         """save(filething=None, v1=1, v2_version=4, v23_sep='/', padding=None)
 
         Save changes to a file.
@@ -258,13 +277,12 @@ class ID3(ID3Tags, mutagen.Metadata):
         else:
             old_size = header.size
 
-        data = self._prepare_data(
-            f, 0, old_size, v2_version, v23_sep, padding)
+        data = self._prepare_data(f, 0, old_size, v2_version, v23_sep, padding)
         new_size = len(data)
 
-        if (old_size < new_size):
+        if old_size < new_size:
             insert_bytes(f, new_size - old_size, old_size)
-        elif (old_size > new_size):
+        elif old_size > new_size:
             delete_bytes(f, old_size - new_size, new_size)
         f.seek(0)
         f.write(data)
@@ -276,8 +294,11 @@ class ID3(ID3Tags, mutagen.Metadata):
         has_v1 = tag is not None
 
         f.seek(offset, 2)
-        if v1 == ID3v1SaveOptions.UPDATE and has_v1 or \
-                v1 == ID3v1SaveOptions.CREATE:
+        if (
+            v1 == ID3v1SaveOptions.UPDATE
+            and has_v1
+            or v1 == ID3v1SaveOptions.CREATE
+        ):
             f.write(MakeID3v1(self))
         else:
             f.truncate()
@@ -328,12 +349,12 @@ def delete(filething, delete_v1=True, delete_v2=True):
         f.seek(0, 0)
         idata = f.read(10)
         try:
-            id3, vmaj, vrev, flags, insize = struct.unpack('>3sBBB4s', idata)
+            id3, vmaj, vrev, flags, insize = struct.unpack(">3sBBB4s", idata)
         except struct.error:
             pass
         else:
             insize = BitPaddedInt(insize)
-            if id3 == b'ID3' and insize >= 0:
+            if id3 == b"ID3" and insize >= 0:
                 delete_bytes(f, insize + 10, 0)
 
 
@@ -367,7 +388,7 @@ class ID3FileType(mutagen.FileType):
 
         @staticmethod
         def pprint():
-            return u"Unknown format with ID3 tag"
+            return "Unknown format with ID3 tag"
 
     @staticmethod
     def score(filename, fileobj, header_data):

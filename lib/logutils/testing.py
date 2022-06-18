@@ -4,14 +4,16 @@
 import logging
 from logging.handlers import BufferingHandler
 
+
 class TestHandler(BufferingHandler):
     """
     This handler collects records in a buffer for later inspection by
     your unit test code.
-    
+
     :param matcher: The :class:`~logutils.testing.Matcher` instance to
                     use for matching.
     """
+
     def __init__(self, matcher):
         # BufferingHandler takes a "capacity" argument
         # so as to know when to flush. As we're overriding
@@ -54,9 +56,9 @@ class TestHandler(BufferingHandler):
         Look for a saved dict whose keys/values match the supplied arguments.
 
         Return `True` if found, else `False`.
-        
+
         :param kwargs: A set of keyword arguments whose names are LogRecord
-                       attributes and whose values are what you want to 
+                       attributes and whose values are what you want to
                        match in a stored LogRecord.
         """
         result = False
@@ -64,7 +66,7 @@ class TestHandler(BufferingHandler):
             if self.matcher.matches(d, **kwargs):
                 result = True
                 break
-        #if not result:
+        # if not result:
         #    print('*** matcher failed completely on %d records' % len(self.buffer))
         return result
 
@@ -74,7 +76,7 @@ class TestHandler(BufferingHandler):
         buffer of stored records matches the list one-for-one.
 
         Return `True` if exactly matched, else `False`.
-        
+
         :param kwarglist: A list of keyword-argument dictionaries, each of
                           which will be passed to :meth:`matches` with the
                           corresponding record from the buffer.
@@ -96,20 +98,21 @@ class TestHandler(BufferingHandler):
         """
         return len(self.buffer)
 
+
 class Matcher(object):
     """
     This utility class matches a stored dictionary of
     :class:`logging.LogRecord` attributes with keyword arguments
     passed to its :meth:`~logutils.testing.Matcher.matches` method.
     """
-    
-    _partial_matches = ('msg', 'message')
+
+    _partial_matches = ("msg", "message")
     """
     A list of :class:`logging.LogRecord` attribute names which
     will be checked for partial matches. If not in this list,
     an exact match will be attempted.
     """
-    
+
     def matches(self, d, **kwargs):
         """
         Try to match a single dict with the supplied arguments.
@@ -117,11 +120,11 @@ class Matcher(object):
         Keys whose values are strings and which are in self._partial_matches
         will be checked for partial (i.e. substring) matches. You can extend
         this scheme to (for example) do regular expression matching, etc.
-        
+
         Return `True` if found, else `False`.
 
         :param kwargs: A set of keyword arguments whose names are LogRecord
-                       attributes and whose values are what you want to 
+                       attributes and whose values are what you want to
                        match in a stored LogRecord.
         """
         result = True
@@ -129,7 +132,7 @@ class Matcher(object):
             v = kwargs[k]
             dv = d.get(k)
             if not self.match_value(k, dv, v):
-                #print('*** matcher failed: %s, %r, %r' % (k, dv, v))
+                # print('*** matcher failed: %s, %r, %r' % (k, dv, v))
                 result = False
                 break
         return result
@@ -147,10 +150,9 @@ class Matcher(object):
         if type(v) != type(dv):
             result = False
         elif type(dv) is not str or k not in self._partial_matches:
-            result = (v == dv)
+            result = v == dv
         else:
             result = dv.find(v) >= 0
-        #if not result:
+        # if not result:
         #    print('*** matcher failed on %s: %r vs. %r' % (k, dv, v))
         return result
-

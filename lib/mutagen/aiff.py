@@ -38,14 +38,14 @@ class error(IffError):
 
 
 # based on stdlib's aifc
-_HUGE_VAL = 1.79769313486231e+308
+_HUGE_VAL = 1.79769313486231e308
 
 
 def read_float(data):
     """Raises OverflowError"""
 
     assert len(data) == 10
-    expon, himant, lomant = struct.unpack('>hLL', data)
+    expon, himant, lomant = struct.unpack(">hLL", data)
     sign = 1
     if expon < 0:
         sign = -1
@@ -66,20 +66,20 @@ class AIFFChunk(IffChunk):
 
     @classmethod
     def parse_header(cls, header):
-        return struct.unpack('>4sI', header)
+        return struct.unpack(">4sI", header)
 
     @classmethod
     def get_class(cls, id):
-        if id == 'FORM':
+        if id == "FORM":
             return AIFFFormChunk
         else:
             return cls
 
     def write_new_header(self, id_, size):
-        self._fileobj.write(pack('>4sI', id_, size))
+        self._fileobj.write(pack(">4sI", id_, size))
 
     def write_size(self):
-        self._fileobj.write(pack('>I', self.data_size))
+        self._fileobj.write(pack(">I", self.data_size))
 
 
 class AIFFFormChunk(AIFFChunk, IffContainerChunkMixin):
@@ -89,8 +89,8 @@ class AIFFFormChunk(AIFFChunk, IffContainerChunkMixin):
         return AIFFChunk.parse(self._fileobj, self)
 
     def __init__(self, fileobj, id, data_size, parent_chunk):
-        if id != u'FORM':
-            raise InvalidChunk('Expected FORM chunk, got %s' % id)
+        if id != "FORM":
+            raise InvalidChunk("Expected FORM chunk, got %s" % id)
 
         AIFFChunk.__init__(self, fileobj, id, data_size, parent_chunk)
         self.init_container()
@@ -104,17 +104,18 @@ class AIFFFile(IffFile):
         # ID before the start of other chunks
         super().__init__(AIFFChunk, fileobj)
 
-        if self.root.id != u'FORM':
-            raise InvalidChunk("Root chunk must be a FORM chunk, got %s"
-                               % self.root.id)
+        if self.root.id != "FORM":
+            raise InvalidChunk(
+                "Root chunk must be a FORM chunk, got %s" % self.root.id
+            )
 
     def __contains__(self, id_):
-        if id_ == 'FORM':  # For backwards compatibility
+        if id_ == "FORM":  # For backwards compatibility
             return True
         return super().__contains__(id_)
 
     def __getitem__(self, id_):
-        if id_ == 'FORM':  # For backwards compatibility
+        if id_ == "FORM":  # For backwards compatibility
             return self.root
         return super().__getitem__(id_)
 
@@ -145,7 +146,7 @@ class AIFFInfo(StreamInfo):
 
         iff = AIFFFile(fileobj)
         try:
-            common_chunk = iff[u'COMM']
+            common_chunk = iff["COMM"]
         except KeyError as e:
             raise error(str(e))
 
@@ -153,7 +154,7 @@ class AIFFInfo(StreamInfo):
         if len(data) < 18:
             raise error
 
-        info = struct.unpack('>hLh10s', data[:18])
+        info = struct.unpack(">hLh10s", data[:18])
         channels, frame_count, sample_size, sample_rate = info
 
         try:
@@ -171,8 +172,12 @@ class AIFFInfo(StreamInfo):
         self.bitrate = channels * sample_size * self.sample_rate
 
     def pprint(self):
-        return u"%d channel AIFF @ %d bps, %s Hz, %.2f seconds" % (
-            self.channels, self.bitrate, self.sample_rate, self.length)
+        return "%d channel AIFF @ %d bps, %s Hz, %.2f seconds" % (
+            self.channels,
+            self.bitrate,
+            self.sample_rate,
+            self.length,
+        )
 
 
 class _IFFID3(IffID3):
@@ -188,7 +193,7 @@ def delete(filething):
     """Completely removes the ID3 chunk from the AIFF file"""
 
     try:
-        del AIFFFile(filething.fileobj)[u'ID3']
+        del AIFFFile(filething.fileobj)["ID3"]
     except KeyError:
         pass
 
@@ -212,8 +217,12 @@ class AIFF(FileType):
     def score(filename, fileobj, header):
         filename = filename.lower()
 
-        return (header.startswith(b"FORM") * 2 + endswith(filename, b".aif") +
-                endswith(filename, b".aiff") + endswith(filename, b".aifc"))
+        return (
+            header.startswith(b"FORM") * 2
+            + endswith(filename, b".aif")
+            + endswith(filename, b".aiff")
+            + endswith(filename, b".aifc")
+        )
 
     def add_tags(self):
         """Add an empty ID3 tag to the file."""

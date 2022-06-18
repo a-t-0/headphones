@@ -34,9 +34,16 @@ import bs4  # type: ignore[import]
 from typing import Dict, Optional, Any, List, Iterator, Iterable
 
 __all__ = (
-    'DEBUG', 'SelectorSyntaxError', 'SoupSieve',
-    'closest', 'compile', 'filter', 'iselect',
-    'match', 'select', 'select_one'
+    "DEBUG",
+    "SelectorSyntaxError",
+    "SoupSieve",
+    "closest",
+    "compile",
+    "filter",
+    "iselect",
+    "match",
+    "select",
+    "select_one",
 )
 
 SoupSieve = cm.SoupSieve
@@ -48,20 +55,30 @@ def compile(  # noqa: A001
     flags: int = 0,
     *,
     custom: Optional[Dict[str, str]] = None,
-    **kwargs: Any
+    **kwargs: Any,
 ) -> cm.SoupSieve:
     """Compile CSS pattern."""
 
-    ns = ct.Namespaces(namespaces) if namespaces is not None else namespaces  # type: Optional[ct.Namespaces]
-    cs = ct.CustomSelectors(custom) if custom is not None else custom  # type: Optional[ct.CustomSelectors]
+    ns = (
+        ct.Namespaces(namespaces) if namespaces is not None else namespaces
+    )  # type: Optional[ct.Namespaces]
+    cs = (
+        ct.CustomSelectors(custom) if custom is not None else custom
+    )  # type: Optional[ct.CustomSelectors]
 
     if isinstance(pattern, SoupSieve):
         if flags:
-            raise ValueError("Cannot process 'flags' argument on a compiled selector list")
+            raise ValueError(
+                "Cannot process 'flags' argument on a compiled selector list"
+            )
         elif namespaces is not None:
-            raise ValueError("Cannot process 'namespaces' argument on a compiled selector list")
+            raise ValueError(
+                "Cannot process 'namespaces' argument on a compiled selector list"
+            )
         elif custom is not None:
-            raise ValueError("Cannot process 'custom' argument on a compiled selector list")
+            raise ValueError(
+                "Cannot process 'custom' argument on a compiled selector list"
+            )
         return pattern
 
     return cp._cached_css_compile(pattern, ns, cs, flags)
@@ -75,13 +92,13 @@ def purge() -> None:
 
 def closest(
     select: str,
-    tag: 'bs4.Tag',
+    tag: "bs4.Tag",
     namespaces: Optional[Dict[str, str]] = None,
     flags: int = 0,
     *,
     custom: Optional[Dict[str, str]] = None,
-    **kwargs: Any
-) -> 'bs4.Tag':
+    **kwargs: Any,
+) -> "bs4.Tag":
     """Match closest ancestor."""
 
     return compile(select, namespaces, flags, **kwargs).closest(tag)
@@ -89,12 +106,12 @@ def closest(
 
 def match(
     select: str,
-    tag: 'bs4.Tag',
+    tag: "bs4.Tag",
     namespaces: Optional[Dict[str, str]] = None,
     flags: int = 0,
     *,
     custom: Optional[Dict[str, str]] = None,
-    **kwargs: Any
+    **kwargs: Any,
 ) -> bool:
     """Match node."""
 
@@ -103,13 +120,13 @@ def match(
 
 def filter(  # noqa: A001
     select: str,
-    iterable: Iterable['bs4.Tag'],
+    iterable: Iterable["bs4.Tag"],
     namespaces: Optional[Dict[str, str]] = None,
     flags: int = 0,
     *,
     custom: Optional[Dict[str, str]] = None,
-    **kwargs: Any
-) -> List['bs4.Tag']:
+    **kwargs: Any,
+) -> List["bs4.Tag"]:
     """Filter list of nodes."""
 
     return compile(select, namespaces, flags, **kwargs).filter(iterable)
@@ -117,13 +134,13 @@ def filter(  # noqa: A001
 
 def select_one(
     select: str,
-    tag: 'bs4.Tag',
+    tag: "bs4.Tag",
     namespaces: Optional[Dict[str, str]] = None,
     flags: int = 0,
     *,
     custom: Optional[Dict[str, str]] = None,
-    **kwargs: Any
-) -> 'bs4.Tag':
+    **kwargs: Any,
+) -> "bs4.Tag":
     """Select a single tag."""
 
     return compile(select, namespaces, flags, **kwargs).select_one(tag)
@@ -131,14 +148,14 @@ def select_one(
 
 def select(
     select: str,
-    tag: 'bs4.Tag',
+    tag: "bs4.Tag",
     namespaces: Optional[Dict[str, str]] = None,
     limit: int = 0,
     flags: int = 0,
     *,
     custom: Optional[Dict[str, str]] = None,
-    **kwargs: Any
-) -> List['bs4.Tag']:
+    **kwargs: Any,
+) -> List["bs4.Tag"]:
     """Select the specified tags."""
 
     return compile(select, namespaces, flags, **kwargs).select(tag, limit)
@@ -146,14 +163,14 @@ def select(
 
 def iselect(
     select: str,
-    tag: 'bs4.Tag',
+    tag: "bs4.Tag",
     namespaces: Optional[Dict[str, str]] = None,
     limit: int = 0,
     flags: int = 0,
     *,
     custom: Optional[Dict[str, str]] = None,
-    **kwargs: Any
-) -> Iterator['bs4.Tag']:
+    **kwargs: Any,
+) -> Iterator["bs4.Tag"]:
     """Iterate the specified tags."""
 
     for el in compile(select, namespaces, flags, **kwargs).iselect(tag, limit):

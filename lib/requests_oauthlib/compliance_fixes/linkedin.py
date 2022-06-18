@@ -16,6 +16,10 @@ def linkedin_compliance_fix(session):
         return url, headers, data
 
     session._client.default_token_placement = "query"
-    session.register_compliance_hook("access_token_response", _missing_token_type)
-    session.register_compliance_hook("protected_request", _non_compliant_param_name)
+    session.register_compliance_hook(
+        "access_token_response", _missing_token_type
+    )
+    session.register_compliance_hook(
+        "protected_request", _non_compliant_param_name
+    )
     return session

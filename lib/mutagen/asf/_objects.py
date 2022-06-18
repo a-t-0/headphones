@@ -53,7 +53,10 @@ class BaseObject(object):
 
     def __repr__(self):
         return "<%s GUID=%s objects=%r>" % (
-            type(self).__name__, bytes2guid(self.GUID), self.objects)
+            type(self).__name__,
+            bytes2guid(self.GUID),
+            self.objects,
+        )
 
     def pprint(self):
         l = []
@@ -163,9 +166,12 @@ class HeaderObject(BaseObject):
         data += padding_obj.render(asf)
         num_objects += 1
 
-        data = (HeaderObject.GUID +
-                struct.pack("<QL", len(data) + 30, num_objects) +
-                b"\x01\x02" + data)
+        data = (
+            HeaderObject.GUID
+            + struct.pack("<QL", len(data) + 30, num_objects)
+            + b"\x01\x02"
+            + data
+        )
 
         return data
 
@@ -183,11 +189,11 @@ class ContentDescriptionObject(BaseObject):
     GUID = guid2bytes("75B22633-668E-11CF-A6D9-00AA0062CE6C")
 
     NAMES = [
-        u"Title",
-        u"Author",
-        u"Copyright",
-        u"Description",
-        u"Rating",
+        "Title",
+        "Author",
+        "Copyright",
+        "Description",
+        "Rating",
     ]
 
     def parse(self, asf, data):
@@ -198,7 +204,7 @@ class ContentDescriptionObject(BaseObject):
         for length in lengths:
             end = pos + length
             if length > 0:
-                texts.append(data[pos:end].decode("utf-16-le").strip(u"\x00"))
+                texts.append(data[pos:end].decode("utf-16-le").strip("\x00"))
             else:
                 texts.append(None)
             pos = end
@@ -229,17 +235,19 @@ class ExtendedContentDescriptionObject(BaseObject):
 
     def parse(self, asf, data):
         super(ExtendedContentDescriptionObject, self).parse(asf, data)
-        num_attributes, = struct.unpack("<H", data[0:2])
+        (num_attributes,) = struct.unpack("<H", data[0:2])
         pos = 2
         for i in range(num_attributes):
-            name_length, = struct.unpack("<H", data[pos:pos + 2])
+            (name_length,) = struct.unpack("<H", data[pos : pos + 2])
             pos += 2
-            name = data[pos:pos + name_length]
+            name = data[pos : pos + name_length]
             name = name.decode("utf-16-le").strip("\x00")
             pos += name_length
-            value_type, value_length = struct.unpack("<HH", data[pos:pos + 4])
+            value_type, value_length = struct.unpack(
+                "<HH", data[pos : pos + 4]
+            )
             pos += 4
-            value = data[pos:pos + value_length]
+            value = data[pos : pos + value_length]
             pos += value_length
             attr = ASFBaseAttribute._get_type(value_type)(data=value)
             asf._tags.setdefault(self.GUID, []).append((name, attr))
@@ -297,7 +305,7 @@ class CodecListObject(BaseObject):
         try:
             name = data[offset:next_offset].decode("utf-16-le").strip("\x00")
         except UnicodeDecodeError:
-            name = u""
+            name = ""
         offset = next_offset
 
         units, offset = cdata.uint16_le_from(data, offset)
@@ -305,12 +313,12 @@ class CodecListObject(BaseObject):
         try:
             desc = data[offset:next_offset].decode("utf-16-le").strip("\x00")
         except UnicodeDecodeError:
-            desc = u""
+            desc = ""
         offset = next_offset
 
         bytes_, offset = cdata.uint16_le_from(data, offset)
         next_offset = offset + bytes_
-        codec = u""
+        codec = ""
         if bytes_ == 2:
             codec_id = cdata.uint16_le_from(data, offset)[0]
             if codec_id in CODECS:
@@ -326,8 +334,9 @@ class CodecListObject(BaseObject):
         count, offset = cdata.uint32_le_from(data, offset)
         for i in range(count):
             try:
-                offset, type_, name, desc, codec = \
-                    self._parse_entry(data, offset)
+                offset, type_, name, desc, codec = self._parse_entry(
+                    data, offset
+                )
             except cdata.error:
                 raise ASFError("invalid codec entry")
 
@@ -377,15 +386,16 @@ class HeaderExtensionObject(BaseObject):
 
     def parse(self, asf, data):
         super(HeaderExtensionObject, self).parse(asf, data)
-        datasize, = struct.unpack("<I", data[18:22])
+        (datasize,) = struct.unpack("<I", data[18:22])
         datapos = 0
         while datapos < datasize:
             guid, size = struct.unpack(
-                "<16sQ", data[22 + datapos:22 + datapos + 24])
+                "<16sQ", data[22 + datapos : 22 + datapos + 24]
+            )
             if size < 1:
                 raise ASFHeaderError("invalid size in header extension")
             obj = BaseObject._get_object(guid)
-            obj.parse(asf, data[22 + datapos + 24:22 + datapos + size])
+            obj.parse(asf, data[22 + datapos + 24 : 22 + datapos + size])
             self.objects.append(obj)
             datapos += size
 
@@ -398,10 +408,15 @@ class HeaderExtensionObject(BaseObject):
             if obj.GUID == PaddingObject.GUID:
                 continue
             data += obj.render(asf)
-        return (self.GUID + struct.pack("<Q", 24 + 16 + 6 + len(data)) +
-                b"\x11\xD2\xD3\xAB\xBA\xA9\xcf\x11" +
-                b"\x8E\xE6\x00\xC0\x0C\x20\x53\x65" +
-                b"\x06\x00" + struct.pack("<I", len(data)) + data)
+        return (
+            self.GUID
+            + struct.pack("<Q", 24 + 16 + 6 + len(data))
+            + b"\x11\xD2\xD3\xAB\xBA\xA9\xcf\x11"
+            + b"\x8E\xE6\x00\xC0\x0C\x20\x53\x65"
+            + b"\x06\x00"
+            + struct.pack("<I", len(data))
+            + data
+        )
 
 
 @BaseObject._register
@@ -412,28 +427,34 @@ class MetadataObject(BaseObject):
 
     def parse(self, asf, data):
         super(MetadataObject, self).parse(asf, data)
-        num_attributes, = struct.unpack("<H", data[0:2])
+        (num_attributes,) = struct.unpack("<H", data[0:2])
         pos = 2
         for i in range(num_attributes):
-            (reserved, stream, name_length, value_type,
-             value_length) = struct.unpack("<HHHHI", data[pos:pos + 12])
+            (
+                reserved,
+                stream,
+                name_length,
+                value_type,
+                value_length,
+            ) = struct.unpack("<HHHHI", data[pos : pos + 12])
             pos += 12
-            name = data[pos:pos + name_length]
+            name = data[pos : pos + name_length]
             name = name.decode("utf-16-le").strip("\x00")
             pos += name_length
-            value = data[pos:pos + value_length]
+            value = data[pos : pos + value_length]
             pos += value_length
-            args = {'data': value, 'stream': stream}
+            args = {"data": value, "stream": stream}
             if value_type == 2:
-                args['dword'] = False
+                args["dword"] = False
             attr = ASFBaseAttribute._get_type(value_type)(**args)
             asf._tags.setdefault(self.GUID, []).append((name, attr))
 
     def render(self, asf):
         attrs = asf.to_metadata.items()
         data = b"".join([attr.render_m(name) for (name, attr) in attrs])
-        return (self.GUID + struct.pack("<QH", 26 + len(data), len(attrs)) +
-                data)
+        return (
+            self.GUID + struct.pack("<QH", 26 + len(data), len(attrs)) + data
+        )
 
 
 @BaseObject._register
@@ -444,25 +465,31 @@ class MetadataLibraryObject(BaseObject):
 
     def parse(self, asf, data):
         super(MetadataLibraryObject, self).parse(asf, data)
-        num_attributes, = struct.unpack("<H", data[0:2])
+        (num_attributes,) = struct.unpack("<H", data[0:2])
         pos = 2
         for i in range(num_attributes):
-            (language, stream, name_length, value_type,
-             value_length) = struct.unpack("<HHHHI", data[pos:pos + 12])
+            (
+                language,
+                stream,
+                name_length,
+                value_type,
+                value_length,
+            ) = struct.unpack("<HHHHI", data[pos : pos + 12])
             pos += 12
-            name = data[pos:pos + name_length]
+            name = data[pos : pos + name_length]
             name = name.decode("utf-16-le").strip("\x00")
             pos += name_length
-            value = data[pos:pos + value_length]
+            value = data[pos : pos + value_length]
             pos += value_length
-            args = {'data': value, 'language': language, 'stream': stream}
+            args = {"data": value, "language": language, "stream": stream}
             if value_type == 2:
-                args['dword'] = False
+                args["dword"] = False
             attr = ASFBaseAttribute._get_type(value_type)(**args)
             asf._tags.setdefault(self.GUID, []).append((name, attr))
 
     def render(self, asf):
         attrs = asf.to_metadata_library
         data = b"".join([attr.render_ml(name) for (name, attr) in attrs])
-        return (self.GUID + struct.pack("<QH", 26 + len(data), len(attrs)) +
-                data)
+        return (
+            self.GUID + struct.pack("<QH", 26 + len(data), len(attrs)) + data
+        )

@@ -16,6 +16,7 @@ class Loader(yaml.SafeLoader):
     - All maps are OrderedDicts.
     - Strings can begin with % without quotation.
     """
+
     # All strings should be Unicode objects, regardless of contents.
     def _construct_unicode(self, node):
         return self.construct_scalar(node)
@@ -33,9 +34,10 @@ class Loader(yaml.SafeLoader):
             self.flatten_mapping(node)
         else:
             raise yaml.constructor.ConstructorError(
-                None, None,
-                u'expected a mapping node, but found %s' % node.id,
-                node.start_mark
+                None,
+                None,
+                "expected a mapping node, but found %s" % node.id,
+                node.start_mark,
             )
 
         mapping = OrderedDict()
@@ -45,9 +47,10 @@ class Loader(yaml.SafeLoader):
                 hash(key)
             except TypeError as exc:
                 raise yaml.constructor.ConstructorError(
-                    u'while constructing a mapping',
-                    node.start_mark, 'found unacceptable key (%s)' % exc,
-                    key_node.start_mark
+                    "while constructing a mapping",
+                    node.start_mark,
+                    "found unacceptable key (%s)" % exc,
+                    key_node.start_mark,
                 )
             value = self.construct_object(value_node, deep=deep)
             mapping[key] = value
@@ -56,7 +59,7 @@ class Loader(yaml.SafeLoader):
     # Allow bare strings to begin with %. Directives are still detected.
     def check_plain(self):
         plain = super(Loader, self).check_plain()
-        return plain or self.peek() == '%'
+        return plain or self.peek() == "%"
 
     @staticmethod
     def add_constructors(loader):
@@ -64,12 +67,15 @@ class Loader(yaml.SafeLoader):
         and maps. Call this method on a custom Loader class to make it behave
         like Confuse's own Loader
         """
-        loader.add_constructor('tag:yaml.org,2002:str',
-                               Loader._construct_unicode)
-        loader.add_constructor('tag:yaml.org,2002:map',
-                               Loader.construct_yaml_map)
-        loader.add_constructor('tag:yaml.org,2002:omap',
-                               Loader.construct_yaml_map)
+        loader.add_constructor(
+            "tag:yaml.org,2002:str", Loader._construct_unicode
+        )
+        loader.add_constructor(
+            "tag:yaml.org,2002:map", Loader.construct_yaml_map
+        )
+        loader.add_constructor(
+            "tag:yaml.org,2002:omap", Loader.construct_yaml_map
+        )
 
 
 Loader.add_constructors(Loader)
@@ -83,7 +89,7 @@ def load_yaml(filename, loader=Loader):
     extra constructors.
     """
     try:
-        with open(filename, 'rb') as f:
+        with open(filename, "rb") as f:
             return yaml.load(f, Loader=loader)
     except (IOError, yaml.error.YAMLError) as exc:
         raise ConfigReadError(filename, exc)
@@ -122,7 +128,7 @@ def parse_as_scalar(value, loader=Loader):
     if not isinstance(value, BASESTRING):
         return value
     try:
-        loader = loader('')
+        loader = loader("")
         tag = loader.resolve(yaml.ScalarNode, value, (True, False))
         node = yaml.ScalarNode(tag, value)
         return loader.construct_object(node)
@@ -133,10 +139,12 @@ def parse_as_scalar(value, loader=Loader):
 
 # YAML dumping.
 
+
 class Dumper(yaml.SafeDumper):
     """A PyYAML Dumper that represents OrderedDicts as ordinary mappings
     (in order, of course).
     """
+
     # From http://pyyaml.org/attachment/ticket/161/use_ordered_dict.py
     def represent_mapping(self, tag, mapping, flow_style=None):
         value = []
@@ -144,16 +152,19 @@ class Dumper(yaml.SafeDumper):
         if self.alias_key is not None:
             self.represented_objects[self.alias_key] = node
         best_style = False
-        if hasattr(mapping, 'items'):
+        if hasattr(mapping, "items"):
             mapping = list(mapping.items())
         for item_key, item_value in mapping:
             node_key = self.represent_data(item_key)
             node_value = self.represent_data(item_value)
-            if not (isinstance(node_key, yaml.ScalarNode)
-                    and not node_key.style):
+            if not (
+                isinstance(node_key, yaml.ScalarNode) and not node_key.style
+            ):
                 best_style = False
-            if not (isinstance(node_value, yaml.ScalarNode)
-                    and not node_value.style):
+            if not (
+                isinstance(node_value, yaml.ScalarNode)
+                and not node_value.style
+            ):
                 best_style = False
             value.append((node_key, node_value))
         if flow_style is None:
@@ -176,18 +187,16 @@ class Dumper(yaml.SafeDumper):
         return node
 
     def represent_bool(self, data):
-        """Represent bool as 'yes' or 'no' instead of 'true' or 'false'.
-        """
+        """Represent bool as 'yes' or 'no' instead of 'true' or 'false'."""
         if data:
-            value = u'yes'
+            value = "yes"
         else:
-            value = u'no'
-        return self.represent_scalar('tag:yaml.org,2002:bool', value)
+            value = "no"
+        return self.represent_scalar("tag:yaml.org,2002:bool", value)
 
     def represent_none(self, data):
-        """Represent a None value with nothing instead of 'none'.
-        """
-        return self.represent_scalar('tag:yaml.org,2002:null', '')
+        """Represent a None value with nothing instead of 'none'."""
+        return self.represent_scalar("tag:yaml.org,2002:null", "")
 
 
 Dumper.add_representer(OrderedDict, Dumper.represent_dict)
@@ -216,12 +225,12 @@ def restore_yaml_comments(data, default_data):
             if line and not line.startswith("#"):
                 break
             comment += "{0}\n".format(line)
-        key = line.split(':')[0].strip()
+        key = line.split(":")[0].strip()
         comment_map[key] = comment
     out_lines = iter(data.splitlines())
     out_data = ""
     for line in out_lines:
-        key = line.split(':')[0].strip()
+        key = line.split(":")[0].strip()
         if key in comment_map:
             out_data += comment_map[key]
         out_data += "{0}\n".format(line)

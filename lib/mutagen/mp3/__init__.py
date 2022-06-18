@@ -11,8 +11,15 @@
 import struct
 
 from mutagen import StreamInfo
-from mutagen._util import MutagenError, enum, BitReader, BitReaderError, \
-    convert_error, intround, endswith
+from mutagen._util import (
+    MutagenError,
+    enum,
+    BitReader,
+    BitReaderError,
+    convert_error,
+    intround,
+    endswith,
+)
 from mutagen.id3 import ID3FileType, delete
 from mutagen.id3._util import BitPaddedInt
 
@@ -81,16 +88,75 @@ class MPEGFrame(object):
 
     # Map (version, layer) tuples to bitrates.
     __BITRATE = {
-        (1, 1): [0, 32, 64, 96, 128, 160, 192, 224,
-                 256, 288, 320, 352, 384, 416, 448],
-        (1, 2): [0, 32, 48, 56, 64, 80, 96, 112, 128,
-                 160, 192, 224, 256, 320, 384],
-        (1, 3): [0, 32, 40, 48, 56, 64, 80, 96, 112,
-                 128, 160, 192, 224, 256, 320],
-        (2, 1): [0, 32, 48, 56, 64, 80, 96, 112, 128,
-                 144, 160, 176, 192, 224, 256],
-        (2, 2): [0, 8, 16, 24, 32, 40, 48, 56, 64,
-                 80, 96, 112, 128, 144, 160],
+        (1, 1): [
+            0,
+            32,
+            64,
+            96,
+            128,
+            160,
+            192,
+            224,
+            256,
+            288,
+            320,
+            352,
+            384,
+            416,
+            448,
+        ],
+        (1, 2): [
+            0,
+            32,
+            48,
+            56,
+            64,
+            80,
+            96,
+            112,
+            128,
+            160,
+            192,
+            224,
+            256,
+            320,
+            384,
+        ],
+        (1, 3): [
+            0,
+            32,
+            40,
+            48,
+            56,
+            64,
+            80,
+            96,
+            112,
+            128,
+            160,
+            192,
+            224,
+            256,
+            320,
+        ],
+        (2, 1): [
+            0,
+            32,
+            48,
+            56,
+            64,
+            80,
+            96,
+            112,
+            128,
+            144,
+            160,
+            176,
+            192,
+            224,
+            256,
+        ],
+        (2, 2): [0, 8, 16, 24, 32, 40, 48, 56, 64, 80, 96, 112, 128, 144, 160],
     }
 
     __BITRATE[(2, 3)] = __BITRATE[(2, 2)]
@@ -101,7 +167,7 @@ class MPEGFrame(object):
     __RATES = {
         1: [44100, 48000, 32000],
         2: [22050, 24000, 16000],
-        2.5: [11025, 12000, 8000]
+        2.5: [11025, 12000, 8000],
     }
 
     sketchy = False
@@ -113,7 +179,7 @@ class MPEGFrame(object):
 
         r = BitReader(fileobj)
         try:
-            if r.bits(11) != 0x7ff:
+            if r.bits(11) != 0x7FF:
                 raise HeaderNotFoundError("invalid sync")
             version = r.bits(2)
             layer = r.bits(2)
@@ -130,8 +196,13 @@ class MPEGFrame(object):
         assert r.get_position() == 32 and r.is_aligned()
 
         # try to be strict here to redice the chance of a false positive
-        if version == 1 or layer == 0 or sample_rate == 0x3 or \
-                bitrate == 0xf or bitrate == 0:
+        if (
+            version == 1
+            or layer == 0
+            or sample_rate == 0x3
+            or bitrate == 0xF
+            or bitrate == 0
+        ):
             raise HeaderNotFoundError("invalid header")
 
         self.channels = 1 if self.mode == MONO else 2
@@ -156,21 +227,23 @@ class MPEGFrame(object):
             slot = 1
 
         frame_length = (
-            ((frame_size // 8 * self.bitrate) // self.sample_rate) +
-            padding) * slot
+            ((frame_size // 8 * self.bitrate) // self.sample_rate) + padding
+        ) * slot
 
         self.sketchy = True
 
         # Try to find/parse the Xing header, which trumps the above length
         # and bitrate calculation.
         if self.layer == 3:
-            self._parse_vbr_header(fileobj, self.frame_offset, frame_size,
-                                   frame_length)
+            self._parse_vbr_header(
+                fileobj, self.frame_offset, frame_size, frame_length
+            )
 
         fileobj.seek(self.frame_offset + frame_length, 0)
 
-    def _parse_vbr_header(self, fileobj, frame_offset, frame_size,
-                          frame_length):
+    def _parse_vbr_header(
+        self, fileobj, frame_offset, frame_size, frame_length
+    ):
         """Does not raise"""
 
         # Xing
@@ -191,8 +264,9 @@ class MPEGFrame(object):
                     # the first frame is only included in xing.bytes but
                     # not in xing.frames, skip it.
                     audio_bytes = max(0, xing.bytes - frame_length)
-                    self.bitrate = intround((
-                        audio_bytes * 8 * self.sample_rate) / float(samples))
+                    self.bitrate = intround(
+                        (audio_bytes * 8 * self.sample_rate) / float(samples)
+                    )
                 if lame is not None:
                     samples -= lame.encoder_delay_start
                     samples -= lame.encoder_padding_end
@@ -202,7 +276,7 @@ class MPEGFrame(object):
                     samples = 0
                 self.length = float(samples) / self.sample_rate
             if xing.lame_version_desc:
-                self.encoder_info = u"LAME %s" % xing.lame_version_desc
+                self.encoder_info = "LAME %s" % xing.lame_version_desc
             if lame is not None:
                 self.track_gain = lame.track_gain_adjustment
                 self.track_peak = lame.track_peak
@@ -218,7 +292,7 @@ class MPEGFrame(object):
             pass
         else:
             self.bitrate_mode = BitrateMode.VBR
-            self.encoder_info = u"FhG"
+            self.encoder_info = "FhG"
             self.sketchy = False
             self.length = float(frame_size * vbri.frames) / self.sample_rate
             if self.length:
@@ -232,11 +306,11 @@ def skip_id3(fileobj):
     while True:
         idata = fileobj.read(10)
         try:
-            id3, insize = struct.unpack('>3sxxx4s', idata)
+            id3, insize = struct.unpack(">3sxxx4s", idata)
         except struct.error:
-            id3, insize = b'', 0
+            id3, insize = b"", 0
         insize = BitPaddedInt(insize)
-        if id3 == b'ID3' and insize > 0:
+        if id3 == b"ID3" and insize > 0:
             fileobj.seek(insize, 1)
         else:
             fileobj.seek(-len(idata), 1)
@@ -255,7 +329,7 @@ def iter_sync(fileobj, max_read):
     read = 0
     size = 2
     last_byte = b""
-    is_second = lambda b: ord(b) & 0xe0 == 0xe0
+    is_second = lambda b: ord(b) & 0xE0 == 0xE0
 
     while read < max_read:
         data_offset = fileobj.tell()
@@ -278,7 +352,7 @@ def iter_sync(fileobj, max_read):
             if index == -1 or index == len(new_data) - 1:
                 break
 
-            if is_second(new_data[index + 1:index + 2]):
+            if is_second(new_data[index + 1 : index + 2]):
                 fileobj.seek(data_offset + index, 0)
                 yield
             find_offset = index + 1
@@ -329,8 +403,8 @@ class MPEGInfo(StreamInfo):
     """
 
     sketchy = False
-    encoder_info = u""
-    encoder_settings = u""
+    encoder_info = ""
+    encoder_settings = ""
     bitrate_mode = BitrateMode.UNKNOWN
     track_gain = track_peak = album_gain = album_peak = None
 
@@ -417,16 +491,22 @@ class MPEGInfo(StreamInfo):
     def pprint(self):
         info = str(self.bitrate_mode).split(".", 1)[-1]
         if self.bitrate_mode == BitrateMode.UNKNOWN:
-            info = u"CBR?"
+            info = "CBR?"
         if self.encoder_info:
             info += ", %s" % self.encoder_info
         if self.encoder_settings:
             info += ", %s" % self.encoder_settings
-        s = u"MPEG %s layer %d, %d bps (%s), %s Hz, %d chn, %.2f seconds" % (
-            self.version, self.layer, self.bitrate, info,
-            self.sample_rate, self.channels, self.length)
+        s = "MPEG %s layer %d, %d bps (%s), %s Hz, %d chn, %.2f seconds" % (
+            self.version,
+            self.layer,
+            self.bitrate,
+            info,
+            self.sample_rate,
+            self.channels,
+            self.length,
+        )
         if self.sketchy:
-            s += u" (sketchy)"
+            s += " (sketchy)"
         return s
 
 
@@ -456,10 +536,13 @@ class MP3(ID3FileType):
     def score(filename, fileobj, header_data):
         filename = filename.lower()
 
-        return (header_data.startswith(b"ID3") * 2 +
-                endswith(filename, b".mp3") +
-                endswith(filename, b".mp2") + endswith(filename, b".mpg") +
-                endswith(filename, b".mpeg"))
+        return (
+            header_data.startswith(b"ID3") * 2
+            + endswith(filename, b".mp3")
+            + endswith(filename, b".mp2")
+            + endswith(filename, b".mpg")
+            + endswith(filename, b".mpeg")
+        )
 
 
 Open = MP3
@@ -479,4 +562,5 @@ class EasyMP3(MP3):
     """
 
     from mutagen.easyid3 import EasyID3 as ID3
+
     ID3 = ID3

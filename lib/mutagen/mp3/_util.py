@@ -126,7 +126,7 @@ class LAMEHeader(object):
             self.track_peak = None
         else:
             # see PutLameVBR() in LAME's VbrTag.c
-            self.track_peak = cdata.uint32_be(track_peak_data) / 2 ** 23
+            self.track_peak = cdata.uint32_be(track_peak_data) / 2**23
         track_gain_type = r.bits(3)
         self.track_gain_origin = r.bits(3)
         sign = r.bits(1)
@@ -196,64 +196,69 @@ class LAMEHeader(object):
         if self.vbr_method == 2:
             if version in ((3, 90), (3, 91), (3, 92)) and self.encoding_flags:
                 if self.bitrate < 255:
-                    return u"--alt-preset %d" % self.bitrate
+                    return "--alt-preset %d" % self.bitrate
                 else:
-                    return u"--alt-preset %d+" % self.bitrate
+                    return "--alt-preset %d+" % self.bitrate
             if self.preset_used != 0:
-                return u"--preset %d" % self.preset_used
+                return "--preset %d" % self.preset_used
             elif self.bitrate < 255:
-                return u"--abr %d" % self.bitrate
+                return "--abr %d" % self.bitrate
             else:
-                return u"--abr %d+" % self.bitrate
+                return "--abr %d+" % self.bitrate
         elif self.vbr_method == 1:
             if self.preset_used == 0:
                 if self.bitrate < 255:
-                    return u"-b %d" % self.bitrate
+                    return "-b %d" % self.bitrate
                 else:
-                    return u"-b 255+"
+                    return "-b 255+"
             elif self.preset_used == 1003:
-                return u"--preset insane"
-            return u"-b %d" % self.preset_used
+                return "--preset insane"
+            return "-b %d" % self.preset_used
         elif version in ((3, 90), (3, 91), (3, 92)):
-            preset_key = (self.vbr_quality, self.quality, self.vbr_method,
-                          self.lowpass_filter, self.ath_type)
+            preset_key = (
+                self.vbr_quality,
+                self.quality,
+                self.vbr_method,
+                self.lowpass_filter,
+                self.ath_type,
+            )
             if preset_key == (1, 2, 4, 19500, 3):
-                return u"--preset r3mix"
+                return "--preset r3mix"
             if preset_key == (2, 2, 3, 19000, 4):
-                return u"--alt-preset standard"
+                return "--alt-preset standard"
             if preset_key == (2, 2, 3, 19500, 2):
-                return u"--alt-preset extreme"
+                return "--alt-preset extreme"
 
             if self.vbr_method == 3:
-                return u"-V %s" % self.vbr_quality
+                return "-V %s" % self.vbr_quality
             elif self.vbr_method in (4, 5):
-                return u"-V %s --vbr-new" % self.vbr_quality
+                return "-V %s --vbr-new" % self.vbr_quality
         elif version in ((3, 93), (3, 94), (3, 95), (3, 96), (3, 97)):
             if self.preset_used == 1001:
-                return u"--preset standard"
+                return "--preset standard"
             elif self.preset_used == 1002:
-                return u"--preset extreme"
+                return "--preset extreme"
             elif self.preset_used == 1004:
-                return u"--preset fast standard"
+                return "--preset fast standard"
             elif self.preset_used == 1005:
-                return u"--preset fast extreme"
+                return "--preset fast extreme"
             elif self.preset_used == 1006:
-                return u"--preset medium"
+                return "--preset medium"
             elif self.preset_used == 1007:
-                return u"--preset fast medium"
+                return "--preset fast medium"
 
             if self.vbr_method == 3:
-                return u"-V %s" % self.vbr_quality
+                return "-V %s" % self.vbr_quality
             elif self.vbr_method in (4, 5):
-                return u"-V %s --vbr-new" % self.vbr_quality
+                return "-V %s --vbr-new" % self.vbr_quality
         elif version == (3, 98):
             if self.vbr_method == 3:
-                return u"-V %s --vbr-old" % self.vbr_quality
+                return "-V %s --vbr-old" % self.vbr_quality
             elif self.vbr_method in (4, 5):
-                return u"-V %s" % self.vbr_quality
+                return "-V %s" % self.vbr_quality
         elif version >= (3, 99):
             if self.vbr_method == 3:
-                return u"-V %s --vbr-old" % self.vbr_quality
+                return "-V %s --vbr-old" % self.vbr_quality
             elif self.vbr_method in (4, 5):
                 p = self.vbr_quality
                 adjust_key = (p, self.bitrate, self.lowpass_filter)
@@ -263,9 +268,9 @@ class LAMEHeader(object):
                     (5, 8, 0): 8,
                     (6, 8, 0): 9,
                 }.get(adjust_key, p)
-                return u"-V %s" % p
+                return "-V %s" % p
 
-        return u""
+        return ""
 
     @classmethod
     def parse_version(cls, fileobj):
@@ -291,7 +296,7 @@ class LAMEHeader(object):
             if not c.isdigit():
                 break
             minor += c
-        data = data[len(minor):]
+        data = data[len(minor) :]
 
         try:
             major = int(major.decode("ascii"))
@@ -303,38 +308,42 @@ class LAMEHeader(object):
         # e.g. "LAME3.90 (alpha)" should still stop here.
         # (I have seen such a file)
         if (major, minor) < (3, 90) or (
-                (major, minor) == (3, 90) and data[-11:-10] == b"("):
+            (major, minor) == (3, 90) and data[-11:-10] == b"("
+        ):
             flag = data.strip(b"\x00").rstrip().decode("ascii")
-            return (major, minor), u"%d.%d%s" % (major, minor, flag), False
+            return (major, minor), "%d.%d%s" % (major, minor, flag), False
 
         if len(data) < 11:
             raise LAMEError("Invalid version: too long")
 
         flag = data[:-11].rstrip(b"\x00")
 
-        flag_string = u""
-        patch = u""
+        flag_string = ""
+        patch = ""
         if flag == b"a":
-            flag_string = u" (alpha)"
+            flag_string = " (alpha)"
         elif flag == b"b":
-            flag_string = u" (beta)"
+            flag_string = " (beta)"
         elif flag == b"r":
-            patch = u".1+"
+            patch = ".1+"
         elif flag == b" ":
             if (major, minor) > (3, 96):
-                patch = u".0"
+                patch = ".0"
             else:
-                patch = u".0+"
+                patch = ".0+"
         elif flag == b"" or flag == b".":
-            patch = u".0+"
+            patch = ".0+"
         else:
-            flag_string = u" (?)"
+            flag_string = " (?)"
 
         # extended header, seek back to 9 bytes for the caller
         fileobj.seek(-11, 1)
 
-        return (major, minor), \
-            u"%d.%d%s%s" % (major, minor, patch, flag_string), True
+        return (
+            (major, minor),
+            "%d.%d%s%s" % (major, minor, patch, flag_string),
+            True,
+        )
 
 
 class XingHeaderError(Exception):
@@ -371,7 +380,7 @@ class XingHeader(object):
     lame_version = (0, 0)
     """The LAME version as two element tuple (major, minor)"""
 
-    lame_version_desc = u""
+    lame_version_desc = ""
     """The version of the LAME encoder e.g. '3.99.0'. Empty if unknown"""
 
     is_info = False
@@ -387,7 +396,7 @@ class XingHeader(object):
         if len(data) != 8 or data[:4] not in (b"Xing", b"Info"):
             raise XingHeaderError("Not a Xing header")
 
-        self.is_info = (data[:4] == b"Info")
+        self.is_info = data[:4] == b"Info"
 
         flags = cdata.uint32_be_from(data, 4)[0]
 
@@ -416,8 +425,11 @@ class XingHeader(object):
             self.vbr_scale = cdata.uint32_be(data)
 
         try:
-            self.lame_version, self.lame_version_desc, has_header = \
-                LAMEHeader.parse_version(fileobj)
+            (
+                self.lame_version,
+                self.lame_version_desc,
+                has_header,
+            ) = LAMEHeader.parse_version(fileobj)
             if has_header:
                 self.lame_header = LAMEHeader(self, fileobj)
         except LAMEError:
@@ -427,7 +439,7 @@ class XingHeader(object):
         """Returns the guessed encoder settings"""
 
         if self.lame_header is None:
-            return u""
+            return ""
         return self.lame_header.guess_settings(*self.lame_version)
 
     @classmethod
@@ -491,7 +503,8 @@ class VBRIHeader(object):
         self.version, offset = cdata.uint16_be_from(data, offset)
         if self.version != 1:
             raise VBRIHeaderError(
-                "Unsupported header version: %r" % self.version)
+                "Unsupported header version: %r" % self.version
+            )
 
         offset += 2  # float16.. can't do
         self.quality, offset = cdata.uint16_be_from(data, offset)

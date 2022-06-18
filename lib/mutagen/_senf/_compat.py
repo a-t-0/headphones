@@ -29,13 +29,17 @@ PY3 = not PY2
 
 if PY2:
     from urlparse import urlparse, urlunparse
+
     urlparse, urlunparse
     from urllib import quote, unquote
+
     quote, unquote
 
     from StringIO import StringIO
+
     BytesIO = StringIO
     from io import StringIO as TextIO
+
     TextIO
 
     string_types = (str, unicode)
@@ -44,12 +48,15 @@ if PY2:
     iteritems = lambda d: d.iteritems()
 elif PY3:
     from urllib.parse import urlparse, quote, unquote, urlunparse
+
     urlparse, quote, unquote, urlunparse
 
     from io import StringIO
+
     StringIO = StringIO
     TextIO = StringIO
     from io import BytesIO
+
     BytesIO = BytesIO
 
     string_types = (str,)

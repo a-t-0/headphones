@@ -13,22 +13,28 @@
 #  You should have received a copy of the GNU General Public License
 #  along with Headphones.  If not, see <http://www.gnu.org/licenses/>.
 
-'''
-Created on Aug 1, 2011
+"""Created on Aug 1, 2011.
 
 @author: Michael
-'''
-import platform
+"""
 import operator
-
 import os
+import platform
 import re
-from headphones import version
 from functools import reduce
 
+from headphones import version
 
 # Identify Our Application
-USER_AGENT = 'Headphones/-' + version.HEADPHONES_VERSION + ' (' + platform.system() + ' ' + platform.release() + ')'
+USER_AGENT = (
+    "Headphones/-"
+    + version.HEADPHONES_VERSION
+    + " ("
+    + platform.system()
+    + " "
+    + platform.release()
+    + ")"
+)
 
 # Notification Types
 NOTIFY_SNATCH = 1
@@ -61,23 +67,28 @@ class Quality:
     # put these bits at the other end of the spectrum, far enough out that they shouldn't interfere
     UNKNOWN = 1 << 15
 
-    qualityStrings = {NONE: "N/A",
-                      UNKNOWN: "Unknown",
-                      B192: "MP3 192",
-                      VBR: "MP3 VBR",
-                      B256: "MP3 256",
-                      B320: "MP3 320",
-                      FLAC: "Flac"}
+    qualityStrings = {
+        NONE: "N/A",
+        UNKNOWN: "Unknown",
+        B192: "MP3 192",
+        VBR: "MP3 VBR",
+        B256: "MP3 256",
+        B320: "MP3 320",
+        FLAC: "Flac",
+    }
 
-    statusPrefixes = {DOWNLOADED: "Downloaded",
-                      SNATCHED: "Snatched"}
+    statusPrefixes = {DOWNLOADED: "Downloaded", SNATCHED: "Snatched"}
 
     @staticmethod
     def _getStatusStrings(status):
         toReturn = {}
         for x in list(Quality.qualityStrings.keys()):
-            toReturn[Quality.compositeStatus(status, x)] = Quality.statusPrefixes[status] + " (" + \
-                                                           Quality.qualityStrings[x] + ")"
+            toReturn[Quality.compositeStatus(status, x)] = (
+                Quality.statusPrefixes[status]
+                + " ("
+                + Quality.qualityStrings[x]
+                + ")"
+            )
         return toReturn
 
     @staticmethod
@@ -104,7 +115,6 @@ class Quality:
 
     @staticmethod
     def nameQuality(name):
-
         def checkName(list, func):
             return func([re.search(x, name, re.I) for x in list])
 
@@ -115,7 +125,7 @@ class Quality:
             if x == Quality.UNKNOWN:
                 continue
 
-            regex = '\W' + Quality.qualityStrings[x].replace(' ', '\W') + '\W'
+            regex = r"\W" + Quality.qualityStrings[x].replace(" ", r"\W") + r"\W"
             regex_match = re.search(regex, name, re.I)
             if regex_match:
                 return x
@@ -170,17 +180,30 @@ class Quality:
     SNATCHED_PROPER = None
 
 
-Quality.DOWNLOADED = [Quality.compositeStatus(DOWNLOADED, x) for x in list(Quality.qualityStrings.keys())]
-Quality.SNATCHED = [Quality.compositeStatus(SNATCHED, x) for x in list(Quality.qualityStrings.keys())]
-Quality.SNATCHED_PROPER = [Quality.compositeStatus(SNATCHED_PROPER, x) for x in
-                           list(Quality.qualityStrings.keys())]
+Quality.DOWNLOADED = [
+    Quality.compositeStatus(DOWNLOADED, x)
+    for x in list(Quality.qualityStrings.keys())
+]
+Quality.SNATCHED = [
+    Quality.compositeStatus(SNATCHED, x)
+    for x in list(Quality.qualityStrings.keys())
+]
+Quality.SNATCHED_PROPER = [
+    Quality.compositeStatus(SNATCHED_PROPER, x)
+    for x in list(Quality.qualityStrings.keys())
+]
 
-MP3 = Quality.combineQualities([Quality.B192, Quality.B256, Quality.B320, Quality.VBR], [])
+MP3 = Quality.combineQualities(
+    [Quality.B192, Quality.B256, Quality.B320, Quality.VBR], []
+)
 LOSSLESS = Quality.combineQualities([Quality.FLAC], [])
 ANY = Quality.combineQualities(
-    [Quality.B192, Quality.B256, Quality.B320, Quality.VBR, Quality.FLAC], [])
+    [Quality.B192, Quality.B256, Quality.B320, Quality.VBR, Quality.FLAC], []
+)
 
 qualityPresets = (MP3, LOSSLESS, ANY)
-qualityPresetStrings = {MP3: "MP3 (All bitrates 192+)",
-                        LOSSLESS: "Lossless (flac)",
-                        ANY: "Any"}
+qualityPresetStrings = {
+    MP3: "MP3 (All bitrates 192+)",
+    LOSSLESS: "Lossless (flac)",
+    ANY: "Any",
+}

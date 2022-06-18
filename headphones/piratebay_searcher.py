@@ -197,7 +197,9 @@ def search_piratebay(
                         ):
                             match = True
                             logger.info(
-                                "Found {}. Size: {}".format(title, formatted_size)
+                                "Found {}. Size: {}".format(
+                                    title, formatted_size
+                                )
                             )
                         else:
                             match = False
@@ -272,7 +274,9 @@ def search_piratebay(
                         ):
                             match = True
                             logger.info(
-                                "Found {}. Size: {}".format(title, formatted_size)
+                                "Found {}. Size: {}".format(
+                                    title, formatted_size
+                                )
                             )
                         else:
                             match = False

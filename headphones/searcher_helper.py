@@ -22,9 +22,7 @@ from bencode import decode as bdecode
 from bencode import encode as bencode
 
 import headphones
-from headphones import (
-    logger,
-)
+from headphones import logger
 
 
 def read_torrent_name(torrent_file, default_name=None):

@@ -13,32 +13,35 @@
 #  You should have received a copy of the GNU General Public License
 #  along with Headphones.  If not, see <http://www.gnu.org/licenses/>.
 
-import time
 import datetime
+import multiprocessing
+import os
 import shutil
 import subprocess
-import multiprocessing
+import time
 
-import os
-import headphones
-from headphones import logger
 from mediafile import MediaFile
 
+import headphones
+from headphones import logger
 
 # xld
 from . import getXldProfile
 
 
 def encode(albumPath):
-    use_xld = headphones.CONFIG.ENCODER == 'xld'
+    use_xld = headphones.CONFIG.ENCODER == "xld"
 
     # Return if xld details not found
     if use_xld:
         (xldProfile, xldFormat, xldBitrate) = getXldProfile.getXldProfile(
-            headphones.CONFIG.XLDPROFILE)
+            headphones.CONFIG.XLDPROFILE
+        )
         if not xldFormat:
-            logger.error('Details for xld profile \'%s\' not found, files will not be re-encoded',
-                         xldProfile)
+            logger.error(
+                "Details for xld profile '%s' not found, files will not be re-encoded",
+                xldProfile,
+            )
             return None
     else:
         xldProfile = None
@@ -56,13 +59,16 @@ def encode(albumPath):
             time.sleep(1)
 
         os.mkdir(tempDirEncode)
-    except Exception as e:
+    except Exception:
         logger.exception("Unable to create temporary directory")
         return None
 
     for r, d, f in os.walk(albumPath):
         for music in f:
-            if any(music.lower().endswith('.' + x.lower()) for x in headphones.MEDIA_FORMATS):
+            if any(
+                music.lower().endswith("." + x.lower())
+                for x in headphones.MEDIA_FORMATS
+            ):
                 if not use_xld:
                     encoderFormat = headphones.CONFIG.ENCODEROUTPUTFORMAT
                 else:
@@ -71,37 +77,53 @@ def encode(albumPath):
                     encoderFormat = xldFormat
 
                 if headphones.CONFIG.ENCODERLOSSLESS:
-                    ext = os.path.normpath(os.path.splitext(music)[1].lstrip(".")).lower()
-                    if not use_xld and ext == 'flac' or use_xld and (
-                            ext != xldFormat and (xldInfoMusic.bitrate / 1000 > 400)):
+                    ext = os.path.normpath(
+                        os.path.splitext(music)[1].lstrip(".")
+                    ).lower()
+                    if (
+                        not use_xld
+                        and ext == "flac"
+                        or use_xld
+                        and (
+                            ext != xldFormat
+                            and (xldInfoMusic.bitrate / 1000 > 400)
+                        )
+                    ):
                         musicFiles.append(os.path.join(r, music))
                         musicTemp = os.path.normpath(
-                            os.path.splitext(music)[0] + '.' + encoderFormat)
-                        musicTempFiles.append(os.path.join(tempDirEncode, musicTemp))
+                            os.path.splitext(music)[0] + "." + encoderFormat
+                        )
+                        musicTempFiles.append(
+                            os.path.join(tempDirEncode, musicTemp)
+                        )
                     else:
-                        logger.debug('%s is already encoded', music)
+                        logger.debug("%s is already encoded", music)
                 else:
                     musicFiles.append(os.path.join(r, music))
-                    musicTemp = os.path.normpath(os.path.splitext(music)[0] + '.' + encoderFormat)
-                    musicTempFiles.append(os.path.join(tempDirEncode, musicTemp))
+                    musicTemp = os.path.normpath(
+                        os.path.splitext(music)[0] + "." + encoderFormat
+                    )
+                    musicTempFiles.append(
+                        os.path.join(tempDirEncode, musicTemp)
+                    )
 
     if headphones.CONFIG.ENCODER_PATH:
         encoder = headphones.CONFIG.ENCODER_PATH
     else:
         if use_xld:
-            encoder = os.path.join('/Applications', 'xld')
-        elif headphones.CONFIG.ENCODER == 'lame':
+            encoder = os.path.join("/Applications", "xld")
+        elif headphones.CONFIG.ENCODER == "lame":
             if headphones.SYS_PLATFORM == "win32":
                 # NEED THE DEFAULT LAME INSTALL ON WIN!
                 encoder = "C:/Program Files/lame/lame.exe"
             else:
                 encoder = "lame"
-        elif headphones.CONFIG.ENCODER == 'ffmpeg':
+        elif headphones.CONFIG.ENCODER == "ffmpeg":
             if headphones.SYS_PLATFORM == "win32":
                 encoder = "C:/Program Files/ffmpeg/bin/ffmpeg.exe"
             else:
                 encoder = "ffmpeg"
-        elif headphones.CONFIG.ENCODER == 'libav':
+        elif headphones.CONFIG.ENCODER == "libav":
             if headphones.SYS_PLATFORM == "win32":
                 encoder = "C:/Program Files/libav/bin/avconv.exe"
             else:
@@ -117,31 +139,48 @@ def encode(albumPath):
 
         if use_xld:
             if xldBitrate and (infoMusic.bitrate / 1000 <= xldBitrate):
-                logger.info(f"{music} has bitrate <= {xldBitrate}kb, will not be re-encoded")
+                logger.info(
+                    f"{music} has bitrate <= {xldBitrate}kb, will not be re-encoded"
+                )
             else:
                 encode = True
-        elif headphones.CONFIG.ENCODER == 'lame':
+        elif headphones.CONFIG.ENCODER == "lame":
             if not any(
-                    music.lower().endswith('.' + x) for x
-                    in ["mp3", "wav"]):
-                logger.warn('Lame cannot encode %s format for %s, use ffmpeg',
-                            os.path.splitext(music)[1], music)
+                music.lower().endswith("." + x) for x in ["mp3", "wav"]
+            ):
+                logger.warn(
+                    "Lame cannot encode %s format for %s, use ffmpeg",
+                    os.path.splitext(music)[1],
+                    music,
+                )
             else:
-                if music.lower().endswith('.mp3') and (
-                        int(infoMusic.bitrate / 1000) <= headphones.CONFIG.BITRATE):
-                    logger.info('%s has bitrate <= %skb, will not be re-encoded', music,
-                                headphones.CONFIG.BITRATE)
+                if music.lower().endswith(".mp3") and (
+                    int(infoMusic.bitrate / 1000) <= headphones.CONFIG.BITRATE
+                ):
+                    logger.info(
+                        "%s has bitrate <= %skb, will not be re-encoded",
+                        music,
+                        headphones.CONFIG.BITRATE,
+                    )
                 else:
                     encode = True
         else:
-            if headphones.CONFIG.ENCODEROUTPUTFORMAT == 'ogg':
-                if music.lower().endswith('.ogg'):
+            if headphones.CONFIG.ENCODEROUTPUTFORMAT == "ogg":
+                if music.lower().endswith(".ogg"):
                     logger.warn(f"Cannot re-encode .ogg {music}")
                 else:
                     encode = True
             else:
-                if music.lower().endswith('.' + headphones.CONFIG.ENCODEROUTPUTFORMAT) and (int(infoMusic.bitrate / 1000) <= headphones.CONFIG.BITRATE):
-                    logger.info('%s has bitrate <= %skb, will not be re-encoded', music, headphones.CONFIG.BITRATE)
+                if music.lower().endswith(
+                    "." + headphones.CONFIG.ENCODEROUTPUTFORMAT
+                ) and (
+                    int(infoMusic.bitrate / 1000) <= headphones.CONFIG.BITRATE
+                ):
+                    logger.info(
+                        "%s has bitrate <= %skb, will not be re-encoded",
+                        music,
+                        headphones.CONFIG.BITRATE,
+                    )
                 else:
                     encode = True
         # encode
@@ -165,8 +204,9 @@ def encode(albumPath):
             else:
                 processes = headphones.CONFIG.ENCODER_MULTICORE_COUNT
 
-            logger.debug("Multi-core encoding enabled, spawning %d processes",
-                         processes)
+            logger.debug(
+                "Multi-core encoding enabled, spawning %d processes", processes
+            )
 
         # Use multiprocessing only if it's worth the overhead. and if it is
         # enabled. If not, then use the old fashioned way.
@@ -196,8 +236,10 @@ def encode(albumPath):
         for dest in musicTempFiles:
             if not os.path.exists(dest):
                 encoder_failed = True
-                logger.error("Encoded file '%s' does not exist in the destination temp directory",
-                             dest)
+                logger.error(
+                    "Encoded file '%s' does not exist in the destination temp directory",
+                    dest,
+                )
 
     # No errors, move from temp to parent
     if not encoder_failed and musicTempFiles:
@@ -213,7 +255,9 @@ def encode(albumPath):
                 try:
                     shutil.move(dest, albumPath)
                 except Exception as e:
-                    logger.error('Could not move %s to %s: %s', dest, albumPath, e)
+                    logger.error(
+                        "Could not move %s to %s: %s", dest, albumPath, e
+                    )
                     encoder_failed = True
                     break
             i += 1
@@ -225,26 +269,28 @@ def encode(albumPath):
     if encoder_failed:
         logger.error(
             "One or more files failed to encode. Ensure you have the latest version of %s installed.",
-            headphones.CONFIG.ENCODER)
+            headphones.CONFIG.ENCODER,
+        )
         return None
 
     time.sleep(1)
     for r, d, f in os.walk(albumPath):
         for music in f:
-            if any(music.lower().endswith('.' + x.lower()) for x in headphones.MEDIA_FORMATS):
+            if any(
+                music.lower().endswith("." + x.lower())
+                for x in headphones.MEDIA_FORMATS
+            ):
                 musicFinalFiles.append(os.path.join(r, music))
 
     if not musicTempFiles:
-        logger.info('Encoding for folder \'%s\' is not required', albumPath)
+        logger.info("Encoding for folder '%s' is not required", albumPath)
 
     return musicFinalFiles
 
 
 def command_map(args):
-    """
-    Wrapper for the '[multiprocessing.]map()' method, to unpack the arguments
-    and wrap exceptions.
-    """
+    """Wrapper for the '[multiprocessing.]map()' method, to unpack the
+    arguments and wrap exceptions."""
 
     # Initialize multiprocessing logger
     if multiprocessing.current_process().name != "MainProcess":
@@ -259,9 +305,9 @@ def command_map(args):
 
 
 def command(encoder, musicSource, musicDest, albumPath, xldProfile):
-    """
-    Encode a given music file with a certain encoder. Returns True on success,
-    or False otherwise.
+    """Encode a given music file with a certain encoder.
+
+    Returns True on success, or False otherwise.
     """
 
     startMusicTime = time.time()
@@ -271,24 +317,30 @@ def command(encoder, musicSource, musicDest, albumPath, xldProfile):
         xldDestDir = os.path.split(musicDest)[0]
         cmd = [encoder]
         cmd.extend([musicSource])
-        cmd.extend(['--profile'])
+        cmd.extend(["--profile"])
         cmd.extend([xldProfile])
-        cmd.extend(['-o'])
+        cmd.extend(["-o"])
         cmd.extend([xldDestDir])
 
     # Lame
-    elif headphones.CONFIG.ENCODER == 'lame':
+    elif headphones.CONFIG.ENCODER == "lame":
         cmd = [encoder]
         opts = []
         if not headphones.CONFIG.ADVANCEDENCODER:
-            opts.extend(['-h'])
-            if headphones.CONFIG.ENCODERVBRCBR == 'cbr':
-                opts.extend(['--resample', str(headphones.CONFIG.SAMPLINGFREQUENCY), '-b',
-                             str(headphones.CONFIG.BITRATE)])
-            elif headphones.CONFIG.ENCODERVBRCBR == 'vbr':
-                opts.extend(['-v', str(headphones.CONFIG.ENCODERQUALITY)])
+            opts.extend(["-h"])
+            if headphones.CONFIG.ENCODERVBRCBR == "cbr":
+                opts.extend(
+                    [
+                        "--resample",
+                        str(headphones.CONFIG.SAMPLINGFREQUENCY),
+                        "-b",
+                        str(headphones.CONFIG.BITRATE),
+                    ]
+                )
+            elif headphones.CONFIG.ENCODERVBRCBR == "vbr":
+                opts.extend(["-v", str(headphones.CONFIG.ENCODERQUALITY)])
         else:
-            advanced = (headphones.CONFIG.ADVANCEDENCODER.split())
+            advanced = headphones.CONFIG.ADVANCEDENCODER.split()
             for tok in advanced:
                 opts.extend([tok.encode(headphones.SYS_ENCODING)])
         opts.extend([musicSource])
@@ -296,22 +348,28 @@ def command(encoder, musicSource, musicDest, albumPath, xldProfile):
         cmd.extend(opts)
 
     # FFmpeg
-    elif headphones.CONFIG.ENCODER == 'ffmpeg':
-        cmd = [encoder, '-i', musicSource]
+    elif headphones.CONFIG.ENCODER == "ffmpeg":
+        cmd = [encoder, "-i", musicSource]
         opts = []
         if not headphones.CONFIG.ADVANCEDENCODER:
-            if headphones.CONFIG.ENCODEROUTPUTFORMAT == 'ogg':
-                opts.extend(['-acodec', 'libvorbis'])
-            if headphones.CONFIG.ENCODEROUTPUTFORMAT == 'm4a':
-                opts.extend(['-strict', 'experimental'])
-            if headphones.CONFIG.ENCODERVBRCBR == 'cbr':
-                opts.extend(['-ar', str(headphones.CONFIG.SAMPLINGFREQUENCY), '-ab',
-                             str(headphones.CONFIG.BITRATE) + 'k'])
-            elif headphones.CONFIG.ENCODERVBRCBR == 'vbr':
-                opts.extend(['-aq', str(headphones.CONFIG.ENCODERQUALITY)])
-            opts.extend(['-y', '-ac', '2', '-vn'])
+            if headphones.CONFIG.ENCODEROUTPUTFORMAT == "ogg":
+                opts.extend(["-acodec", "libvorbis"])
+            if headphones.CONFIG.ENCODEROUTPUTFORMAT == "m4a":
+                opts.extend(["-strict", "experimental"])
+            if headphones.CONFIG.ENCODERVBRCBR == "cbr":
+                opts.extend(
+                    [
+                        "-ar",
+                        str(headphones.CONFIG.SAMPLINGFREQUENCY),
+                        "-ab",
+                        str(headphones.CONFIG.BITRATE) + "k",
+                    ]
+                )
+            elif headphones.CONFIG.ENCODERVBRCBR == "vbr":
+                opts.extend(["-aq", str(headphones.CONFIG.ENCODERQUALITY)])
+            opts.extend(["-y", "-ac", "2", "-vn"])
         else:
-            advanced = (headphones.CONFIG.ADVANCEDENCODER.split())
+            advanced = headphones.CONFIG.ADVANCEDENCODER.split()
             for tok in advanced:
                 opts.extend([tok.encode(headphones.SYS_ENCODING)])
         opts.extend([musicDest])
@@ -319,21 +377,27 @@ def command(encoder, musicSource, musicDest, albumPath, xldProfile):
 
     # Libav
     elif headphones.CONFIG.ENCODER == "libav":
-        cmd = [encoder, '-i', musicSource]
+        cmd = [encoder, "-i", musicSource]
         opts = []
         if not headphones.CONFIG.ADVANCEDENCODER:
-            if headphones.CONFIG.ENCODEROUTPUTFORMAT == 'ogg':
-                opts.extend(['-acodec', 'libvorbis'])
-            if headphones.CONFIG.ENCODEROUTPUTFORMAT == 'm4a':
-                opts.extend(['-strict', 'experimental'])
-            if headphones.CONFIG.ENCODERVBRCBR == 'cbr':
-                opts.extend(['-ar', str(headphones.CONFIG.SAMPLINGFREQUENCY), '-ab',
-                             str(headphones.CONFIG.BITRATE) + 'k'])
-            elif headphones.CONFIG.ENCODERVBRCBR == 'vbr':
-                opts.extend(['-aq', str(headphones.CONFIG.ENCODERQUALITY)])
-            opts.extend(['-y', '-ac', '2', '-vn'])
+            if headphones.CONFIG.ENCODEROUTPUTFORMAT == "ogg":
+                opts.extend(["-acodec", "libvorbis"])
+            if headphones.CONFIG.ENCODEROUTPUTFORMAT == "m4a":
+                opts.extend(["-strict", "experimental"])
+            if headphones.CONFIG.ENCODERVBRCBR == "cbr":
+                opts.extend(
+                    [
+                        "-ar",
+                        str(headphones.CONFIG.SAMPLINGFREQUENCY),
+                        "-ab",
+                        str(headphones.CONFIG.BITRATE) + "k",
+                    ]
+                )
+            elif headphones.CONFIG.ENCODERVBRCBR == "vbr":
+                opts.extend(["-aq", str(headphones.CONFIG.ENCODERQUALITY)])
+            opts.extend(["-y", "-ac", "2", "-vn"])
         else:
-            advanced = (headphones.CONFIG.ADVANCEDENCODER.split())
+            advanced = headphones.CONFIG.ADVANCEDENCODER.split()
             for tok in advanced:
                 opts.extend([tok.encode(headphones.SYS_ENCODING)])
         opts.extend([musicDest])
@@ -353,22 +417,31 @@ def command(encoder, musicSource, musicDest, albumPath, xldProfile):
     logger.info(f"Encoding {musicSource}")
     logger.debug(subprocess.list2cmdline(cmd))
 
-    process = subprocess.Popen(cmd, startupinfo=startupinfo,
-                               stdin=open(os.devnull, 'rb'), stdout=subprocess.PIPE,
-                               stderr=subprocess.PIPE, text=True)
+    process = subprocess.Popen(
+        cmd,
+        startupinfo=startupinfo,
+        stdin=open(os.devnull, "rb"),
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+    )
     stdout, stderr = process.communicate(headphones.CONFIG.ENCODER)
 
     # Error if return code not zero
     if process.returncode:
         logger.error(f"Encoding failed for {musicSource}")
         out = stdout or stderr
-        outlast2lines = '\n'.join(out.splitlines()[-2:])
-        logger.error(f"{headphones.CONFIG.ENCODER} error details: {outlast2lines}")
+        outlast2lines = "\n".join(out.splitlines()[-2:])
+        logger.error(
+            f"{headphones.CONFIG.ENCODER} error details: {outlast2lines}"
+        )
         out = out.rstrip("\n")
         logger.debug(out)
         encoded = False
     else:
-        logger.info(f"{musicSource} encoded in {getTimeEncode(startMusicTime)}")
+        logger.info(
+            f"{musicSource} encoded in {getTimeEncode(startMusicTime)}"
+        )
         encoded = True
 
     return encoded

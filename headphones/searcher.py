@@ -26,13 +26,7 @@ from pygazelle import release_type as gazellerelease_type
 from unidecode import unidecode
 
 import headphones
-from headphones import (
-    db,
-    helpers,
-    logger,
-    request,
-    rutracker,
-)
+from headphones import db, helpers, logger, request, rutracker
 from headphones.common import USER_AGENT
 from headphones.downloader import send_to_downloader
 from headphones.piratebay_searcher import fix_url, search_piratebay

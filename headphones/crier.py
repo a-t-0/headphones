@@ -7,9 +7,7 @@ from headphones import logger
 
 
 def cry():
-    """
-    Logs thread traces.
-    """
+    """Logs thread traces."""
     tmap = {}
     main_thread = None
     # get a map of threads by their ID so we can print their names
@@ -25,12 +23,12 @@ def cry():
         thread = tmap.get(tid, main_thread)
 
         lines = []
-        lines.append('%s\n' % thread.getName())
-        lines.append('========================================\n')
+        lines.append("%s\n" % thread.getName())
+        lines.append("========================================\n")
         lines += traceback.format_stack(frame)
-        lines.append('========================================\n')
-        lines.append('LOCAL VARIABLES:\n')
-        lines.append('========================================\n')
+        lines.append("========================================\n")
+        lines.append("LOCAL VARIABLES:\n")
+        lines.append("========================================\n")
         lines.append(pprint.pformat(frame.f_locals))
-        lines.append('\n\n')
+        lines.append("\n\n")
         logger.info("".join(lines))

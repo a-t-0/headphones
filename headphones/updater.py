@@ -13,18 +13,21 @@
 #  You should have received a copy of the GNU General Public License
 #  along with Headphones.  If not, see <http://www.gnu.org/licenses/>.
 
-from headphones import logger, db, importer
+from headphones import db, importer, logger
 
 
 def dbUpdate(forcefull=False):
     myDB = db.DBConnection()
 
     active_artists = myDB.select(
-        'SELECT ArtistID, ArtistName from artists WHERE Status="Active" or Status="Loading" order by LastUpdated ASC')
-    logger.info('Starting update for %i active artists', len(active_artists))
+        'SELECT ArtistID, ArtistName from artists WHERE Status="Active" or Status="Loading" order by LastUpdated ASC'
+    )
+    logger.info("Starting update for %i active artists", len(active_artists))
 
     for artist in active_artists:
         artistid = artist[0]
-        importer.addArtisttoDB(artistid=artistid, extrasonly=False, forcefull=forcefull)
+        importer.addArtisttoDB(
+            artistid=artistid, extrasonly=False, forcefull=forcefull
+        )
 
-    logger.info('Active artist update complete')
+    logger.info("Active artist update complete")

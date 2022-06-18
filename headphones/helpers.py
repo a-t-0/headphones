@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #  This file is part of Headphones.
 #
 #  Headphones is free software: you can redistribute it and/or modify
@@ -22,19 +21,18 @@ import tempfile
 import time
 import unicodedata
 from contextlib import contextmanager
-from datetime import datetime, date
+from datetime import date, datetime
 from fnmatch import fnmatch
 from functools import cmp_to_key
 from glob import glob
 from operator import itemgetter
 
 from beets import logging as beetslogging
-from mediafile import MediaFile, FileTypeError, UnreadableFileError
+from mediafile import FileTypeError, MediaFile, UnreadableFileError
 from six import text_type
 from unidecode import unidecode
 
 import headphones
-
 
 # Modified from https://github.com/Verrus/beets-plugin-featInTitle
 RE_FEATURING = re.compile(r"[fF]t\.|[fF]eaturing|[fF]eat\.|\b[wW]ith\b|&|vs\.")
@@ -42,9 +40,9 @@ RE_FEATURING = re.compile(r"[fF]t\.|[fF]eaturing|[fF]eat\.|\b[wW]ith\b|&|vs\.")
 RE_CD_ALBUM = re.compile(r"\(?((CD|disc)\s*[0-9]+)\)?", re.I)
 RE_CD = re.compile(r"^(CD|dics)\s*[0-9]+$", re.I)
 
+
 def cmp(x, y):
-    """
-    Replacement for built-in function cmp that was removed in Python 3
+    """Replacement for built-in function cmp that was removed in Python 3.
 
     Compare the two objects x and y and return an integer according to
     the outcome. The return value is negative if x < y, zero if x == y
@@ -61,10 +59,16 @@ def cmp(x, y):
     else:
         return (x > y) - (x < y)
 
+
 def multikeysort(items, columns):
     comparers = [
-        ((itemgetter(col[1:].strip()), -1) if col.startswith('-') else (itemgetter(col.strip()), 1))
-        for col in columns]
+        (
+            (itemgetter(col[1:].strip()), -1)
+            if col.startswith("-")
+            else (itemgetter(col.strip()), 1)
+        )
+        for col in columns
+    ]
 
     def comparer(left, right):
         for fn, mult in comparers:
@@ -79,51 +83,122 @@ def multikeysort(items, columns):
 
 def checked(variable):
     if variable:
-        return 'Checked'
+        return "Checked"
     else:
-        return ''
+        return ""
 
 
 def radio(variable, pos):
     if variable == pos:
-        return 'Checked'
+        return "Checked"
     else:
-        return ''
+        return ""
 
 
 def latinToAscii(unicrap):
-    """
-    From couch potato
-    """
+    """From couch potato."""
     xlate = {
-        0xc0: 'A', 0xc1: 'A', 0xc2: 'A', 0xc3: 'A', 0xc4: 'A', 0xc5: 'A',
-        0xc6: 'Ae', 0xc7: 'C',
-        0xc8: 'E', 0xc9: 'E', 0xca: 'E', 0xcb: 'E', 0x86: 'e', 0x39e: 'E',
-        0xcc: 'I', 0xcd: 'I', 0xce: 'I', 0xcf: 'I',
-        0xd0: 'Th', 0xd1: 'N',
-        0xd2: 'O', 0xd3: 'O', 0xd4: 'O', 0xd5: 'O', 0xd6: 'O', 0xd8: 'O',
-        0xd9: 'U', 0xda: 'U', 0xdb: 'U', 0xdc: 'U',
-        0xdd: 'Y', 0xde: 'th', 0xdf: 'ss',
-        0xe0: 'a', 0xe1: 'a', 0xe2: 'a', 0xe3: 'a', 0xe4: 'a', 0xe5: 'a',
-        0xe6: 'ae', 0xe7: 'c',
-        0xe8: 'e', 0xe9: 'e', 0xea: 'e', 0xeb: 'e', 0x0259: 'e',
-        0xec: 'i', 0xed: 'i', 0xee: 'i', 0xef: 'i',
-        0xf0: 'th', 0xf1: 'n',
-        0xf2: 'o', 0xf3: 'o', 0xf4: 'o', 0xf5: 'o', 0xf6: 'o', 0xf8: 'o',
-        0xf9: 'u', 0xfa: 'u', 0xfb: 'u', 0xfc: 'u',
-        0xfd: 'y', 0xfe: 'th', 0xff: 'y',
-        0xa1: '!', 0xa2: '{cent}', 0xa3: '{pound}', 0xa4: '{currency}',
-        0xa5: '{yen}', 0xa6: '|', 0xa7: '{section}', 0xa8: '{umlaut}',
-        0xa9: '{C}', 0xaa: '{^a}', 0xab: '<<', 0xac: '{not}',
-        0xad: '-', 0xae: '{R}', 0xaf: '_', 0xb0: '{degrees}',
-        0xb1: '{+/-}', 0xb2: '{^2}', 0xb3: '{^3}', 0xb4: "'",
-        0xb5: '{micro}', 0xb6: '{paragraph}', 0xb7: '*', 0xb8: '{cedilla}',
-        0xb9: '{^1}', 0xba: '{^o}', 0xbb: '>>',
-        0xbc: '{1/4}', 0xbd: '{1/2}', 0xbe: '{3/4}', 0xbf: '?',
-        0xd7: '*', 0xf7: '/'
+        0xC0: "A",
+        0xC1: "A",
+        0xC2: "A",
+        0xC3: "A",
+        0xC4: "A",
+        0xC5: "A",
+        0xC6: "Ae",
+        0xC7: "C",
+        0xC8: "E",
+        0xC9: "E",
+        0xCA: "E",
+        0xCB: "E",
+        0x86: "e",
+        0x39E: "E",
+        0xCC: "I",
+        0xCD: "I",
+        0xCE: "I",
+        0xCF: "I",
+        0xD0: "Th",
+        0xD1: "N",
+        0xD2: "O",
+        0xD3: "O",
+        0xD4: "O",
+        0xD5: "O",
+        0xD6: "O",
+        0xD8: "O",
+        0xD9: "U",
+        0xDA: "U",
+        0xDB: "U",
+        0xDC: "U",
+        0xDD: "Y",
+        0xDE: "th",
+        0xDF: "ss",
+        0xE0: "a",
+        0xE1: "a",
+        0xE2: "a",
+        0xE3: "a",
+        0xE4: "a",
+        0xE5: "a",
+        0xE6: "ae",
+        0xE7: "c",
+        0xE8: "e",
+        0xE9: "e",
+        0xEA: "e",
+        0xEB: "e",
+        0x0259: "e",
+        0xEC: "i",
+        0xED: "i",
+        0xEE: "i",
+        0xEF: "i",
+        0xF0: "th",
+        0xF1: "n",
+        0xF2: "o",
+        0xF3: "o",
+        0xF4: "o",
+        0xF5: "o",
+        0xF6: "o",
+        0xF8: "o",
+        0xF9: "u",
+        0xFA: "u",
+        0xFB: "u",
+        0xFC: "u",
+        0xFD: "y",
+        0xFE: "th",
+        0xFF: "y",
+        0xA1: "!",
+        0xA2: "{cent}",
+        0xA3: "{pound}",
+        0xA4: "{currency}",
+        0xA5: "{yen}",
+        0xA6: "|",
+        0xA7: "{section}",
+        0xA8: "{umlaut}",
+        0xA9: "{C}",
+        0xAA: "{^a}",
+        0xAB: "<<",
+        0xAC: "{not}",
+        0xAD: "-",
+        0xAE: "{R}",
+        0xAF: "_",
+        0xB0: "{degrees}",
+        0xB1: "{+/-}",
+        0xB2: "{^2}",
+        0xB3: "{^3}",
+        0xB4: "'",
+        0xB5: "{micro}",
+        0xB6: "{paragraph}",
+        0xB7: "*",
+        0xB8: "{cedilla}",
+        0xB9: "{^1}",
+        0xBA: "{^o}",
+        0xBB: ">>",
+        0xBC: "{1/4}",
+        0xBD: "{1/2}",
+        0xBE: "{3/4}",
+        0xBF: "?",
+        0xD7: "*",
+        0xF7: "/",
     }
 
-    r = ''
+    r = ""
     for i in unicrap:
         if ord(i) in xlate:
             r += xlate[ord(i)]
@@ -168,23 +243,23 @@ def is_valid_date(d):
     if not d:
         return False
     else:
-        return bool(re.match(r'\d{4}-\d{2}-\d{2}', d))
+        return bool(re.match(r"\d{4}-\d{2}-\d{2}", d))
 
 
 def age(d):
-    '''Requires a valid date'''
+    """Requires a valid date."""
     delta = date.today() - date.fromisoformat(d)
     return delta.days
 
 
 def bytes_to_mb(bytes):
     mb = int(bytes) / 1048576
-    size = '%.1f MB' % mb
+    size = "%.1f MB" % mb
     return size
 
 
 def mb_to_bytes(mb_str):
-    result = re.search('^(\d+(?:\.\d+)?)\s?(?:mb)?', mb_str, flags=re.I)
+    result = re.search(r"^(\d+(?:\.\d+)?)\s?(?:mb)?", mb_str, flags=re.I)
     if result:
         return int(float(result.group(1)) * 1048576)
 
@@ -194,17 +269,17 @@ def piratesize(size):
     factor = float(split[0])
     unit = split[1].upper()
 
-    if unit == 'MIB':
+    if unit == "MIB":
         size = factor * 1048576
-    elif unit == 'MB':
+    elif unit == "MB":
         size = factor * 1000000
-    elif unit == 'GIB':
+    elif unit == "GIB":
         size = factor * 1073741824
-    elif unit == 'GB':
+    elif unit == "GB":
         size = factor * 1000000000
-    elif unit == 'KIB':
+    elif unit == "KIB":
         size = factor * 1024
-    elif unit == 'KB':
+    elif unit == "KB":
         size = factor * 1000
     elif unit == "B":
         size = factor
@@ -222,21 +297,23 @@ def pattern_substitute(pattern, dic, normalize=False):
          returns My artist/My album
     """
     from headphones import pathrender
+
     if not pattern:
-        return ''
+        return ""
 
     if normalize:
         new_dic = {}
         for i, j in dic.items():
             if j is not None:
                 try:
-                    if sys.platform == 'darwin':
-                        j = unicodedata.normalize('NFD', j)
+                    if sys.platform == "darwin":
+                        j = unicodedata.normalize("NFD", j)
                     else:
-                        j = unicodedata.normalize('NFC', j)
+                        j = unicodedata.normalize("NFC", j)
                 except TypeError:
-                    j = unicodedata.normalize('NFC',
-                        j.decode(headphones.SYS_ENCODING, 'replace'))
+                    j = unicodedata.normalize(
+                        "NFC", j.decode(headphones.SYS_ENCODING, "replace")
+                    )
             new_dic[i] = j
         dic = new_dic
     return pathrender.render(pattern, dic)[0]
@@ -244,7 +321,7 @@ def pattern_substitute(pattern, dic, normalize=False):
 
 def replace_all(text, dic):
     if not text:
-        return ''
+        return ""
 
     for i, j in dic.items():
         text = text.replace(i, j)
@@ -253,14 +330,14 @@ def replace_all(text, dic):
 
 def replace_illegal_chars(string, type="file"):
     if type == "file":
-        string = re.sub('[\?"*:|<>/]', '_', string)
+        string = re.sub(r'[\?"*:|<>/]', "_", string)
     if type == "folder":
-        string = re.sub('[:\?<>"|*]', '_', string)
+        string = re.sub(r'[:\?<>"|*]', "_", string)
     return string
 
 
-_CN_RE1 = re.compile(r'[^\w]+', re.UNICODE)
-_CN_RE2 = re.compile(r'[\s_]+', re.UNICODE)
+_CN_RE1 = re.compile(r"[^\w]+", re.UNICODE)
+_CN_RE2 = re.compile(r"[\s_]+", re.UNICODE)
 
 
 _XLATE_GRAPHICAL_AND_DIACRITICAL = {
@@ -270,54 +347,94 @@ _XLATE_GRAPHICAL_AND_DIACRITICAL = {
     # ©ª«®²³¹»¼½¾ÆÐØÞßæðøþĐđĦħıĲĳĸĿŀŁłŒœŦŧǄǅǆǇǈǉǊǋǌǤǥǱǲǳȤȥ. This
     # includes also some graphical symbols which can be easily replaced and
     # usually are written by people who don't have appropriate keyboard layout.
-    '©': '(C)', 'ª': 'a.', '«': '<<', '®': '(R)', '²': '2', '³': '3',
-    '¹': '1', '»': '>>', '¼': ' 1/4 ', '½': ' 1/2 ', '¾': ' 3/4 ',
-    'Æ': 'AE', 'Ð': 'D', 'Ø': 'O', 'Þ': 'Th', 'ß': 'ss', 'æ': 'ae',
-    'ð': 'd', 'ø': 'o', 'þ': 'th', 'Đ': 'D', 'đ': 'd', 'Ħ': 'H',
-    'ħ': 'h', 'ı': 'i', 'Ĳ': 'IJ', 'ĳ': 'ij', 'ĸ': 'q', 'Ŀ': 'L',
-    'ŀ': 'l', 'Ł': 'L', 'ł': 'l', 'Œ': 'OE', 'œ': 'oe', 'Ŧ': 'T',
-    'ŧ': 't', 'Ǆ': 'DZ', 'ǅ': 'Dz', 'Ǉ': 'LJ', 'ǈ': 'Lj',
-    'ǉ': 'lj', 'Ǌ': 'NJ', 'ǋ': 'Nj', 'ǌ': 'nj',
-    'Ǥ': 'G', 'ǥ': 'g', 'Ǳ': 'DZ', 'ǲ': 'Dz', 'ǳ': 'dz',
-    'Ȥ': 'Z', 'ȥ': 'z', '№': 'No.',
-    'º': 'o.',        # normalize Nº abbrev (popular w/ classical music),
-                       # this is 'masculine ordering indicator', not degree
+    "©": "(C)",
+    "ª": "a.",
+    "«": "<<",
+    "®": "(R)",
+    "²": "2",
+    "³": "3",
+    "¹": "1",
+    "»": ">>",
+    "¼": " 1/4 ",
+    "½": " 1/2 ",
+    "¾": " 3/4 ",
+    "Æ": "AE",
+    "Ð": "D",
+    "Ø": "O",
+    "Þ": "Th",
+    "ß": "ss",
+    "æ": "ae",
+    "ð": "d",
+    "ø": "o",
+    "þ": "th",
+    "Đ": "D",
+    "đ": "d",
+    "Ħ": "H",
+    "ħ": "h",
+    "ı": "i",
+    "Ĳ": "IJ",
+    "ĳ": "ij",
+    "ĸ": "q",
+    "Ŀ": "L",
+    "ŀ": "l",
+    "Ł": "L",
+    "ł": "l",
+    "Œ": "OE",
+    "œ": "oe",
+    "Ŧ": "T",
+    "ŧ": "t",
+    "Ǆ": "DZ",
+    "ǅ": "Dz",
+    "Ǉ": "LJ",
+    "ǈ": "Lj",
+    "ǉ": "lj",
+    "Ǌ": "NJ",
+    "ǋ": "Nj",
+    "ǌ": "nj",
+    "Ǥ": "G",
+    "ǥ": "g",
+    "Ǳ": "DZ",
+    "ǲ": "Dz",
+    "ǳ": "dz",
+    "Ȥ": "Z",
+    "ȥ": "z",
+    "№": "No.",
+    "º": "o.",  # normalize Nº abbrev (popular w/ classical music),
+    # this is 'masculine ordering indicator', not degree
 }
 
 _XLATE_SPECIAL = {
     # Translation table.
     # Cover additional special characters processing normalization.
-    "'": '',         # replace apostrophe with nothing
-    "’": '',         # replace musicbrainz style apostrophe with nothing
-    '&': ' and ',     # expand & to ' and '
+    "'": "",  # replace apostrophe with nothing
+    "’": "",  # replace musicbrainz style apostrophe with nothing
+    "&": " and ",  # expand & to ' and '
 }
 
 _XLATE_MUSICBRAINZ = {
     # Translation table for Musicbrainz.
-    "…": '...',     # HORIZONTAL ELLIPSIS (U+2026)
-    "’": "'",       # APOSTROPHE (U+0027)
-    "‐": "-",       # EN DASH (U+2013)
+    "…": "...",  # HORIZONTAL ELLIPSIS (U+2026)
+    "’": "'",  # APOSTROPHE (U+0027)
+    "‐": "-",  # EN DASH (U+2013)
 }
 
 
 def _translate(s, dictionary):
     # type: (basestring,Mapping[basestring,basestring])->basestring
-    return ''.join(dictionary.get(x, x) for x in s)
+    return "".join(dictionary.get(x, x) for x in s)
 
 
 _COMBINING_RANGES = (
-    (0x0300, 0x036f),   # Combining Diacritical Marks
-    (0x1ab0, 0x1aff),   # Combining Diacritical Marks Extended
-    (0x20d0, 0x20ff),   # Combining Diacritical Marks for Symbols
-    (0x1dc0, 0x1dff)    # Combining Diacritical Marks Supplement
+    (0x0300, 0x036F),  # Combining Diacritical Marks
+    (0x1AB0, 0x1AFF),  # Combining Diacritical Marks Extended
+    (0x20D0, 0x20FF),  # Combining Diacritical Marks for Symbols
+    (0x1DC0, 0x1DFF),  # Combining Diacritical Marks Supplement
 )
 
 
 def _is_unicode_combining(u):
     # type: (unicode)->bool
-    """
-    Check if input unicode is combining diacritical mark.
-    """
+    """Check if input unicode is combining diacritical mark."""
     i = ord(u)
     for r in _COMBINING_RANGES:
         if r[0] <= i <= r[1]:
@@ -327,11 +444,9 @@ def _is_unicode_combining(u):
 
 def _transliterate(u, xlate):
     # type: (unicode)->unicode
-    """
-    Perform transliteration using the specified dictionary
-    """
-    u = unicodedata.normalize('NFD', u)
-    u = ''.join(['' if _is_unicode_combining(x) else x for x in u])
+    """Perform transliteration using the specified dictionary."""
+    u = unicodedata.normalize("NFD", u)
+    u = "".join(["" if _is_unicode_combining(x) else x for x in u])
     u = _translate(u, xlate)
     # at this point output is either unicode, or plain ascii
     return str(u)
@@ -341,26 +456,27 @@ def clean_name(s):
     # type: (basestring)->unicode
     """Remove non-alphanumeric characters from the string, perform
     normalization and substitution of some special characters; coalesce spaces.
+
     :param s: string to clean up, possibly unicode one.
     :return: cleaned-up version of input string.
     """
     if not isinstance(s, str):
         # ignore extended chars if someone was dumb enough to pass non-ascii
         # narrow string here, use only unicode for meaningful texts
-        u = str(s, 'ascii', 'replace')
+        u = str(s, "ascii", "replace")
     else:
         u = s
     # 1. don't bother doing normalization NFKC, rather transliterate
     # using special translation table
     u = _transliterate(u, _XLATE_GRAPHICAL_AND_DIACRITICAL)
     # 2. normalize NFKC the result
-    u = unicodedata.normalize('NFKC', u)
+    u = unicodedata.normalize("NFKC", u)
     # 3. translate spacials
     u = _translate(u, _XLATE_SPECIAL)
     # 4. replace any non-alphanumeric character sequences by spaces
-    u = _CN_RE1.sub(' ', u)
+    u = _CN_RE1.sub(" ", u)
     # 5. coalesce interleaved space/underscore sequences
-    u = _CN_RE2.sub(' ', u)
+    u = _CN_RE2.sub(" ", u)
     # 6. trim
     u = u.strip()
     # 7. lowercase
@@ -371,25 +487,26 @@ def clean_name(s):
 def clean_musicbrainz_name(s, return_as_string=True):
     # type: (basestring)->unicode
     """Substitute special Musicbrainz characters.
+
     :param s: string to clean up, probably unicode.
     :return: cleaned-up version of input string.
     """
     if not isinstance(s, str):
-        u = str(s, 'ascii', 'replace')
+        u = str(s, "ascii", "replace")
     else:
         u = s
     u = _translate(u, _XLATE_MUSICBRAINZ)
     if return_as_string:
-        return u.encode('utf-8')
+        return u.encode("utf-8")
     else:
         return u
 
 
 def cleanTitle(title):
-    title = re.sub('[\.\-\/\_]', ' ', title).lower()
+    title = re.sub(r"[\.\-\/\_]", " ", title).lower()
 
     # Strip out extra whitespace
-    title = ' '.join(title.split())
+    title = " ".join(title.split())
 
     title = title.title()
 
@@ -397,9 +514,10 @@ def cleanTitle(title):
 
 
 def split_path(f):
-    """
-    Split a path into components, starting with the drive letter (if any). Given
-    a path, os.path.join(*split_path(f)) should be path equal to f.
+    """Split a path into components, starting with the drive letter (if any).
+
+    Given a path, os.path.join(*split_path(f)) should be path equal to
+    f.
     """
 
     components = []
@@ -429,13 +547,12 @@ def split_path(f):
 
 
 def expand_subfolders(f):
-    """
-    Try to expand a given folder and search for subfolders containing media
+    """Try to expand a given folder and search for subfolders containing media
     files. This should work for discographies indexed per album in the same
     root, possibly with folders per CD (if any).
 
-    This algorithm will return nothing if the result is only one folder. In this
-    case, normal post processing will be better.
+    This algorithm will return nothing if the result is only one folder.
+    In this case, normal post processing will be better.
     """
 
     from headphones import logger
@@ -456,7 +573,9 @@ def expand_subfolders(f):
         return
 
     # Split into path components
-    media_folders = [split_path(media_folder) for media_folder in media_folders]
+    media_folders = [
+        split_path(media_folder) for media_folder in media_folders
+    ]
 
     # Correct folder endings such as CD1 etc.
     for index, media_folder in enumerate(media_folders):
@@ -469,24 +588,35 @@ def expand_subfolders(f):
 
     if difference > 0:
         logger.info(
-            f"Found {len(media_folders)} media folders, but depth difference between lowest and deepest media folder is {difference} (expected zero). If this is a discography or a collection of albums, make sure albums are per folder.")
+            f"Found {len(media_folders)} media folders, but depth difference between lowest and deepest media folder is {difference} (expected zero). If this is a discography or a collection of albums, make sure albums are per folder."
+        )
 
         # While already failed, advice the user what he could try. We assume the
         # directory may contain separate CD's and maybe some extra's. The
         # structure may look like X albums at same depth, and (one or more)
         # extra folders with a higher depth.
-        extra_media_folders = [media_folder[:min(path_depths)] for media_folder in media_folders if
-                               len(media_folder) > min(path_depths)]
+        extra_media_folders = [
+            media_folder[: min(path_depths)]
+            for media_folder in media_folders
+            if len(media_folder) > min(path_depths)
+        ]
         extra_media_folders = list(
-            set([os.path.join(*media_folder) for media_folder in extra_media_folders]))
+            {
+                    os.path.join(*media_folder)
+                    for media_folder in extra_media_folders
+            }
+        )
 
         logger.info(
-            f"Please look at the following folder(s), since they cause the depth difference: {extra_media_folders}")
+            f"Please look at the following folder(s), since they cause the depth difference: {extra_media_folders}"
+        )
         return
 
     # Convert back to paths and remove duplicates, which may be there after
     # correcting the paths
-    media_folders = list(set([os.path.join(*media_folder) for media_folder in media_folders]))
+    media_folders = list(
+        {os.path.join(*media_folder) for media_folder in media_folders}
+    )
 
     # Don't return a result if the number of subfolders is one. In this case,
     # this algorithm will not improve processing and will likely interfere
@@ -500,9 +630,9 @@ def expand_subfolders(f):
 
 
 def path_match_patterns(path, patterns):
-    """
-    Check if a path matches one or more patterns. The whole path will be
-    matched be matched against the patterns.
+    """Check if a path matches one or more patterns.
+
+    The whole path will be matched be matched against the patterns.
     """
 
     for pattern in patterns:
@@ -513,12 +643,12 @@ def path_match_patterns(path, patterns):
     return False
 
 
-def path_filter_patterns(paths, patterns, root=''):
-    """
-    Scan for ignored paths based on glob patterns. Note that the whole path
+def path_filter_patterns(paths, patterns, root=""):
+    """Scan for ignored paths based on glob patterns. Note that the whole path
     will be matched, therefore paths should only contain the relative paths.
 
-    The root is optional, and only used for producing meaningful debug info.
+    The root is optional, and only used for producing meaningful debug
+    info.
     """
 
     from headphones import logger
@@ -527,7 +657,9 @@ def path_filter_patterns(paths, patterns, root=''):
 
     for path in paths[:]:
         if path_match_patterns(path, patterns):
-            logger.debug(f"Path ignored by pattern: {os.path.join(root, path)}")
+            logger.debug(
+                f"Path ignored by pattern: {os.path.join(root, path)}"
+            )
 
             ignored += 1
             paths.remove(path)
@@ -537,11 +669,13 @@ def path_filter_patterns(paths, patterns, root=''):
 
 
 def extract_data(s):
-    s = s.replace('_', ' ')
+    s = s.replace("_", " ")
 
     # headphones default format
-    pattern = re.compile(r'(?P<name>.*?)\s\-\s(?P<album>.*?)\s[\[\(](?P<year>.*?)[\]\)]',
-                         re.VERBOSE)
+    pattern = re.compile(
+        r"(?P<name>.*?)\s\-\s(?P<album>.*?)\s[\[\(](?P<year>.*?)[\]\)]",
+        re.VERBOSE,
+    )
     match = pattern.match(s)
 
     if match:
@@ -565,10 +699,11 @@ def extract_data(s):
 
 
 def extract_metadata(f):
-    """
-    Scan all files in the given directory and decide on an artist, album and
-    year based on the metadata. A decision is based on the number of different
-    artists, albums and years found in the media files.
+    """Scan all files in the given directory and decide on an artist, album and
+    year based on the metadata.
+
+    A decision is based on the number of different artists, albums and
+    years found in the media files.
     """
 
     from headphones import logger
@@ -609,13 +744,15 @@ def extract_metadata(f):
     count_ratio = 0.75
 
     if count < (count_ratio * len(results)):
-        logger.info(f"Counted {count} media files, but only {len(results)} have tags, ignoring.")
+        logger.info(
+            f"Counted {count} media files, but only {len(results)} have tags, ignoring."
+        )
         return (None, None, None)
 
     # Count distinct values
-    artists = list(set([x[0] for x in results]))
-    albums = list(set([x[1] for x in results]))
-    years = list(set([x[2] for x in results]))
+    artists = list({x[0] for x in results})
+    albums = list({x[1] for x in results})
+    years = list({x[2] for x in results})
 
     # Remove things such as CD2 from album names
     if len(albums) > 1:
@@ -627,7 +764,9 @@ def extract_metadata(f):
                 old_album = new_albums[index]
                 new_albums[index] = RE_CD_ALBUM.sub("", album).strip()
 
-                logger.debug(f"Stripped album number identifier: {old_album} -> {new_albums[index]}")
+                logger.debug(
+                    f"Stripped album number identifier: {old_album} -> {new_albums[index]}"
+                )
 
         # Remove duplicates
         new_albums = list(set(new_albums))
@@ -645,7 +784,9 @@ def extract_metadata(f):
     if len(artists) > 1 and len(albums) == 1:
         split_artists = [RE_FEATURING.split(x) for x in artists]
         featurings = [len(split_artist) - 1 for split_artist in split_artists]
-        logger.info("Album seem to feature {sum(featurings)} different artists")
+        logger.info(
+            "Album seem to feature {sum(featurings)} different artists"
+        )
 
         if sum(featurings) > 0:
             # Find the artist of which the least splits have been generated.
@@ -667,9 +808,7 @@ def extract_metadata(f):
 
 
 def get_downloaded_track_list(albumpath):
-    """
-     Return a list of audio files for the given directory.
-     """
+    """Return a list of audio files for the given directory."""
     downloaded_track_list = []
 
     for root, dirs, files in os.walk(albumpath):
@@ -682,9 +821,8 @@ def get_downloaded_track_list(albumpath):
 
 
 def preserve_torrent_directory(albumpath, forced=False, single=False):
-    """
-    Copy torrent directory to temp headphones_ directory to keep files for seeding.
-    """
+    """Copy torrent directory to temp headphones_ directory to keep files for
+    seeding."""
     from headphones import logger
 
     # Create temp dir
@@ -693,7 +831,9 @@ def preserve_torrent_directory(albumpath, forced=False, single=False):
     else:
         tempdir = tempfile.gettempdir()
 
-    logger.info(f"Preparing to copy to a temporary directory for post processing: {albumpath}")
+    logger.info(
+        f"Preparing to copy to a temporary directory for post processing: {albumpath}"
+    )
 
     try:
         file_name = os.path.basename(os.path.normpath(albumpath))
@@ -710,9 +850,9 @@ def preserve_torrent_directory(albumpath, forced=False, single=False):
     if not forced:
         try:
             workdir = os.path.join(tempdir, prefix)
-            workdir = re.sub(r'\[', '[[]', workdir)
-            workdir = re.sub(r'(?<!\[)\]', '[]]', workdir)
-            if len(glob(workdir + '*/')) >= 3:
+            workdir = re.sub(r"\[", "[[]", workdir)
+            workdir = re.sub(r"(?<!\[)\]", "[]]", workdir)
+            if len(glob(workdir + "*/")) >= 3:
                 logger.error(
                     "Looks like a temp directory has previously been created "
                     "for this albumpath, not continuing "
@@ -746,9 +886,8 @@ def preserve_torrent_directory(albumpath, forced=False, single=False):
 
 
 def cue_split(albumpath, keep_original_folder=False):
-    """
-     Attempts to check and split audio files by a cue for the given directory.
-     """
+    """Attempts to check and split audio files by a cue for the given
+    directory."""
     # Walk directory and scan all media files
     count = 0
     cue_count = 0
@@ -759,7 +898,7 @@ def cue_split(albumpath, keep_original_folder=False):
             extension = os.path.splitext(_file)[1].lower()[1:]
             if extension in headphones.MEDIA_FORMATS:
                 count += 1
-            elif extension == 'cue':
+            elif extension == "cue":
                 cue_count += 1
                 if root not in cue_dirs:
                     cue_dirs.append(root)
@@ -771,12 +910,16 @@ def cue_split(albumpath, keep_original_folder=False):
         if keep_original_folder:
             temppath = preserve_torrent_directory(albumpath)
             if temppath:
-                cue_dirs = [cue_dir.replace(albumpath, temppath) for cue_dir in cue_dirs]
+                cue_dirs = [
+                    cue_dir.replace(albumpath, temppath)
+                    for cue_dir in cue_dirs
+                ]
                 albumpath = temppath
             else:
                 return None
 
-        from headphones import logger, cuesplit
+        from headphones import cuesplit, logger
+
         logger.info("Attempting to split audio files by cue")
 
         cwd = os.getcwd()
@@ -797,8 +940,9 @@ def cue_split(albumpath, keep_original_folder=False):
 def extract_logline(s):
     # Default log format
     pattern = re.compile(
-        r'(?P<timestamp>.*?)\s\-\s(?P<level>.*?)\s*\:\:\s(?P<thread>.*?)\s\:\s(?P<message>.*)',
-        re.VERBOSE)
+        r"(?P<timestamp>.*?)\s\-\s(?P<level>.*?)\s*\:\:\s(?P<thread>.*?)\s\:\s(?P<message>.*)",
+        re.VERBOSE,
+    )
     match = pattern.match(s)
     if match:
         timestamp = match.group("timestamp")
@@ -814,7 +958,9 @@ def extract_song_data(s):
     from headphones import logger
 
     # headphones default format
-    pattern = re.compile(r'(?P<name>.*?)\s\-\s(?P<album>.*?)\s\[(?P<year>.*?)\]', re.VERBOSE)
+    pattern = re.compile(
+        r"(?P<name>.*?)\s\-\s(?P<album>.*?)\s\[(?P<year>.*?)\]", re.VERBOSE
+    )
     match = pattern.match(s)
 
     if match:
@@ -826,7 +972,9 @@ def extract_song_data(s):
         logger.info(f"Couldn't parse {s} into a valid default format")
 
     # newzbin default format
-    pattern = re.compile(r'(?P<name>.*?)\s\-\s(?P<album>.*?)\s\((?P<year>\d+?\))', re.VERBOSE)
+    pattern = re.compile(
+        r"(?P<name>.*?)\s\-\s(?P<album>.*?)\s\((?P<year>\d+?\))", re.VERBOSE
+    )
     match = pattern.match(s)
     if match:
         name = match.group("name")
@@ -852,7 +1000,7 @@ def smartMove(src, dest, delete=True):
         ext = os.path.splitext(filename)[1]
         i = 1
         while True:
-            newfile = title + '(' + str(i) + ')' + ext
+            newfile = title + "(" + str(i) + ")" + ext
             if os.path.isfile(os.path.join(dest, newfile)):
                 i += 1
             else:
@@ -870,7 +1018,9 @@ def smartMove(src, dest, delete=True):
             shutil.move(source_path, dest_path)
         except Exception as e:
             exists = os.path.exists(dest_path)
-            if exists and os.path.getsize(source_path) == os.path.getsize(dest_path):
+            if exists and os.path.getsize(source_path) == os.path.getsize(
+                dest_path
+            ):
                 logger.warn(
                     f"Successfully moved {filename}, but something went wrong: {e}"
                 )
@@ -886,13 +1036,14 @@ def smartMove(src, dest, delete=True):
             shutil.copy(source_path, dest_path)
             return True
         except Exception as e:
-            logger.warn(f"Error copying {filename}: {e}") 
+            logger.warn(f"Error copying {filename}: {e}")
 
 
 def walk_directory(basedir, followlinks=True):
-    """
-    Enhanced version of 'os.walk' where symlink directores are traversed, but
-    with care. In case a folder is already processed, don't traverse it again.
+    """Enhanced version of 'os.walk' where symlink directores are traversed,
+    but with care.
+
+    In case a folder is already processed, don't traverse it again.
     """
 
     from . import logger
@@ -917,16 +1068,14 @@ def walk_directory(basedir, followlinks=True):
                     traversed.append(real_path)
 
                     for args in os.walk(real_path):
-                        for result in _inner(*args):
-                            yield result
+                        yield from _inner(*args)
 
         # Pass on actual result
         yield root, directories, files
 
     # Start traversing
     for args in os.walk(basedir):
-        for result in _inner(*args):
-            yield result
+        yield from _inner(*args)
 
 
 #########################
@@ -937,19 +1086,18 @@ def walk_directory(basedir, followlinks=True):
 
 
 def sab_replace_dots(name):
-    return name.replace('.', ' ')
+    return name.replace(".", " ")
 
 
 def sab_replace_spaces(name):
-    return name.replace(' ', '_')
+    return name.replace(" ", "_")
 
 
 def sab_sanitize_foldername(name):
-    """ Return foldername with dodgy chars converted to safe ones
-        Remove any leading and trailing dot and space characters
-    """
+    """Return foldername with dodgy chars converted to safe ones Remove any
+    leading and trailing dot and space characters."""
     CH_ILLEGAL = r'\/<>?*|"'
-    CH_LEGAL = r'++{}!@#`'
+    CH_LEGAL = r"++{}!@#`"
 
     FL_ILLEGAL = CH_ILLEGAL + ':\x92"'
     FL_LEGAL = CH_LEGAL + "-''"
@@ -966,11 +1114,11 @@ def sab_sanitize_foldername(name):
             lst.append(ch)
         else:
             lst.append(ch)
-    name = ''.join(lst)
+    name = "".join(lst)
 
-    name = name.strip('. ')
+    name = name.strip(". ")
     if not name:
-        name = 'unknown'
+        name = "unknown"
 
     # maxlen = cfg.folder_max_length()
     # if len(name) > maxlen:
@@ -979,7 +1127,7 @@ def sab_sanitize_foldername(name):
     return name
 
 
-def split_string(mystring, splitvar=','):
+def split_string(mystring, splitvar=","):
     mylist = []
     for each_word in mystring.split(splitvar):
         mylist.append(each_word.strip())
@@ -987,29 +1135,36 @@ def split_string(mystring, splitvar=','):
 
 
 def create_https_certificates(ssl_cert, ssl_key):
-    """
-    Create a pair of self-signed HTTPS certificares and store in them in
+    """Create a pair of self-signed HTTPS certificares and store in them in
     'ssl_cert' and 'ssl_key'. Method assumes pyOpenSSL is installed.
 
-    This code is stolen from SickBeard (http://github.com/midgetspy/Sick-Beard).
+    This code is stolen from SickBeard
+    (http://github.com/midgetspy/Sick-Beard).
     """
 
-    from headphones import logger
-
+    from certgen import (
+        TYPE_RSA,
+        createCertificate,
+        createCertRequest,
+        createKeyPair,
+        serial,
+    )
     from OpenSSL import crypto
-    from certgen import createKeyPair, createCertRequest, createCertificate, \
-        TYPE_RSA, serial
+
+    from headphones import logger
 
     # Create the CA Certificate
     cakey = createKeyPair(TYPE_RSA, 2048)
     careq = createCertRequest(cakey, CN="Certificate Authority")
-    cacert = createCertificate(careq, (careq, cakey), serial,
-                               (0, 60 * 60 * 24 * 365 * 10))  # ten years
+    cacert = createCertificate(
+        careq, (careq, cakey), serial, (0, 60 * 60 * 24 * 365 * 10)
+    )  # ten years
 
     pkey = createKeyPair(TYPE_RSA, 2048)
     req = createCertRequest(pkey, CN="Headphones")
-    cert = createCertificate(req, (cacert, cakey), serial,
-                             (0, 60 * 60 * 24 * 365 * 10))  # ten years
+    cert = createCertificate(
+        req, (cacert, cakey), serial, (0, 60 * 60 * 24 * 365 * 10)
+    )  # ten years
 
     # Save the key and certificate to disk
     try:
@@ -1017,7 +1172,7 @@ def create_https_certificates(ssl_cert, ssl_key):
             fp.write(crypto.dump_privatekey(crypto.FILETYPE_PEM, pkey))
         with open(ssl_cert, "w") as fp:
             fp.write(crypto.dump_certificate(crypto.FILETYPE_PEM, cert))
-    except IOError as e:
+    except OSError:
         logger.error(f"Error creating SSL key and certificate: e")
         return False
 
@@ -1025,17 +1180,16 @@ def create_https_certificates(ssl_cert, ssl_key):
 
 
 class BeetsLogCapture(beetslogging.Handler):
-
     def __init__(self):
         beetslogging.Handler.__init__(self)
         self.messages = []
 
     def emit(self, record):
-        self.messages.append(text_type(record.msg))
+        self.messages.append(str(record.msg))
 
 
 @contextmanager
-def capture_beets_log(logger='beets'):
+def capture_beets_log(logger="beets"):
     capture = BeetsLogCapture()
     log = beetslogging.getLogger(logger)
     log.addHandler(capture)
@@ -1044,9 +1198,9 @@ def capture_beets_log(logger='beets'):
     finally:
         log.removeHandler(capture)
 
+
 def have_pct_have_total(db_artist):
-    have_tracks = db_artist['HaveTracks'] or 0
-    total_tracks = db_artist['TotalTracks'] or 0 
+    have_tracks = db_artist["HaveTracks"] or 0
+    total_tracks = db_artist["TotalTracks"] or 0
     have_pct = have_tracks / total_tracks if total_tracks else 0
     return (have_pct, total_tracks)
-

@@ -1,4 +1,3 @@
-# encoding=utf8
 #  This file is part of Headphones.
 #
 #  Headphones is free software: you can redistribute it and/or modify
@@ -13,39 +12,38 @@
 #
 #  You should have received a copy of the GNU General Public License
 #  along with Headphones.  If not, see <http://www.gnu.org/licenses/>.
-"""
-Track/album metadata handling routines.
-"""
+"""Track/album metadata handling routines."""
 
+
+import datetime
+import os.path
 
 from mediafile import MediaFile, UnreadableFileError
-import headphones
+
 from headphones import logger
-import os.path
-import datetime
 
 __author__ = "Andrzej Ciarkowski <andrzej.ciarkowski@gmail.com>"
 
 
 class MetadataDict(dict):
-    """
-    Dictionary which allows for case-insensitive, but case-preserving lookup,
-    allowing to put different values under $Album and $album, but still
+    """Dictionary which allows for case-insensitive, but case-preserving
+    lookup, allowing to put different values under $Album and $album, but still
     finding some value if only single key is present and called with any
     variation of the name's case.
 
-    Keeps case-sensitive mapping in superclass dict, and case-insensitive (
-    lowercase) in member variable self._lower. If case-sensitive lookup
-    fails, another case-insensitive attempt is made.
+    Keeps case-sensitive mapping in superclass dict, and case-
+    insensitive ( lowercase) in member variable self._lower. If case-
+    sensitive lookup fails, another case-insensitive attempt is made.
     """
+
     def __setitem__(self, key, value):
-        super(MetadataDict, self).__setitem__(key, value)
+        super().__setitem__(key, value)
         self._lower.__setitem__(key.lower(), value)
 
     def add_items(self, items):
         # type: (Iterable[Tuple[Any,Any]])->None
-        """
-        Add (key,value) pairs to this dictionary using iterable as an input.
+        """Add (key,value) pairs to this dictionary using iterable as an input.
+
         :param items: input items.
         """
         for key, value in items:
@@ -53,10 +51,10 @@ class MetadataDict(dict):
 
     def __init__(self, seq=None, **kwargs):
         if isinstance(seq, MetadataDict):
-            super(MetadataDict, self).__init__(seq)
+            super().__init__(seq)
             self._lower = dict(seq._lower)
         else:
-            super(MetadataDict, self).__init__()
+            super().__init__()
             self._lower = {}
             if seq is not None:
                 try:
@@ -66,7 +64,7 @@ class MetadataDict(dict):
 
     def __getitem__(self, item):
         try:
-            return super(MetadataDict, self).__getitem__(item)
+            return super().__getitem__(item)
         except KeyError:
             return self._lower.__getitem__(item.lower())
 
@@ -75,22 +73,21 @@ class MetadataDict(dict):
 
 
 class Vars:
-    """
-    Metadata $variable names (only ones set explicitly by headphones).
-    """
-    DISC = '$Disc'
-    DISC_TOTAL = '$DiscTotal'
-    TRACK = '$Track'
-    TITLE = '$Title'
-    ARTIST = '$Artist'
-    SORT_ARTIST = '$SortArtist'
-    ALBUM = '$Album'
-    YEAR = '$Year'
-    DATE = '$Date'
-    EXTENSION = '$Extension'
-    ORIGINAL_FOLDER = '$OriginalFolder'
-    FIRST_LETTER = '$First'
-    TYPE = '$Type'
+    """Metadata $variable names (only ones set explicitly by headphones)."""
+
+    DISC = "$Disc"
+    DISC_TOTAL = "$DiscTotal"
+    TRACK = "$Track"
+    TITLE = "$Title"
+    ARTIST = "$Artist"
+    SORT_ARTIST = "$SortArtist"
+    ALBUM = "$Album"
+    YEAR = "$Year"
+    DATE = "$Date"
+    EXTENSION = "$Extension"
+    ORIGINAL_FOLDER = "$OriginalFolder"
+    FIRST_LETTER = "$First"
+    TYPE = "$Type"
     TITLE_LOWER = TITLE.lower()
     ARTIST_LOWER = ARTIST.lower()
     SORT_ARTIST_LOWER = SORT_ARTIST.lower()
@@ -101,9 +98,8 @@ class Vars:
 
 
 def _verify_var_type(val):
-    """
-    Check if type of value is allowed as a variable in pathname substitution.
-    """
+    """Check if type of value is allowed as a variable in pathname
+    substitution."""
     return isinstance(val, (str, int, float, datetime.date))
 
 
@@ -116,54 +112,48 @@ def _as_str(val):
 
 def _media_file_to_dict(mf, d):
     # type: (MediaFile, MutableMapping[basestring,basestring])->None
-    """
-    Populate dict with tags read from media file.
-    """
+    """Populate dict with tags read from media file."""
     for fld in mf.readable_fields():
-        if 'art' == fld:
+        if "art" == fld:
             # skip embedded artwork as it's a BLOB
             continue
         val = getattr(mf, fld)
         if val is None:
-            val = ''
+            val = ""
         # include only types with meaningful string representation
         if _verify_var_type(val):
-            d['$' + fld] = _as_str(val)
+            d["$" + fld] = _as_str(val)
 
 
 def _row_to_dict(row, d):
-    """
-    Populate dict with database row fields.
-    """
+    """Populate dict with database row fields."""
     for fld in list(row.keys()):
         val = row[fld]
         if val is None:
-            val = ''
+            val = ""
         if _verify_var_type(val):
-            d['$' + fld] = _as_str(val)
+            d["$" + fld] = _as_str(val)
 
 
 def _date_year(release):
     # type: (sqlite3.Row)->Tuple[str,str]
-    """
-    Extract release date and year from database row
-    """
+    """Extract release date and year from database row."""
     try:
-        date = release['ReleaseDate']
+        date = release["ReleaseDate"]
     except TypeError:
-        date = ''
+        date = ""
 
     if date is not None:
         year = date[:4]
     else:
-        year = ''
+        year = ""
     return date, year
 
 
 def _lower(s):
     # type: basestring->basestring
-    """
-    Return s.lower() if not None
+    """Return s.lower() if not None.
+
     :param s:
     :return:
     """
@@ -174,9 +164,9 @@ def _lower(s):
 
 def file_metadata(path, release, single_disc_ignore=False):
     # type: (str,sqlite3.Row)->Tuple[Mapping[str,str],bool]
-    """
-    Prepare metadata dictionary for path substitution, based on file name,
+    """Prepare metadata dictionary for path substitution, based on file name,
     the tags stored within it and release info from the db.
+
     :param path: media file path
     :param release: database row with release info
     :return: pair (dict,boolean indicating if Vars.TITLE is taken from tags or
@@ -184,7 +174,7 @@ def file_metadata(path, release, single_disc_ignore=False):
     """
     try:
         f = MediaFile(path)
-    except UnreadableFileError as ex:
+    except UnreadableFileError:
         logger.info(f"MediaFile couldn't parse {path}: {e}")
         return None, None
 
@@ -197,19 +187,19 @@ def file_metadata(path, release, single_disc_ignore=False):
     date, year = _date_year(release)
 
     if not f.disctotal or (f.disctotal == 1 and single_disc_ignore):
-        disc_total = ''
+        disc_total = ""
     else:
-        disc_total = '%d' % f.disctotal
+        disc_total = "%d" % f.disctotal
 
     if not f.disc or (f.disctotal == 1 and single_disc_ignore):
-        disc_number = ''
+        disc_number = ""
     else:
-        disc_number = '%d' % f.disc
+        disc_number = "%d" % f.disc
 
     if not f.track:
-        track_number = ''
+        track_number = ""
     else:
-        track_number = '%02d' % f.track
+        track_number = "%02d" % f.track
 
     if not f.title:
         basename = os.path.basename(path)
@@ -220,17 +210,17 @@ def file_metadata(path, release, single_disc_ignore=False):
         from_metadata = True
 
     ext = os.path.splitext(path)[1]
-    if release['ArtistName'] == "Various Artists" and f.artist:
+    if release["ArtistName"] == "Various Artists" and f.artist:
         artist_name = f.artist
     else:
-        artist_name = release['ArtistName']
+        artist_name = release["ArtistName"]
 
-    if artist_name and artist_name.startswith('The '):
+    if artist_name and artist_name.startswith("The "):
         sort_name = artist_name[4:] + ", The"
     else:
         sort_name = artist_name
 
-    album_title = release['AlbumTitle']
+    album_title = release["AlbumTitle"]
     override_values = {
         Vars.DISC: disc_number,
         Vars.DISC_TOTAL: disc_total,
@@ -253,9 +243,7 @@ def file_metadata(path, release, single_disc_ignore=False):
 
 def _intersect(d1, d2):
     # type: (Mapping,Mapping)->Mapping
-    """
-    Create intersection (common part) of two dictionaries.
-    """
+    """Create intersection (common part) of two dictionaries."""
     res = {}
     for key, val in d1.items():
         if key in d2 and d2[key] == val:
@@ -265,35 +253,35 @@ def _intersect(d1, d2):
 
 def album_metadata(path, release, common_tags):
     # type: (str,sqlite3.Row,Mapping[str,str])->Mapping[str,str]
-    """
-    Prepare metadata dictionary for path substitution of album folder.
+    """Prepare metadata dictionary for path substitution of album folder.
+
     :param path: album path to prepare metadata for.
     :param release: database row with release properties.
     :param common_tags: common set of tags gathered from media files.
     :return: metadata dictionary with substitution variables for rendering path.
     """
     date, year = _date_year(release)
-    artist = release['ArtistName']
+    artist = release["ArtistName"]
     if artist:
-        artist = artist.replace('/', '_')
-    album = release['AlbumTitle']
+        artist = artist.replace("/", "_")
+    album = release["AlbumTitle"]
     if album:
-        album = album.replace('/', '_')
-    release_type = release['Type']
+        album = album.replace("/", "_")
+    release_type = release["Type"]
     if release_type:
-        release_type = release_type.replace('/', '_')
+        release_type = release_type.replace("/", "_")
 
-    if artist and artist.startswith('The '):
+    if artist and artist.startswith("The "):
         sort_name = artist[4:] + ", The"
     else:
         sort_name = artist
 
     if not sort_name or sort_name[0].isdigit():
-        first_char = '0-9'
+        first_char = "0-9"
     else:
         first_char = sort_name[0]
 
-    orig_folder = ''
+    orig_folder = ""
 
     # Get from temp path
     if "_@hp@_" in path:
@@ -320,7 +308,7 @@ def album_metadata(path, release, common_tags):
         Vars.ALBUM_LOWER: _lower(album),
         Vars.TYPE_LOWER: _lower(release_type),
         Vars.FIRST_LETTER_LOWER: _lower(first_char),
-        Vars.ORIGINAL_FOLDER_LOWER: _lower(orig_folder)
+        Vars.ORIGINAL_FOLDER_LOWER: _lower(orig_folder),
     }
     res = MetadataDict(common_tags)
     res.add_items(iter(override_values.items()))
@@ -329,15 +317,15 @@ def album_metadata(path, release, common_tags):
 
 def albumart_metadata(release, common_tags):
     # type: (sqlite3.Row,Mapping)->Mapping
-    """
-    Prepare metadata dictionary for path subtitution of album art file.
+    """Prepare metadata dictionary for path subtitution of album art file.
+
     :param release: database row with release properties.
     :param common_tags: common set of tags gathered from media files.
     :return: metadata dictionary with substitution variables for rendering path.
     """
     date, year = _date_year(release)
-    artist = release['ArtistName']
-    album = release['AlbumTitle']
+    artist = release["ArtistName"]
+    album = release["AlbumTitle"]
 
     override_values = {
         Vars.ARTIST: artist,
@@ -345,26 +333,24 @@ def albumart_metadata(release, common_tags):
         Vars.YEAR: year,
         Vars.DATE: date,
         Vars.ARTIST_LOWER: _lower(artist),
-        Vars.ALBUM_LOWER: _lower(album)
+        Vars.ALBUM_LOWER: _lower(album),
     }
     res = MetadataDict(common_tags)
     res.add_items(iter(override_values.items()))
     return res
 
 
-class AlbumMetadataBuilder(object):
-    """
-    Facilitates building of album metadata as a common set of tags retrieved
-    from media files.
-    """
+class AlbumMetadataBuilder:
+    """Facilitates building of album metadata as a common set of tags retrieved
+    from media files."""
 
     def __init__(self):
         self._common = None
 
     def add_media_file(self, mf):
         # type: (Mapping)->None
-        """
-        Add metadata tags read from media file to album metadata.
+        """Add metadata tags read from media file to album metadata.
+
         :param mf: MediaFile
         """
         md = {}
@@ -376,9 +362,9 @@ class AlbumMetadataBuilder(object):
 
     def build(self):
         # type: (None)->Mapping
-        """
-        Build case-insensitive, case-preserving dict from gathered metadata
+        """Build case-insensitive, case-preserving dict from gathered metadata
         tags.
+
         :return: dictinary-like object filled with $variables based on common
         tags.
         """

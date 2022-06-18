@@ -21,13 +21,9 @@ class HeadphonesException(Exception):
 
 
 class NewzbinAPIThrottled(HeadphonesException):
-    """
-    Newzbin has throttled us, deal with it
-    """
+    """Newzbin has throttled us, deal with it."""
 
 
 class SoftChrootError(HeadphonesException):
-    """
-    Fatal errors in SoftChroot module
-    """
-    pass
+    """Fatal errors in SoftChroot module."""
+

@@ -1,4 +1,5 @@
 import sys
+
 if sys.version_info < (2, 7):
     import unittest2 as unittest
     from unittest2 import TestCase as TC
@@ -20,59 +21,58 @@ def _d(f):
         if not _dummy:
             return f(self, *args, **kw)
         return self.assertTrue(True)
+
     return decorate
 
 
 class TestCase(TC):
-    """
-    Wrapper for python 2.6 stubs
-    """
+    """Wrapper for python 2.6 stubs."""
 
     def assertIsInstance(self, obj, cls, msg=None):
         if not _dummy:
-            return super(TestCase, self).assertIsInstance(obj, cls, msg)
+            return super().assertIsInstance(obj, cls, msg)
         tst = isinstance(obj, cls)
         return self.assertTrue(tst, msg)
 
     @_d
     def assertNotIsInstance(self, *args, **kw):
-        return super(TestCase, self).assertNotIsInstance(*args, **kw)
+        return super().assertNotIsInstance(*args, **kw)
 
     @_d
     def assertIn(self, *args, **kw):
-        return super(TestCase, self).assertIn(*args, **kw)
+        return super().assertIn(*args, **kw)
 
     @_d
     def assertRegexpMatches(self, *args, **kw):
-        return super(TestCase, self).assertRegex(*args, **kw)
+        return super().assertRegex(*args, **kw)
 
     # -----------------------------------------------------------
     # NOT DUMMY ASSERTIONS
     # -----------------------------------------------------------
     def assertIsNone(self, val, msg=None):
         if not _dummy:
-            return super(TestCase, self).assertIsNone(val, msg)
+            return super().assertIsNone(val, msg)
         tst = val is None
-        return super(TestCase, self).assertTrue(tst, msg)
+        return super().assertTrue(tst, msg)
 
     def assertIsNotNone(self, val, msg=None):
         if not _dummy:
-            return super(TestCase, self).assertIsNotNone(val, msg)
+            return super().assertIsNotNone(val, msg)
         tst = val is not None
-        return super(TestCase, self).assertTrue(tst, msg)
+        return super().assertTrue(tst, msg)
 
     def assertRaises(self, exc, msg=None):
         if not _dummy:
-            return super(TestCase, self).assertRaises(exc, msg)
+            return super().assertRaises(exc, msg)
         return TestCase._TestCaseRaiseStub(self, exc, msg=msg)
 
     def assertRaisesRegexp(self, exc, regex, msg=None):
         if not _dummy:
-            return super(TestCase, self).assertRaises(exc, msg)
+            return super().assertRaises(exc, msg)
         return TestCase._TestCaseRaiseStub(self, exc, regex=regex, msg=msg)
 
     class _TestCaseRaiseStub:
-        """ Internal stuff for stubbing `assertRaises*` """
+        """Internal stuff for stubbing `assertRaises*`"""
 
         def __init__(self, test_case, exc, regex=None, msg=None):
             self.exc = exc
@@ -105,11 +105,19 @@ def TestArgs(*parameters):
 
             def method_for_parameter(self, method=method, parameter=parameter):
                 method(self, *parameter)
+
             args_for_parameter = ",".join(repr(v) for v in parameter)
-            name_for_parameter = method.__name__ + "(" + args_for_parameter + ")"
-            frame = sys._getframe(1)    # pylint: disable-msg=W0212
+            name_for_parameter = (
+                method.__name__ + "(" + args_for_parameter + ")"
+            )
+            frame = sys._getframe(1)  # pylint: disable-msg=W0212
             frame.f_locals[name_for_parameter] = method_for_parameter
-            frame.f_locals[name_for_parameter].__doc__ = method.__doc__ + '(' + args_for_parameter + ')'
-            method_for_parameter.__name__ = name_for_parameter + '(' + args_for_parameter + ')'
+            frame.f_locals[name_for_parameter].__doc__ = (
+                method.__doc__ + "(" + args_for_parameter + ")"
+            )
+            method_for_parameter.__name__ = (
+                name_for_parameter + "(" + args_for_parameter + ")"
+            )
         return None
+
     return decorator

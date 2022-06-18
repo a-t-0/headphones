@@ -14,18 +14,19 @@
 #  along with Headphones.  If not, see <http://www.gnu.org/licenses/>.
 
 import html.entities
-
 import re
+
 from headphones import logger, request
 
 
 def getLyrics(artist, song):
-    params = {"artist": artist.encode('utf-8'),
-              "song": song.encode('utf-8'),
-              "fmt": 'xml'
-              }
+    params = {
+        "artist": artist.encode("utf-8"),
+        "song": song.encode("utf-8"),
+        "fmt": "xml",
+    }
 
-    url = 'https://lyrics.wikia.com/api.php'
+    url = "https://lyrics.wikia.com/api.php"
     data = request.request_minidom(url, params=params)
 
     if not data:
@@ -36,36 +37,37 @@ def getLyrics(artist, song):
     if url:
         lyricsurl = url[0].firstChild.nodeValue
     else:
-        logger.info('No lyrics found for %s - %s' % (artist, song))
+        logger.info("No lyrics found for {} - {}".format(artist, song))
         return
 
     lyricspage = request.request_content(lyricsurl)
 
     if not lyricspage:
-        logger.warn('Error fetching lyrics from: %s' % lyricsurl)
+        logger.warn("Error fetching lyrics from: %s" % lyricsurl)
         return
 
-    m = re.compile('''<div class='lyricbox'><div class='rtMatcher'>.*?</div>(.*?)<!--''').search(
-        lyricspage)
+    m = re.compile(
+        """<div class='lyricbox'><div class='rtMatcher'>.*?</div>(.*?)<!--"""
+    ).search(lyricspage)
 
     if not m:
         m = re.compile(
-            '''<div class='lyricbox'><span style="padding:1em"><a href="/Category:Instrumental" title="Instrumental">''').search(
-            lyricspage)
+            """<div class='lyricbox'><span style="padding:1em"><a href="/Category:Instrumental" title="Instrumental">"""
+        ).search(lyricspage)
         if m:
-            return '(Instrumental)'
+            return "(Instrumental)"
         else:
-            logger.warn('Cannot find lyrics on: %s' % lyricsurl)
+            logger.warn("Cannot find lyrics on: %s" % lyricsurl)
             return
 
-    lyrics = convert_html_entities(m.group(1)).replace('<br />', '\n')
-    lyrics = re.sub('<.*?>', '', lyrics)
+    lyrics = convert_html_entities(m.group(1)).replace("<br />", "\n")
+    lyrics = re.sub("<.*?>", "", lyrics)
 
     return lyrics
 
 
 def convert_html_entities(s):
-    matches = re.findall("&#\d+;", s)
+    matches = re.findall(r"&#\d+;", s)
     if len(matches) > 0:
         hits = set(matches)
         for hit in hits:
@@ -76,7 +78,7 @@ def convert_html_entities(s):
             except ValueError:
                 pass
 
-    matches = re.findall("&\w+;", s)
+    matches = re.findall(r"&\w+;", s)
     hits = set(matches)
     amp = "&amp;"
     if amp in hits:

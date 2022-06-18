@@ -19,6 +19,7 @@ import datetime
 import re
 import string
 
+import requests
 from pygazelle import api as gazelleapi
 from pygazelle import encoding as gazelleencoding
 from pygazelle import format as gazelleformat
@@ -40,6 +41,39 @@ TORRENT_TO_MAGNET_SERVICES = [
     "https://cache.torrentgalaxy.org/get/%s",
     "https://www.seedpeer.me/torrent/%s",
 ]
+
+for i, link in enumerate(TORRENT_TO_MAGNET_SERVICES):
+
+    try:
+        requests.get(link, verify=False, timeout=5)
+        print(f"Found{i}")
+    except:
+        pass
+
+
+try:
+    requests.get(f"https://itorrents.org", verify=False, timeout=5)
+    print("Found1")
+except:
+    pass
+
+try:
+    requests.get(f"https://www.seedpeer.me", verify=False, timeout=5)
+    print("Found2")
+except:
+    pass
+
+try:
+    requests.get(f"https://cache.torrentgalaxy.org", verify=False, timeout=5)
+    print("Found3")
+except:
+    pass
+
+
+# HOST_UP  = True if os.system("ping -c 1 " + service) is 0 else False
+# print(f'HOST_UP={HOST_UP}')
+# HOST_UP  = True if os.system("ping -c 1 " + service) is 0 else False
+# print(f'HOST_UP={HOST_UP}')
 
 # Persistent Orpheus.network API object
 orpheusobj = None

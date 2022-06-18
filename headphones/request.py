@@ -51,7 +51,6 @@ def request_response(
     request limit is the minimal time between two requests (and so
     1/request_limit is the number of requests per seconds).
     """
-
     # Convert whitelist_status_code to a list if needed
     if whitelist_status_code and type(whitelist_status_code) != list:
         whitelist_status_code = [whitelist_status_code]

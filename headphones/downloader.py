@@ -17,6 +17,7 @@ import os
 import random
 import subprocess
 
+import requests
 from unidecode import unidecode
 
 import headphones
@@ -106,7 +107,7 @@ def send_to_downloader(data, result, album, ruobj, TORRENT_TO_MAGNET_SERVICES):
 
         # Blackhole
         if headphones.CONFIG.TORRENT_DOWNLOADER == 0:
-
+            print("GETTING TORRENT")
             # Get torrent name from .torrent, this is usually used by the torrent client as the folder name
             torrent_name = (
                 helpers.replace_illegal_chars(folder_name) + ".torrent"
@@ -114,7 +115,9 @@ def send_to_downloader(data, result, album, ruobj, TORRENT_TO_MAGNET_SERVICES):
             download_path = os.path.join(
                 headphones.CONFIG.TORRENTBLACKHOLE_DIR, torrent_name
             )
-
+            print("GETTING TORRENT")
+            print(f"torrent_name={torrent_name}")
+            print(f"download_path={download_path}")
             if result.url.lower().startswith("magnet:"):
                 if headphones.CONFIG.MAGNET_LINKS == 1:
                     try:
@@ -139,6 +142,9 @@ def send_to_downloader(data, result, album, ruobj, TORRENT_TO_MAGNET_SERVICES):
                         logger.error("Error opening magnet link: %s" % str(e))
                         return
                 elif headphones.CONFIG.MAGNET_LINKS == 2:
+                    print(
+                        f"headphones.CONFIG.MAGNET_LINKS={headphones.CONFIG.MAGNET_LINKS}"
+                    )
                     # Procedure adapted from CouchPotato
                     torrent_hash = calculate_torrent_hash(result.url)
 
@@ -147,11 +153,16 @@ def send_to_downloader(data, result, album, ruobj, TORRENT_TO_MAGNET_SERVICES):
                     random.shuffle(services)
                     headers = {"User-Agent": USER_AGENT}
 
+                    # Initialise data before fetching it at a magnet 2 torrent service.
+                    data = None
                     for service in services:
-
-                        data = request.request_content(
-                            service % torrent_hash, headers=headers
-                        )
+                        try:
+                            requests.get(service, verify=False, timeout=5)
+                            data = request.request_content(
+                                service % torrent_hash, headers=headers
+                            )
+                        except:
+                            pass
                         if data:
                             if not torrent_to_file(download_path, data):
                                 return
@@ -163,6 +174,7 @@ def send_to_downloader(data, result, album, ruobj, TORRENT_TO_MAGNET_SERVICES):
                             # Break for loop
                             break
                     else:
+                        # TODO: Include custom magnet to torrent conversion.
                         # No service succeeded
                         logger.warning(
                             "Unable to convert magnet with hash "
